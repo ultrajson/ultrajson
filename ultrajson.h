@@ -276,8 +276,8 @@ EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *
 typedef struct __JSONObjectDecoder
 {
 	JSOBJ (*newString)(char *start, char *end);
-	JSOBJ (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
-	JSOBJ (*arrayAddItem)(JSOBJ obj, JSOBJ value);
+	void (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
+	void (*arrayAddItem)(JSOBJ obj, JSOBJ value);
 	JSOBJ (*newTrue)();
 	JSOBJ (*newFalse)();
 	JSOBJ (*newNull)();
@@ -286,8 +286,6 @@ typedef struct __JSONObjectDecoder
 	JSOBJ (*newInteger)(JSLONG value);
 	JSOBJ (*newDouble)(double value);
 } JSONObjectDecoder;
-
-
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
 

@@ -1,3 +1,33 @@
+/*
+Copyright (c) 2011, Jonas Tarnstrom and ESN Social Software AB
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by ESN Social Software AB (www.esn.me).
+4. Neither the name of the ESN Social Software AB nor the
+   names of its contributors may be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALLESN SOCIAL SOFTWARE AB BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "ultrajson.h"
 #include <math.h>
 
@@ -103,8 +133,17 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	char *expEnd = NULL;
 	int intNeg = 0;
 	int expNeg = 0;
+
+	JSLONG intValue;
+	double frcValue;
+	double expValue;
+	
+
 	
 	ds->lastType = JT_INVALID;
+
+	// Go one back since the scanner ate one
+	ds->start --;
 
 	if (*(ds->start) == '-')
 	{
@@ -114,6 +153,9 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	intStart = ds->start;
 
 	// Scan integer part
+
+	intValue = 0;
+
 	while(ds->start < ds->end)
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
@@ -168,6 +210,8 @@ DECODE_FRACTION:
 		}
 		else
 		{
+			frcEnd = ds->start;
+			ds->start ++;
 			break;
 		}
 	}
@@ -283,7 +327,11 @@ JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
 	while (ds->start < ds->end)
 	{
 		itemValue = decode_any(dec, ds);
-		dec->arrayAddItem (newObj, itemValue);
+
+		if (itemValue)
+		{
+			dec->arrayAddItem (newObj, itemValue);
+		}
 
 		// Scan for end of object declaration
 		while (ds->start < ds->end)
@@ -323,27 +371,31 @@ JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 	{
 		itemName = decode_any(dec, ds);
 
-		if (ds->lastType != JT_UTF8)
+		if (itemName)
 		{
-			fprintf (stderr, "%s: Object is expected to have key value as string\n", __FUNCTION__);
-			return NULL;
-		}
 
-		// Expect ':'
-		while (ds->start < ds->end)
-		{
-			if (*(ds->start++) == ':')
-				break;
-		}
+			if (ds->lastType != JT_UTF8)
+			{
+				fprintf (stderr, "%s: Object is expected to have key value as string\n", __FUNCTION__);
+				return NULL;
+			}
 
-		if (ds->start == ds->end)
-		{
-			fprintf (stderr, "%s: No : found when parsing object key\n", __FUNCTION__);
-			return NULL;
+			// Expect ':'
+			while (ds->start < ds->end)
+			{
+				if (*(ds->start++) == ':')
+					break;
+			}
+
+			if (ds->start == ds->end)
+			{
+				fprintf (stderr, "%s: No : found when parsing object key\n", __FUNCTION__);
+				return NULL;
+			}
+
+			itemValue = decode_any(dec, ds);
+			dec->objectAddKey (newObj, itemName, itemValue);
 		}
-		
-		itemValue = decode_any(dec, ds);
-		dec->objectAddKey (newObj, itemName, itemValue);
 
 		// Scan for end of object declaration
 		while (ds->start < ds->end)
@@ -389,7 +441,7 @@ JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds)
 		else
 		if (pfnDecoder == NULL)
 		{
-			fprintf (stderr, "%s: Unexpected character found\n", __FUNCTION__);
+			//fprintf (stderr, "%s: Unexpected character found\n", __FUNCTION__);
 			return NULL;
 		}
 
@@ -428,7 +480,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	g_identTable['f'] = decode_false;
 	g_identTable['n'] = decode_null; 
 
-	for (index = 0; index < 0x21; index ++)
+	for (index = 0; index < 33; index ++)
 	{
 		g_identTable[index] = (PFN_DECODER) 1; 
 	}

@@ -241,11 +241,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\ultrajson.c"
+				RelativePath="..\ultrajsondec.c"
 				>
 			</File>
 			<File
-				RelativePath="..\ultrajsondec.c"
+				RelativePath="..\ultrajsonenc.c"
 				>
 			</File>
 		</Filter>

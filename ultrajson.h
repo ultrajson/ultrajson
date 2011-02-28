@@ -289,6 +289,9 @@ typedef struct __JSONObjectDecoder
 	JSOBJ (*newArray)();
 	JSOBJ (*newInteger)(JSLONG value);
 	JSOBJ (*newDouble)(double value);
+	JSPFN_MALLOC malloc;
+	JSPFN_FREE free;
+	JSPFN_REALLOC realloc;
 } JSONObjectDecoder;
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);

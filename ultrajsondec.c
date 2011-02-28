@@ -31,18 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ultrajson.h"
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 
 struct DecoderState
 {
 	char *start;
 	char *end;
+	char *escStart;
+	char *escEnd;
+	int escHeap;
 	int lastType;
-
-	int cObjBegin;
-	int cObjEnd;
-	int cArrBegin;
-	int cArrEnd;
-
 };
 
 JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds);
@@ -51,58 +49,6 @@ typedef JSOBJ (*PFN_DECODER)(JSONObjectDecoder *dec, struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 
 
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
-
-/*
-static JSOBJ StringToNumeric (JSONObjectDecoder *dec, struct DecoderState *ds, int intNeg, JSLONG intValue, int hasFrc, int decimalCount, double frcValue, int hasExp, double expValue, int expNeg)
-{
-	double dblValue;
-	// Decode integer part
-
-	if (intNeg)
-	{
-		intValue *= -1;
-	}
-
-	if (!hasFrc)
-	{
-		dblValue = (double) intValue;
-		goto DECODE_EXPONENT;
-	}
-
-	frcValue /= g_pow10[decimalCount];
-
-	dblValue = (double) intValue; 
-	dblValue += frcValue;
-
-	if (!hasExp)
-	{
-		// Create double from intValue and frcValue. Return
-		ds->lastType = JT_DOUBLE;
-		return dec->newDouble(dblValue);
-	}
-
-DECODE_EXPONENT:
-
-	if (!hasExp)
-	{
-		goto DECODE_INTEGER;
-	}
-
-	if (expNeg)
-	{
-		expValue *= -1.0;
-	}
-
-	dblValue *= pow(10.0, expValue);
-	ds->lastType = JT_DOUBLE;
-	return dec->newDouble(dblValue);
-
-DECODE_INTEGER:
-	ds->lastType = JT_INTEGER;
-	return dec->newInteger(intValue);
-}
-*/
-
 
 
 INLINEFUNCTION double createDouble(double intValue, double frcValue, int frcDecimalCount)
@@ -281,26 +227,91 @@ JSOBJ decode_null (JSONObjectDecoder *dec, struct DecoderState *ds)
 }
 
 
+static char g_unescapeLookup[] = {
+	/*				 0x00   0x01   0x02    0x03   0x04   0x05    0x06  0x07   0x08   0x09   0x0a   0x0b   0x0c   0x0d   0x0e   0x0f */
+	/* 0x00 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x10 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x20 */ '\0',  '\0',  '\"',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x30 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x40 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x50 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x60 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x70 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x80 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0x90 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xa0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xb0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xc0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xd0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xe0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+	/* 0xf0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
+};
+
 JSOBJ decode_string (JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	char *strStart = ds->start;
+	char *escOffset;
+	char chr;
+	size_t escLen = (ds->escEnd - ds->escStart);
 	ds->lastType = JT_INVALID;
+
+	if ( (ds->end - ds->start) > escLen)
+	{
+		size_t newSize = escLen * 2;
+
+		if (ds->escHeap)
+		{
+			ds->escStart = (char *) dec->realloc (ds->escStart, escLen);
+		}
+		else
+		{
+			char *oldStart = ds->escStart;
+			ds->escHeap = 1;
+			ds->escStart = (char *) dec->malloc (newSize);
+			memcpy (ds->escStart, oldStart, escLen);
+		}
+
+		ds->escEnd = ds->escStart + newSize;
+	}
+
+	escOffset = ds->escStart;
 
 	while (ds->start < ds->end)
 	{
-		//FIXME: Handle escaping here
+		chr = (*ds->start++);
 
-		if (*(ds->start++) == '\"')
+		if (chr == '\"')
 		{
 			ds->lastType = JT_UTF8;
-			return dec->newString(strStart, ds->start - 1);
+			return dec->newString(ds->escStart, escOffset);
 		}
+		else
+		{
+			if (chr == '\\')
+			{
+				if (ds->start >= ds->end)
+				{
+					fprintf (stderr, "%s: Unterminated escape sequencein string literal\n", __FUNCTION__);
+					return NULL;
+				}
+
+				chr = g_unescapeLookup[ (unsigned char) (*ds->start++)];
+
+				if (chr == '\0')
+				{
+					fprintf (stderr, "%s: Unrecognized escape sequeunce in string literal\n", __FUNCTION__);
+					return NULL;
+				}
+
+			}
+		}
+
+		*(escOffset++) = chr;
 	}
 	fprintf (stderr, "%s: Unmatched \" when decoding string\n", __FUNCTION__);
 	return NULL;
 }
 
-JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
+INLINEFUNCTION JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
 	JSOBJ itemValue;
 	JSOBJ newObj = dec->newArray();
@@ -325,7 +336,7 @@ JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
 
 
 
-JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
+INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
 	JSOBJ itemName;
 	JSOBJ itemValue;
@@ -376,29 +387,21 @@ JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 
 JSOBJ decode_array_begin(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	ds->cArrBegin ++;
 	return decode_array(dec, ds);
 }
 
 JSOBJ decode_array_end(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	ds->cArrEnd ++;
-	assert (ds->cArrBegin >= ds->cArrEnd);
 	return NULL;
 }
 
 JSOBJ decode_object_begin(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	ds->cObjBegin ++;
 	return decode_object(dec, ds);
 }
 
 JSOBJ decode_object_end(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	ds->cObjEnd ++;
-
-	assert (ds->cObjBegin >= ds->cObjEnd);
-
 	return NULL;
 }
 
@@ -412,74 +415,106 @@ JSOBJ decode_item_separator(JSONObjectDecoder *dec, struct DecoderState *ds)
 }
 
 
-JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds)
+INLINEFUNCTION JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds)
 {
 	PFN_DECODER pfnDecoder;
 	ds->lastType = JT_INVALID;
 
-	while (ds->start < ds->end)
+	//while (ds->start < ds->end)
+	
+LOOP_FLAG:
+	pfnDecoder = g_identTable[(unsigned char) *(ds->start++)];
+
+	// 1 means white space
+	switch ( (size_t) pfnDecoder)
 	{
-		pfnDecoder = g_identTable[(unsigned char) *(ds->start++)];
+	case 1:
+		goto LOOP_FLAG;
 
-		// 1 means white space
-		if (pfnDecoder == (PFN_DECODER) 1)
-		{
-			continue;
-		}
-		else
-		if (pfnDecoder == NULL)
-		{
-			//fprintf (stderr, "%s: Unexpected character found\n", __FUNCTION__);
-			return NULL;
-		}
+	case 0:
+		return NULL;
 
+	default:
 		return pfnDecoder(dec, ds);
 	}
 
-	return NULL;
+	// Unreachable
+	//return NULL;
 }
 
 
 JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer)
 {
+	static int s_once = 1;
+
 	struct DecoderState ds;
 	int index;
+	char escBuffer[65536];
+	JSOBJ ret;
+	
 
 	ds.start = (char *) buffer;
 	ds.end = ds.start + cbBuffer;
 	ds.lastType = JT_INVALID;
+	ds.escStart = escBuffer;
+	ds.escEnd = ds.escStart + sizeof(escBuffer);
+	ds.escHeap = 0;
 
-	ds.cObjBegin = ds.cObjEnd = ds.cArrBegin = ds.cArrEnd = 0;
-
-	g_identTable['\"'] = decode_string;
-	g_identTable['0'] = decode_numeric;
-	g_identTable['1'] = decode_numeric;
-	g_identTable['2'] = decode_numeric;
-	g_identTable['3'] = decode_numeric;
-	g_identTable['4'] = decode_numeric;
-	g_identTable['5'] = decode_numeric;
-	g_identTable['6'] = decode_numeric;
-	g_identTable['7'] = decode_numeric;
-	g_identTable['8'] = decode_numeric;
-	g_identTable['9'] = decode_numeric;
-	g_identTable['0'] = decode_numeric;
-	g_identTable['-'] = decode_numeric;
-	g_identTable['['] = decode_array_begin;
-	g_identTable['{'] = decode_object_begin; 
-	g_identTable['t'] = decode_true;
-	g_identTable['f'] = decode_false;
-	g_identTable['n'] = decode_null; 
-	g_identTable['}'] = decode_object_end; 
-	g_identTable[']'] = decode_array_end; 
-	g_identTable[','] = decode_item_separator; 
-
-	for (index = 0; index < 33; index ++)
+	if (s_once)
 	{
-		g_identTable[index] = (PFN_DECODER) 1; 
+		//FIXME: Move to static initialization instead
+		g_identTable['\"'] = decode_string;
+		g_identTable['0'] = decode_numeric;
+		g_identTable['1'] = decode_numeric;
+		g_identTable['2'] = decode_numeric;
+		g_identTable['3'] = decode_numeric;
+		g_identTable['4'] = decode_numeric;
+		g_identTable['5'] = decode_numeric;
+		g_identTable['6'] = decode_numeric;
+		g_identTable['7'] = decode_numeric;
+		g_identTable['8'] = decode_numeric;
+		g_identTable['9'] = decode_numeric;
+		g_identTable['0'] = decode_numeric;
+		g_identTable['-'] = decode_numeric;
+		g_identTable['['] = decode_array;
+		g_identTable['{'] = decode_object; 
+		g_identTable['t'] = decode_true;
+		g_identTable['f'] = decode_false;
+		g_identTable['n'] = decode_null; 
+		g_identTable['}'] = decode_object_end; 
+		g_identTable[']'] = decode_array_end; 
+		g_identTable[','] = decode_item_separator; 
+		for (index = 0; index < 33; index ++)
+		{
+			g_identTable[index] = (PFN_DECODER) 1; 
+		}
+
+		for (index = 0; index < 256; index ++)
+		{
+			g_unescapeLookup[index] = '\0';
+		}
+
+		g_unescapeLookup['\"'] = '\"';
+		g_unescapeLookup['/'] = '/';
+		g_unescapeLookup['b'] = '\b';
+		g_unescapeLookup['f'] = '\f';
+		g_unescapeLookup['n'] = '\n';
+		g_unescapeLookup['r'] = '\r';
+		g_unescapeLookup['t'] = '\t';
+
+		//FIXME: Implement unicode decode here
+
+
+
+		s_once = 0;
 	}
 
-	return decode_any (dec, &ds);
+	ret = decode_any (dec, &ds);
 	
+	if (ds.escHeap)
+	{
+		dec->free(ds.escStart);
+	}
 
-
+	return ret;
 }

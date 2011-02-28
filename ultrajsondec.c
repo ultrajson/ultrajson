@@ -80,7 +80,7 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 
 	intValue = 0;
 
-	while(ds->start < ds->end)
+	while(*(ds->start) != '\0')
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
@@ -117,7 +117,7 @@ DECODE_FRACTION:
 
 	// Scan fraction part
 	frcValue = 0.0;
-	while(ds->start < ds->end)
+	while(*(ds->start) != '\0')
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
@@ -160,7 +160,7 @@ DECODE_EXPONENT:
 
 	expValue = 0.0;
 
-	while(ds->start < ds->end)
+	while(*(ds->start) != '\0')
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
@@ -275,7 +275,7 @@ JSOBJ decode_string (JSONObjectDecoder *dec, struct DecoderState *ds)
 
 	escOffset = ds->escStart;
 
-	while (ds->start < ds->end)
+	while (*(ds->start) != '\0')
 	{
 		chr = (*ds->start++);
 
@@ -317,7 +317,7 @@ INLINEFUNCTION JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *d
 	JSOBJ newObj = dec->newArray();
 	ds->lastType = JT_INVALID;
 
-	while (ds->start < ds->end)
+	while (*(ds->start) != '\0')
 	{
 		itemValue = decode_any(dec, ds);
 
@@ -343,7 +343,7 @@ INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *
 	JSOBJ newObj = dec->newObject();
 	ds->lastType = JT_INVALID;
 
-	while (ds->start < ds->end)
+	while (*(ds->start) != '\0')
 	{
 		itemName = decode_any(dec, ds);
 
@@ -363,7 +363,7 @@ INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *
 			}
 
 			// Expect ':'
-			while (ds->start < ds->end)
+			while (*(ds->start) != '\0')
 			{
 				if (*(ds->start++) == ':')
 					break;
@@ -420,7 +420,7 @@ INLINEFUNCTION JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds)
 	PFN_DECODER pfnDecoder;
 	ds->lastType = JT_INVALID;
 
-	//while (ds->start < ds->end)
+	//while (*(ds->start) != '\0')
 	
 LOOP_FLAG:
 	pfnDecoder = g_identTable[(unsigned char) *(ds->start++)];

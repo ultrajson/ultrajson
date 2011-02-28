@@ -332,7 +332,9 @@ static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObject
 	{
 		Buffer_AppendEscapeUnchecked (buffer, name, _cbName);
 		Buffer_AppendCharUnchecked (buffer, ':');
+#ifndef JSON_NO_EXTRA_WHITESPACE
 		Buffer_AppendCharUnchecked (buffer, ' ');
+#endif
 	}
 	
 	ti.release = 0;
@@ -353,7 +355,9 @@ static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObject
 				if (count > 0)
 				{
 					Buffer_AppendCharUnchecked (buffer, ',');
+#ifndef JSON_NO_EXTRA_WHITESPACE
 					Buffer_AppendCharUnchecked (buffer, ' ');
+#endif
 				}
 
 				iterObj = def->iterGetValue(obj, &ti);
@@ -380,7 +384,9 @@ static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObject
 				if (count > 0)
 				{
 					Buffer_AppendCharUnchecked (buffer, ',');
+#ifndef JSON_NO_EXTRA_WHITESPACE
 					Buffer_AppendCharUnchecked (buffer, ' ');
+#endif
 				}
 
 				iterObj = def->iterGetValue(obj, &ti);

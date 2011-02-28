@@ -110,6 +110,9 @@ Encoding in details:
 
 #include <stdio.h>
 
+
+#define JSON_NO_EXTRA_WHITESPACE
+
 #ifndef JSON_DOUBLE_MAX_DECIMALS
 #define JSON_DOUBLE_MAX_DECIMALS 5
 #endif

@@ -103,7 +103,7 @@ Encoding in details:
 #include <stdio.h>
 
 #ifndef JSON_DOUBLE_MAX_DECIMALS
-#define JSON_DOUBLE_MAX_DECIMALS 10
+#define JSON_DOUBLE_MAX_DECIMALS 5
 #endif
 
 #ifdef _WIN32

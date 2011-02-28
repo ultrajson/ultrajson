@@ -1,0 +1,3 @@
+UltraJSON is a fast and extendable JSON encoder written in pure C
+Python bindings are available as the module ujson which currently supports the encode method
+

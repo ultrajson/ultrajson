@@ -35,7 +35,8 @@ Developed by Jonas Tärnström (jonas@esn.me).
 Notes:
 
 :: Float poing valus ::
-All floating point values are converted as doubles using an optimized algorithm which is close but not entirely IEEE complaint.
+All floating point values are converted as doubles using an optimized algorithm
+which is close but not entirely IEEE complaint.
 Known issues with floating point to string conversion:
 x) NaN, -Inf or Inf are not supported
 x) Exponents are not supported
@@ -43,7 +44,8 @@ x) Max 10 decimals are converted
 x) Result might differ in general from IEEE complaint conversion
 
 :: Strings ::
-Characters are assumed to be 1 octet and be ASCII < 127. This makes ISO-8859-* or UTF8 suitable as input data.
+Characters are assumed to be 1 octet and be ASCII < 127. This makes ISO-8859-* 
+or UTF8 suitable as input data.
 
 The following characters are escaped:
 \"
@@ -55,11 +57,17 @@ The following characters are escaped:
 \r
 \t
 
-All other characters are accepted making control characters harmful if present in the string octet stream.
+All other characters are accepted making control characters harmful if present 
+in the string octet stream.
 The JSON '\uXXXX' conversion is not implemented
 
 :: Integers ::
 All integers are converted as signed 64-bit. See JSLONG
+
+:: Cyclic references ::
+Cyclic referenced objects are not detected. 
+Set JSONObjectEncoder.recursionMax to suitable value or make sure input object 
+tree doesn't have cyclic references.
 
 How to implement:
 
@@ -103,16 +111,22 @@ Encoding in details:
 #include <stdio.h>
 
 #ifndef JSON_DOUBLE_MAX_DECIMALS
-#define JSON_DOUBLE_MAX_DECIMALS 5
+#define JSON_DOUBLE_MAX_DECIMALS 10
+#endif
+
+#ifndef JSON_MAX_RECURSION_DEPTH
+#define JSON_MAX_RECURSION_DEPTH 8
 #endif
 
 #ifdef _WIN32
 typedef __int64 JSLONG;
 typedef unsigned __int64 JSULONG;
+#define EXPORTFUNCTION __declspec(dllexport)
 #else
 #include <sys/types.h>
 typedef int64_t JSLONG;
 typedef u_int64_t JSULONG;
+#define EXPORTFUNCTION
 #endif
 
 enum JSTYPES
@@ -125,6 +139,7 @@ enum JSTYPES
 	JT_UTF8,		//(char)
 	JT_ARRAY,		// Array structure
 	JT_OBJECT,	// Key/Value structure 
+	JT_INVALID,	// Internal, do not return or expect
 };
 
 typedef void * JSOBJ;
@@ -223,7 +238,17 @@ typedef struct __JSONObjectEncoder
 	JSPFN_REALLOC realloc;
 	JSPFN_FREE free;
 
+	/*
+	Configuration for max recursion, set to 0 to use default (see JSON_MAX_RECURSION_DEPTH)*/
+	int recursionMax;
+
+	/*
+	If equals 1 at the end of the encoding the recursionMax limit was hit meaning
+	either a recursive object scenario was found or the recursion was too deep */
+	int recursionError;
+
 } JSONObjectEncoder;
+
 
 /*
 Encode an object structure into JSON.
@@ -244,6 +269,26 @@ Life cycle of the provided buffer must still be handled by caller.
 If the return value doesn't equal the specified buffer caller must release the memory using
 JSONObjectEncoder.free or free() as specified when calling this function.
 */
- __declspec(dllexport) char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *buffer, size_t cbBuffer);
+EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *buffer, size_t cbBuffer);
+
+
+
+typedef struct __JSONObjectDecoder
+{
+	JSOBJ (*newString)(char *start, char *end);
+	JSOBJ (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
+	JSOBJ (*arrayAddItem)(JSOBJ obj, JSOBJ value);
+	JSOBJ (*newTrue)();
+	JSOBJ (*newFalse)();
+	JSOBJ (*newNull)();
+	JSOBJ (*newObject)();
+	JSOBJ (*newArray)();
+	JSOBJ (*newInteger)(JSLONG value);
+	JSOBJ (*newDouble)(double value);
+} JSONObjectDecoder;
+
+
+
+EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
 
 #endif

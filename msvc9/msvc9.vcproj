@@ -244,6 +244,10 @@
 				RelativePath="..\ultrajson.c"
 				>
 			</File>
+			<File
+				RelativePath="..\ultrajsondec.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

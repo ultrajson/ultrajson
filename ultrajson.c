@@ -45,9 +45,8 @@ typedef unsigned __int32 uint32_t;
 // POSIX stuff
 //=============================================================================
 #include <sys/types.h>
-
-
-#error "Fix inline definition for non MSVC"
+#define INLINEFUNCTION inline
+typedef u_int32_t uint32_t;
 #endif
 
 typedef struct _Buffer
@@ -108,8 +107,7 @@ static void Buffer_Realloc (Buffer *buffer);
  * Powers of 10
  * 10^0 to 10^9
  */
-static const double pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
-                               10000000, 100000000, 1000000000};
+static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
 INLINEFUNCTION static void strreverse(char* begin, char* end)
 {
@@ -139,7 +137,7 @@ INLINEFUNCTION void Buffer_AppendIntUnchecked(Buffer *buffer, JSLONG value)
     
     // Reverse string
     strreverse(buffer->offset,wstr - 1);
-		buffer->offset += (wstr - 1 - (buffer->offset));
+		buffer->offset += (wstr - (buffer->offset));
 }
 
 
@@ -185,14 +183,14 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
     }
 
     whole = (int) value;
-    tmp = (value - whole) * pow10[prec];
+    tmp = (value - whole) * g_pow10[prec];
     frac = (uint32_t)(tmp);
     diff = tmp - frac;
 
     if (diff > 0.5) {
         ++frac;
         /* handle rollover, e.g.  case 0.99 with prec 1 is 1.0  */
-        if (frac >= pow10[prec]) {
+        if (frac >= g_pow10[prec]) {
             frac = 0;
             ++whole;
         }
@@ -255,7 +253,7 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
         *wstr++ = '-';
     }
     strreverse(str, wstr-1);
-		buffer->offset += (wstr - 1 - (buffer->offset));
+		buffer->offset += (wstr - (buffer->offset));
 }
 
 static void Buffer_Realloc (Buffer *buffer)
@@ -326,6 +324,12 @@ static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObject
 	JSTYPEINFO ti;
 	size_t szlen;
 	const char *name = (insideList || level == 0) ? NULL : _name;
+
+	if (level > def->recursionMax)
+	{
+		def->recursionError = 1;
+		return;
+	}
 
 	/*
 	This reservation must hold 
@@ -473,6 +477,13 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *_buffer, size_t
 	buffer.malloc = def->malloc ? def->malloc : malloc;
 	buffer.free = def->free ? def->free : free;
 	buffer.realloc = def->realloc ? def->realloc : realloc;
+
+	def->recursionError = 0;
+
+	if (def->recursionMax < 1)
+	{
+		def->recursionMax = JSON_MAX_RECURSION_DEPTH;
+	}
 
 	if (_buffer == NULL)
 	{

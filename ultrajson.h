@@ -19,7 +19,7 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALLESN SOCIAL SOFTWARE AB BE LIABLE FOR ANY
+DISCLAIMED. IN NO EVENT SHALL ESN SOCIAL SOFTWARE AB BE LIABLE FOR ANY
 DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -44,7 +44,7 @@ x) Max 10 decimals are converted
 x) Result might differ in general from IEEE complaint conversion
 
 :: Strings ::
-Characters are assumed to be 1 octet and be ASCII < 127. This makes ISO-8859-* 
+Characters are assumed to be 1 octet. This makes ISO-8859-* 
 or UTF8 suitable as input data.
 
 The following characters are escaped:
@@ -84,8 +84,6 @@ Encoding in details:
 		while iterNext
 			call iterGetValue
 			call encode(value)
-			if ti->release is 1:
-				call releaseValue
 		call iterEnd
 
 	3. if JT_OBJECT:
@@ -146,7 +144,7 @@ enum JSTYPES
 	JT_UTF8,		//(char)
 	JT_ARRAY,		// Array structure
 	JT_OBJECT,	// Key/Value structure 
-	JT_INVALID,	// Internal, do not return or expect
+	JT_INVALID,	// Internal, do not return nor expect
 };
 
 typedef void * JSOBJ;

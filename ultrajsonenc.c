@@ -35,19 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <malloc.h>
 #include <math.h>
 
-#ifdef _WIN32
-// WIN32 stuff
-//=============================================================================
-#define INLINEFUNCTION __inline
-typedef unsigned __int32 uint32_t;
-
-#else
-// POSIX stuff
-//=============================================================================
-#include <sys/types.h>
-#define INLINEFUNCTION inline
-typedef u_int32_t uint32_t;
-#endif
 
 typedef struct _Buffer
 {
@@ -165,8 +152,6 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
         return;
     }
 
-
-
     if (prec < 0) {
         prec = 0;
     } else if (prec > 9) {
@@ -223,8 +208,10 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
         }
 
         //vvvvvvvvvvvvvvvvvvv  Diff from modp_dto2
-    } else if (frac) {
-        count = prec;
+    } 
+		else if (frac) { 
+
+			count = prec;
         // now do fractional part, as an unsigned number
         // we know it is not 0 but we can have leading zeros, these
         // should be removed

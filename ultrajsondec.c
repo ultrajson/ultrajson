@@ -30,12 +30,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ultrajson.h"
 #include <math.h>
+#include <assert.h>
 
 struct DecoderState
 {
 	char *start;
 	char *end;
 	int lastType;
+
+	int cObjBegin;
+	int cObjEnd;
+	int cArrBegin;
+	int cArrEnd;
+
 };
 
 JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds);
@@ -45,68 +52,40 @@ PFN_DECODER g_identTable[256] = { NULL };
 
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-static JSOBJ StringToNumeric (JSONObjectDecoder *dec, struct DecoderState *ds, int intNeg, char *intStart, char *intEnd, char *frcStart, char *frcEnd, int expNeg, char *expStart, char *expEnd)
+/*
+static JSOBJ StringToNumeric (JSONObjectDecoder *dec, struct DecoderState *ds, int intNeg, JSLONG intValue, int hasFrc, int decimalCount, double frcValue, int hasExp, double expValue, int expNeg)
 {
-	JSLONG intValue = 0;
-	double frcValue = 0.0;
-	double expValue = 0.0;
-	double dblValue = 0.0;
-	int decimalCount = 0;
-
+	double dblValue;
 	// Decode integer part
-
-	while (intStart < intEnd)
-	{
-		intValue = intValue * 10 + ((JSLONG) (((int) (unsigned char) (*intStart++)) - 48));
-	}
 
 	if (intNeg)
 	{
 		intValue *= -1;
 	}
 
-//DECODE_FRACTION:
-
-	if (frcStart == NULL)
+	if (!hasFrc)
 	{
 		dblValue = (double) intValue;
 		goto DECODE_EXPONENT;
 	}
 
-	// Cap to 9 decimals
-	if (frcEnd - frcStart > 9)
-	{
-		frcEnd -= ( (frcEnd - frcStart) - 9);
-	}
-
-	while (frcStart < frcEnd)
-	{
-		frcValue = frcValue * 10.0 + ((double) (((int) (unsigned char) (*frcStart++)) - 48));
-		decimalCount ++;
-	}
 	frcValue /= g_pow10[decimalCount];
 
 	dblValue = (double) intValue; 
 	dblValue += frcValue;
 
-	if (expStart == NULL)
+	if (!hasExp)
 	{
 		// Create double from intValue and frcValue. Return
 		ds->lastType = JT_DOUBLE;
 		return dec->newDouble(dblValue);
 	}
 
-
 DECODE_EXPONENT:
 
-	if (expStart == NULL)
+	if (!hasExp)
 	{
 		goto DECODE_INTEGER;
-	}
-
-	while (expStart < expEnd)
-	{
-		expValue = expValue * 10.0 + ((double) (((int) (unsigned char) (*frcStart++)) - 48));
 	}
 
 	if (expNeg)
@@ -122,23 +101,23 @@ DECODE_INTEGER:
 	ds->lastType = JT_INTEGER;
 	return dec->newInteger(intValue);
 }
+*/
+
+
+
+INLINEFUNCTION double createDouble(double intValue, double frcValue, int frcDecimalCount)
+{
+	return intValue + (frcValue / g_pow10[frcDecimalCount]);
+}
 
 JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 {
-	char *intStart = NULL;
-	char *intEnd = NULL;
-	char *frcStart = NULL;
-	char *frcEnd = NULL;
-	char *expStart = NULL;
-	char *expEnd = NULL;
-	int intNeg = 0;
-	int expNeg = 0;
-
+	int intNeg = 1;
+	int expNeg = 1;
+	int decimalCount = 0;
 	JSLONG intValue;
-	double frcValue;
+	double frcValue = 0.0;
 	double expValue;
-	
-
 	
 	ds->lastType = JT_INVALID;
 
@@ -148,9 +127,8 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	if (*(ds->start) == '-')
 	{
 		ds->start ++;
-		intNeg = 1;
+		intNeg = -1;
 	}
-	intStart = ds->start;
 
 	// Scan integer part
 
@@ -160,26 +138,24 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
+			intValue = intValue * 10 + ((JSLONG) (((int) (unsigned char) (*ds->start)) - 48));
 			ds->start ++;
 			continue;
 		}
 		else
 		if (*(ds->start) == '.')
 		{
-			intEnd = ds->start;
 			ds->start ++;
 			goto DECODE_FRACTION;
 		}
 		else
 		if (*(ds->start) == 'e' || *(ds->start) == 'E')
 		{
-			intEnd = ds->start;
 			ds->start ++;
 			goto DECODE_EXPONENT;
 		}
 		else
 		{
-			intEnd = ds->start;
 			goto DECODE_INTEGER;
 		}
 
@@ -187,67 +163,73 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	}
 
 DECODE_INTEGER:
-	return StringToNumeric(dec, ds, intNeg, intStart, intEnd, frcStart, frcEnd, expNeg, expStart, expEnd);
+
+	ds->lastType = JT_INTEGER;
+	return dec->newInteger(intValue * intNeg);
 
 DECODE_FRACTION:
 
 	// Scan fraction part
-	frcStart = ds->start;
-
+	frcValue = 0.0;
 	while(ds->start < ds->end)
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
+			if (decimalCount < JSON_DOUBLE_MAX_DECIMALS)
+			{
+				frcValue = frcValue * 10.0 + ((double) (((int) (unsigned char) (*ds->start)) - 48));
+				decimalCount ++;
+			}
 			ds->start ++;
+
 			continue;
 		}
 		else
 		if (*(ds->start) == 'e' || *(ds->start) == 'E')
 		{
-			frcEnd = ds->start;
 			ds->start ++;
 			goto DECODE_EXPONENT;
 		}
 		else
 		{
-			frcEnd = ds->start;
-			ds->start ++;
 			break;
 		}
 	}
 
-	return StringToNumeric(dec, ds, intNeg, intStart, intEnd, frcStart, frcEnd, expNeg, expStart, expEnd);
+	ds->lastType = JT_DOUBLE;
+	return dec->newDouble (createDouble( (double) intValue * intNeg, frcValue, decimalCount));
 
 DECODE_EXPONENT:
-	expStart = ds->start;
-
 	if (*(ds->start) == '-')
 	{
-		expNeg = 1;
+		expNeg = -1;
 		ds->start ++;
 	}
 	else
 	if (*(ds->start) == '+')
 	{
-		expNeg = 0;
+		expNeg = +1;
 		ds->start ++;
 	}
+
+	expValue = 0.0;
 
 	while(ds->start < ds->end)
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
+			expValue = expValue * 10.0 + ((double) (((int) (unsigned char) (*ds->start)) - 48));
 			ds->start ++;
 			continue;
 		}
 		else
 		{
-			expEnd = ds->start;
 			break;
 		}
 	}
 
-	return StringToNumeric(dec, ds, intNeg, intStart, intEnd, frcStart, frcEnd, expNeg, expStart, expEnd);
+	ds->lastType = JT_DOUBLE;
+	return dec->newDouble (createDouble( (double) intValue * intNeg, frcValue, decimalCount) * pow(10.0, expValue));
 }
 
 JSOBJ decode_true (JSONObjectDecoder *dec, struct DecoderState *ds)
@@ -328,33 +310,16 @@ JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
 	{
 		itemValue = decode_any(dec, ds);
 
-		if (itemValue)
+		if (itemValue == NULL)
 		{
-			dec->arrayAddItem (newObj, itemValue);
+			ds->lastType = JT_ARRAY;
+			return newObj;
 		}
 
-		// Scan for end of object declaration
-		while (ds->start < ds->end)
-		{
-			if (*(ds->start) == ',')
-			{
-				ds->start ++;
-				break;
-			}
-			else
-			if (*(ds->start) == ']')
-			{
-				ds->start ++;
-				ds->lastType = JT_ARRAY;
-				return newObj;
-			}
-
-			// Skipping over white space and shits
-			ds->start ++;
-		}
+		dec->arrayAddItem (newObj, itemValue);
 	}
 
-	fprintf (stderr, "%s: Unmatched ] when parsing object\n", __FUNCTION__);
+	fprintf (stderr, "%s: Unmatched ']' when parsing array\n", __FUNCTION__);
 	return NULL;
 }
 
@@ -371,9 +336,15 @@ JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 	{
 		itemName = decode_any(dec, ds);
 
+		if (itemName == NULL)
+		{
+			ds->lastType = JT_OBJECT;
+			return newObj;
+		}
+
+
 		if (itemName)
 		{
-
 			if (ds->lastType != JT_UTF8)
 			{
 				fprintf (stderr, "%s: Object is expected to have key value as string\n", __FUNCTION__);
@@ -389,32 +360,12 @@ JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 
 			if (ds->start == ds->end)
 			{
-				fprintf (stderr, "%s: No : found when parsing object key\n", __FUNCTION__);
+				fprintf (stderr, "%s: No ':' found when parsing object key\n", __FUNCTION__);
 				return NULL;
 			}
 
 			itemValue = decode_any(dec, ds);
 			dec->objectAddKey (newObj, itemName, itemValue);
-		}
-
-		// Scan for end of object declaration
-		while (ds->start < ds->end)
-		{
-			if (*(ds->start) == ',')
-			{
-				ds->start ++;
-				break;
-			}
-			else
-			if (*(ds->start) == '}')
-			{
-				ds->start ++;
-				ds->lastType = JT_OBJECT;
-				return newObj;
-			}
-
-			// Skipping over white space and shits
-			ds->start ++;
 		}
 	}
 
@@ -422,6 +373,43 @@ JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *ds)
 	return NULL;
 }
 
+
+JSOBJ decode_array_begin(JSONObjectDecoder *dec, struct DecoderState *ds)
+{
+	ds->cArrBegin ++;
+	return decode_array(dec, ds);
+}
+
+JSOBJ decode_array_end(JSONObjectDecoder *dec, struct DecoderState *ds)
+{
+	ds->cArrEnd ++;
+	assert (ds->cArrBegin >= ds->cArrEnd);
+	return NULL;
+}
+
+JSOBJ decode_object_begin(JSONObjectDecoder *dec, struct DecoderState *ds)
+{
+	ds->cObjBegin ++;
+	return decode_object(dec, ds);
+}
+
+JSOBJ decode_object_end(JSONObjectDecoder *dec, struct DecoderState *ds)
+{
+	ds->cObjEnd ++;
+
+	assert (ds->cObjBegin >= ds->cObjEnd);
+
+	return NULL;
+}
+
+
+
+
+JSOBJ decode_item_separator(JSONObjectDecoder *dec, struct DecoderState *ds)
+{
+	//FIXME: Validate that we are inside array or object here
+	return decode_any(dec, ds);
+}
 
 
 JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds)
@@ -461,6 +449,8 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	ds.end = ds.start + cbBuffer;
 	ds.lastType = JT_INVALID;
 
+	ds.cObjBegin = ds.cObjEnd = ds.cArrBegin = ds.cArrEnd = 0;
+
 	g_identTable['\"'] = decode_string;
 	g_identTable['0'] = decode_numeric;
 	g_identTable['1'] = decode_numeric;
@@ -474,28 +464,19 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	g_identTable['9'] = decode_numeric;
 	g_identTable['0'] = decode_numeric;
 	g_identTable['-'] = decode_numeric;
-	g_identTable['['] = decode_array;
-	g_identTable['{'] = decode_object; 
+	g_identTable['['] = decode_array_begin;
+	g_identTable['{'] = decode_object_begin; 
 	g_identTable['t'] = decode_true;
 	g_identTable['f'] = decode_false;
 	g_identTable['n'] = decode_null; 
+	g_identTable['}'] = decode_object_end; 
+	g_identTable[']'] = decode_array_end; 
+	g_identTable[','] = decode_item_separator; 
 
 	for (index = 0; index < 33; index ++)
 	{
 		g_identTable[index] = (PFN_DECODER) 1; 
 	}
-
-
-	/*
-	JT_UTF8 "x"
-	JT_INTEGER 2312383120312
-	JT_FLOAT 321321.321321 or 231e/E23190
-	JT_TRUE true
-	JT_FALSE false
-	JT_NULL null
-	JS_ARRAY [ x ]
-	JS_OBJECT { "", x }	
-	*/
 
 	return decode_any (dec, &ds);
 	

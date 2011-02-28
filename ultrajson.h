@@ -111,21 +111,25 @@ Encoding in details:
 #include <stdio.h>
 
 #ifndef JSON_DOUBLE_MAX_DECIMALS
-#define JSON_DOUBLE_MAX_DECIMALS 10
+#define JSON_DOUBLE_MAX_DECIMALS 5
 #endif
 
 #ifndef JSON_MAX_RECURSION_DEPTH
-#define JSON_MAX_RECURSION_DEPTH 8
+#define JSON_MAX_RECURSION_DEPTH 256
 #endif
 
 #ifdef _WIN32
 typedef __int64 JSLONG;
 typedef unsigned __int64 JSULONG;
 #define EXPORTFUNCTION __declspec(dllexport)
+#define INLINEFUNCTION __inline
+typedef unsigned __int32 uint32_t;
 #else
 #include <sys/types.h>
 typedef int64_t JSLONG;
 typedef u_int64_t JSULONG;
+#define INLINEFUNCTION inline
+typedef u_int32_t uint32_t;
 #define EXPORTFUNCTION
 #endif
 

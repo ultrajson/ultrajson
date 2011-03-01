@@ -1,3 +1,16 @@
-UltraJSON is a fast and extendable JSON encoder written in pure C
-Python bindings are available as the module ujson which currently supports the encode method
+UltraJSON is a fast and extendable JSON encoder and decoder written in pure C
+
+Python bindings are available as the module ujson which currently supports the encode method.
+
+
+Encoder benchmarks:
+Preliminary benchmarks indicate this performance:
+ujson encode      : 58061.68741 calls/sec
+simplejson encode : 19025.95344 calls/sec
+cjson encode      : 15308.70966 calls/sec
+json encode       : 2407.92068 calls/sec
+
+See (python/benchmark.py) for further information.
+
+NOTE: These benchmarks are preliminary! 
 

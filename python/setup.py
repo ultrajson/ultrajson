@@ -1,5 +1,8 @@
 from distutils.core import setup, Extension
 import distutils.sysconfig
+import shutil
+
+shutil.rmtree("./build")
 
 module1 = Extension('ujson',
                     sources = ['ujson.c', 'objToJSON.c', 'JSONToObj.c'],

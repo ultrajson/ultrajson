@@ -505,6 +505,9 @@ int main (int argc, char **argv)
 		{
 			obj = (BaseObject *) JSON_DecodeObject (&decoder, indata, sizeof (indata));
 
+			assert (decoder.errorStr == NULL);
+			assert (obj);
+
 			delete obj;
 		}
 

@@ -85,18 +85,21 @@ JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 
 JSOBJ __fastcall decode_numeric ( struct DecoderState *ds)
 {
-	int intNeg = 1;
-	int expNeg;
+	double intNeg = 1.0;
+	double expNeg;
 	int chr;
 	int decimalCount = 0;
-	JSLONG intValue;
-	double frcValue = 0.0;
+	double intValue;
+	double frcValue;
 	double expValue;
+
+	double dbg1;
+	JSLONG dbg2;
 
 	if (*(ds->start) == '-')
 	{
 		ds->start ++;
-		intNeg = -1;
+		intNeg = -1.0;
 	}
 
 	// Scan integer part
@@ -120,7 +123,7 @@ JSOBJ __fastcall decode_numeric ( struct DecoderState *ds)
 		case '9':
 			//FIXME: Check for arithemtic overflow here
 			//PERF: Don't do 64-bit arithmetic here unless we know we have to
-			intValue = intValue * 10 + (JSLONG) (chr - 48);
+			intValue = intValue * 10.0 + (double) (chr - 48);
 			ds->start ++;
 			break;
 
@@ -146,12 +149,18 @@ BREAK_INT_LOOP:
 	ds->lastType = JT_INTEGER;
 
 	/*
-	If input string is LONGLONG_MIN here the value is already negative so we should not flip it */
+	If input string is LONGLONG_MIN here the value is already negative so we should not flip it
 	if (intValue < 0)
 	{
 		intNeg = 1;
 	}
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newInteger(intValue * intNeg));
+	*/
+
+	//dbg1 = (intValue * intNeg);
+	//dbg2 = (JSLONG) dbg1;
+
+
+	RETURN_JSOBJ_NULLCHECK(ds->dec->newInteger( (JSLONG) (intValue * intNeg)));
 
 DECODE_FRACTION:
 
@@ -204,17 +213,17 @@ BREAK_FRC_LOOP:
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount)));
 
 DECODE_EXPONENT:
-	expNeg = 1;
+	expNeg = 1.0;
 
 	if (*(ds->start) == '-')
 	{
-		expNeg = -1;
+		expNeg = -1.0;
 		ds->start ++;
 	}
 	else
 	if (*(ds->start) == '+')
 	{
-		expNeg = +1;
+		expNeg = +1.0;
 		ds->start ++;
 	}
 

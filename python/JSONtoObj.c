@@ -7,15 +7,15 @@
 void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
 	PyDict_SetItem (obj, name, value);
-	Py_DECREF(name);
-	Py_DECREF(value);
+	Py_DECREF( (PyObject *) name);
+	Py_DECREF( (PyObject *) value);
 	return;
 }
 
 void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 {
 	PyList_Append(obj, value);
-	Py_DECREF(value);
+	Py_DECREF( (PyObject *) value);
 	return;
 }
 
@@ -100,7 +100,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		
 		if (ret)
 		{
-			Py_DECREF(ret);
+			Py_DECREF( (PyObject *) ret);
 		}
 		
 		return NULL;

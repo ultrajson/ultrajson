@@ -163,6 +163,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)\python\lib"
 			/>
 		</Configuration>
 		<Configuration
@@ -229,6 +230,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)\..\python\lib\"
 			/>
 		</Configuration>
 	</Configurations>

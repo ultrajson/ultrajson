@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 import distutils.sysconfig
 
 module1 = Extension('ujson',
-                    sources = ['ujson.c', 'objToJSON.c'],
+                    sources = ['ujson.c', 'objToJSON.c', 'JSONToObj.c'],
                     include_dirs = ['../'],
 					library_dirs = ['./lib/'],
 					libraries=['ujson'])

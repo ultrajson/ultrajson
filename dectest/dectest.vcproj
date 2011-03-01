@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libultrajson.lib"
+				AdditionalDependencies="ujson.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\msvc9\Debug\"
 				GenerateDebugInformation="true"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../"
+				AdditionalIncludeDirectories="C:\Python26\include;../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"

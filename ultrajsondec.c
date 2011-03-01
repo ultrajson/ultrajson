@@ -57,10 +57,19 @@ PFN_DECODER g_identTable[256] = { NULL };
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
 
-INLINEFUNCTION double createDouble(double intValue, double frcValue, int frcDecimalCount)
+INLINEFUNCTION double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
 {
-	return intValue + (frcValue / g_pow10[frcDecimalCount]);
+	return (intValue + (frcValue / g_pow10[frcDecimalCount])) * intNeg;
 }
+
+JSOBJ SetError(JSONObjectDecoder *dec, struct DecoderState *ds, int offset, const char *message)
+{
+	dec->errorOffset = ds->start + offset;
+	dec->errorStr = message;
+	return NULL;
+}
+
+
 
 JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 {
@@ -83,13 +92,13 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 	}
 
 	// Scan integer part
-
 	intValue = 0;
 
 	while(*(ds->start) != '\0')
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
+			//FIXME: Check for arithemtic overflow here
 			intValue = intValue * 10 + ((JSLONG) (((int) (unsigned char) (*ds->start)) - 48));
 			ds->start ++;
 			continue;
@@ -117,6 +126,13 @@ JSOBJ decode_numeric (JSONObjectDecoder *dec, struct DecoderState *ds)
 DECODE_INTEGER:
 
 	ds->lastType = JT_INTEGER;
+
+	/*
+	If input string is LONGLONG_MIN here the value is already negative so we should not flip it */
+	if (intValue < 0)
+	{
+		intNeg = 1;
+	}
 	return dec->newInteger(intValue * intNeg);
 
 DECODE_FRACTION:
@@ -148,8 +164,14 @@ DECODE_FRACTION:
 		}
 	}
 
+	if (intValue < 0)
+	{
+		intNeg = 1;
+	}
+
+	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;
-	return dec->newDouble (createDouble( (double) intValue * intNeg, frcValue, decimalCount));
+	return dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
 
 DECODE_EXPONENT:
 	if (*(ds->start) == '-')
@@ -170,6 +192,7 @@ DECODE_EXPONENT:
 	{
 		if (*(ds->start) >= '0' && *(ds->start) <= '9')
 		{
+			//FIXME: Check for arithemtic overflow here
 			expValue = expValue * 10.0 + ((double) (((int) (unsigned char) (*ds->start)) - 48));
 			ds->start ++;
 			continue;
@@ -180,8 +203,14 @@ DECODE_EXPONENT:
 		}
 	}
 
+	if (intValue < 0)
+	{
+		intNeg = 1;
+	}
+	
+	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;
-	return dec->newDouble (createDouble( (double) intValue * intNeg, frcValue, decimalCount) * pow(10.0, expValue));
+	return dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue));
 }
 
 JSOBJ decode_true (JSONObjectDecoder *dec, struct DecoderState *ds)
@@ -189,14 +218,17 @@ JSOBJ decode_true (JSONObjectDecoder *dec, struct DecoderState *ds)
 	ds->lastType = JT_INVALID;
 
 	if (*(ds->start++) != 'r')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'u')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'e')
-		return NULL;
+		goto SETERROR;
 
 	ds->lastType = JT_TRUE;
 	return dec->newTrue();
+
+SETERROR:
+	return SetError(dec, ds, -1, "Unexpected character found when decoding 'true'");
 }
 
 JSOBJ decode_false (JSONObjectDecoder *dec, struct DecoderState *ds)
@@ -204,16 +236,20 @@ JSOBJ decode_false (JSONObjectDecoder *dec, struct DecoderState *ds)
 	ds->lastType = JT_INVALID;
 
 	if (*(ds->start++) != 'a')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'l')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 's')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'e')
-		return NULL;
+		goto SETERROR;
 
 	ds->lastType = JT_FALSE;
 	return dec->newFalse();
+
+SETERROR:
+	return SetError(dec, ds, -1, "Unexpected character found when decoding 'false'");
+
 }
 
 
@@ -222,14 +258,17 @@ JSOBJ decode_null (JSONObjectDecoder *dec, struct DecoderState *ds)
 	ds->lastType = JT_INVALID;
 
 	if (*(ds->start++) != 'u')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'l')
-		return NULL;
+		goto SETERROR;
 	if (*(ds->start++) != 'l')
-		return NULL;
+		goto SETERROR;
 
 	ds->lastType = JT_NULL;
 	return dec->newNull();
+
+SETERROR:
+	return SetError(dec, ds, -1, "Unexpected character found when decoding 'null'");
 }
 
 
@@ -296,16 +335,14 @@ JSOBJ decode_string (JSONObjectDecoder *dec, struct DecoderState *ds)
 			{
 				if (ds->start >= ds->end)
 				{
-					fprintf (stderr, "%s: Unterminated escape sequencein string literal\n", __FUNCTION__);
-					return NULL;
+					return SetError(dec, ds, -1, "Unterminated escape sequence when decoding 'string'");
 				}
 
 				chr = g_unescapeLookup[ (unsigned char) (*ds->start++)];
 
 				if (chr == '\0')
 				{
-					fprintf (stderr, "%s: Unrecognized escape sequeunce in string literal\n", __FUNCTION__);
-					return NULL;
+					return SetError(dec, ds, -1, "Unrecognized escape sequence when decoding 'string'");
 				}
 
 			}
@@ -313,8 +350,8 @@ JSOBJ decode_string (JSONObjectDecoder *dec, struct DecoderState *ds)
 
 		*(escOffset++) = chr;
 	}
-	fprintf (stderr, "%s: Unmatched \" when decoding string\n", __FUNCTION__);
-	return NULL;
+
+	return SetError(dec, ds, -1, "Unmatched ''\"' when when decoding 'string'");
 }
 
 INLINEFUNCTION JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *ds)
@@ -336,8 +373,7 @@ INLINEFUNCTION JSOBJ decode_array(JSONObjectDecoder *dec, struct DecoderState *d
 		dec->arrayAddItem (newObj, itemValue);
 	}
 
-	fprintf (stderr, "%s: Unmatched ']' when parsing array\n", __FUNCTION__);
-	return NULL;
+	return SetError(dec, ds, -1, "Unmatched ']' when decoding 'array'");
 }
 
 
@@ -364,8 +400,7 @@ INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *
 		{
 			if (ds->lastType != JT_UTF8)
 			{
-				fprintf (stderr, "%s: Object is expected to have key value as string\n", __FUNCTION__);
-				return NULL;
+				return SetError(dec, ds, -1, "Key name of object must be 'string' when decoding 'object'");
 			}
 
 			// Expect ':'
@@ -377,8 +412,7 @@ INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *
 
 			if (ds->start == ds->end)
 			{
-				fprintf (stderr, "%s: No ':' found when parsing object key\n", __FUNCTION__);
-				return NULL;
+				return SetError(dec, ds, -1, "No ':' found when decoding object value");
 			}
 
 			itemValue = decode_any(dec, ds);
@@ -386,8 +420,7 @@ INLINEFUNCTION JSOBJ decode_object(JSONObjectDecoder *dec, struct DecoderState *
 		}
 	}
 
-	fprintf (stderr, "%s: Unmatched } when parsing object\n", __FUNCTION__);
-	return NULL;
+	return SetError(dec, ds, -1, "Unmatched '}' when decoding object");
 }
 
 
@@ -438,7 +471,7 @@ LOOP_FLAG:
 		goto LOOP_FLAG;
 
 	case 0:
-		return NULL;
+		return SetError(dec, ds, -1, "Unexpected character when decoding");
 
 	default:
 		return pfnDecoder(dec, ds);
@@ -465,6 +498,9 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	ds.escStart = escBuffer;
 	ds.escEnd = ds.escStart + sizeof(escBuffer);
 	ds.escHeap = 0;
+
+	dec->errorStr = NULL;
+	dec->errorOffset = NULL;
 
 	if (s_once)
 	{
@@ -500,6 +536,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 			g_unescapeLookup[index] = '\0';
 		}
 
+		g_unescapeLookup['\\'] = '\\';
 		g_unescapeLookup['\"'] = '\"';
 		g_unescapeLookup['/'] = '/';
 		g_unescapeLookup['b'] = '\b';
@@ -509,9 +546,6 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 		g_unescapeLookup['t'] = '\t';
 
 		//FIXME: Implement unicode decode here
-
-
-
 		s_once = 0;
 	}
 
@@ -521,6 +555,5 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	{
 		dec->free(ds.escStart);
 	}
-
 	return ret;
 }

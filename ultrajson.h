@@ -299,6 +299,11 @@ typedef struct __JSONObjectDecoder
 	JSPFN_MALLOC malloc;
 	JSPFN_FREE free;
 	JSPFN_REALLOC realloc;
+
+	char *errorStr;
+	char *errorOffset;
+
+
 } JSONObjectDecoder;
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);

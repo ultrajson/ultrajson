@@ -2,17 +2,13 @@ UltraJSON is a fast and extendable JSON encoder and decoder written in pure C
 
 Python bindings are available as the module ujson with the methods decode and encode
 
-
 Preliminary benchmarks:
 
 Python 2.6.6 (r266:84297, Aug 24 2010, 18:46:32) [MSC v.1500 32 bit (Intel)]
-Host Name:                 FORD
-OS Version:                6.1.7601 Service Pack 1 Build 7601
-System Type:               x64-based PC
-Processor(s):              1 Processor(s) Installed.
-                           [01]: Intel64 Family 6 Model 23 Stepping 7 GenuineIntel ~1983 Mhz
-Total Physical Memory:     8 191 MB
-
+OS Version: 6.1.7601 Service Pack 1 Build 7601
+System Type: x64-based PC
+Processor: Intel(R) Core(TM)2 Quad CPU Q9550 @ 2.83GHz 2.83 GHz
+Total Physical Memory: 8191 MB
 
 Encoding:
 ujson encode      : 10288.64358 calls/sec

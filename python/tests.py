@@ -8,22 +8,22 @@ import time
 import datetime
 import calendar
 
-class EncoderTest(TestCase):
-	def test_doubleConversion(self):
+class UltraJSONTests(TestCase):
+	def test_encodeDoubleConversion(self):
 		input = math.pi
 		output = ujson.encode(input)
 		self.assertEquals(round(input, 5), round(json.loads(output), 5))
 		self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
 		pass
 
-	def test_doubleNegConversion(self):
+	def test_encodeDoubleNegConversion(self):
 		input = -math.pi
 		output = ujson.encode(input)
 		self.assertEquals(round(input, 5), round(json.loads(output), 5))
 		self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
 		pass
 
-	def test_stringConversion(self):
+	def test_encodeStringConversion(self):
 		input = "A \"string\"\"\\\/\b\f\n\r\t"
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -31,15 +31,12 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_unicodeConversion(self):
+	def test_encodeUTF8Conversion(self):
 		input = u"A \"string\"\"\\\/\b\f\n\r\t"
-		output = ujson.encode(input)
-		self.assertEquals(input, json.loads(output))
-		self.assertEquals(output, json.dumps(input))
-		self.assertEquals(input, ujson.decode(output))
+		raise NotImplementedError("Implement this test!")
 		pass
 
-	def test_intConversion(self):
+	def test_encodeIntConversion(self):
 		input = 31337
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -47,7 +44,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_intNegConversion(self):
+	def test_encodeIntNegConversion(self):
 		input = -31337
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -55,7 +52,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_longConversion(self):
+	def test_encodeLongConversion(self):
 		input = 9223372036854775807
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -63,7 +60,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_longNegConversion(self):
+	def test_encodeLongNegConversion(self):
 		input = -9223372036854775808
 		output = ujson.encode(input)
 		
@@ -75,14 +72,14 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_listConversion(self):
+	def test_encodeListConversion(self):
 		input = [ 1, 2, 3, 4 ]
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_dictConversion(self):
+	def test_encodeDictConversion(self):
 		input = { "k1": 1, "k2":  2, "k3": 3, "k4": 4 }
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -90,7 +87,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_noneConversion(self):
+	def test_encodeNoneConversion(self):
 		input = None
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -98,7 +95,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_trueConversion(self):
+	def test_encodeTrueConversion(self):
 		input = True
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -106,7 +103,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_falseConversion(self):
+	def test_encodeFalseConversion(self):
 		input = False
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -114,7 +111,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_datetimeConversion(self):
+	def test_encodeDatetimeConversion(self):
 		ts = time.time()
 		input = datetime.datetime.fromtimestamp(ts)
 		output = ujson.encode(input)
@@ -123,7 +120,7 @@ class EncoderTest(TestCase):
 		self.assertEquals(int(expected), ujson.decode(output))
 		pass
 
-	def test_dateConversion(self):
+	def test_encodeDateConversion(self):
 		ts = time.time()
 		input = datetime.date.fromtimestamp(ts)
 
@@ -135,14 +132,14 @@ class EncoderTest(TestCase):
 		self.assertEquals(int(expected), ujson.decode(output))
 		pass
 
-	def test_recursionMax(self):
+	def test_encodeRecursionMax(self):
 		# 8 is the max recursion depth
 
-		class O2():
+		class O2:
 			member = 0
 			pass	
 
-		class O1():
+		class O1:
 			member = 0
 			pass
 
@@ -156,7 +153,7 @@ class EncoderTest(TestCase):
 		except(OverflowError):
 			pass
 
-	def test_listLongConversion(self):
+	def test_encodeListLongConversion(self):
 		input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -336,10 +333,21 @@ class EncoderTest(TestCase):
 		input = "<int>e-<exp>"
 		raise NotImplementedError("Implement this test!")
 
+	def test_decodeStringUnicodeEscape(self):
+		input = "\u3131"
+		raise NotImplementedError("Implement this test!")
 
+	def test_decodeStringUnicodeBrokenEscape(self):
+		input = "\u3131"
+		raise NotImplementedError("Implement this test!")
 
+	def test_decodeStringUnicodeInvalidEscape(self):
+		input = "\u3131"
+		raise NotImplementedError("Implement this test!")
 		
-
+	def test_decodeStringUTF8(self):
+		input = "someutfcharacters"
+		raise NotImplementedError("Implement this test!")
 		
 if __name__ == "__main__":
 	unittest.main()

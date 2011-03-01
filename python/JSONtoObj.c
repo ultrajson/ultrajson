@@ -80,7 +80,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		Object_newDouble,
 		PyObject_Malloc,
 		PyObject_Free,
-		PyObject_Realloc,
+		PyObject_Realloc
 	};
 
 	if (!PyString_Check(arg))
@@ -89,6 +89,9 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		return NULL;
 	}
 
+	decoder.errorStr = NULL;
+	decoder.errorOffset = NULL;
+	
 	ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(arg), PyString_GET_SIZE(arg)); 
 
 	if (decoder.errorStr)

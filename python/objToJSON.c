@@ -1,36 +1,6 @@
-/*
-Copyright (c) 2011, Jonas Tarnstrom and ESN Social Software AB
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by ESN Social Software AB (www.esn.me).
-4. Neither the name of the ESN Social Software AB nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY ESN SOCIAL SOFTWARE AB ''AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALLESN SOCIAL SOFTWARE AB BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include <Python.h>
 #include <datetime.h>
-#include "../ultrajson.h"
+#include <ultrajson.h>
 
 static PyObject* meth_timegm;
 static PyObject* mod_calendar;
@@ -428,8 +398,9 @@ int Dict_iterNext(JSOBJ _obj, JSTYPEINFO *ti)
 	}
 
 
-	if (!PyDict_Next (obj, &((size_t) ti->prv[PRV_ITER_INDEX]), &itemName, &itemValue))
+	if (!PyDict_Next (obj, &i, &itemName, &itemValue))
 	{
+		ti->prv[PRV_ITER_INDEX] = (void *) i;
 		return 0;
 	}
 	if (!PyString_Check(itemName))
@@ -439,6 +410,7 @@ int Dict_iterNext(JSOBJ _obj, JSTYPEINFO *ti)
 
 	ti->prv[PRV_ITER_ITEM_NAME] = itemName;
 	ti->prv[PRV_ITER_ITEM_VALUE] = itemValue;
+	ti->prv[PRV_ITER_INDEX] = (void *) i;
 
 	PRINTMARK();
 	return 1;
@@ -480,6 +452,14 @@ static void Object_getType(JSOBJ _obj, JSTYPEINFO *ti)
 		goto ISITERABLE;
 	}
 
+	if (PyBool_Check(obj))
+	{
+		PRINTMARK();
+		ti->prv[PRV_CONV_FUNC] = NULL; 
+		ti->type = (obj == Py_True) ? JT_TRUE : JT_FALSE;
+		return;
+	}
+	else
 	if (PyInt_Check(obj))
 	{
 		PRINTMARK();
@@ -505,14 +485,6 @@ static void Object_getType(JSOBJ _obj, JSTYPEINFO *ti)
 	{
 		PRINTMARK();
 		ti->prv[PRV_CONV_FUNC] = (void *) PyUnicodeToUTF8; ti->type = JT_UTF8;
-		return;
-	}
-	else
-	if (PyBool_Check(obj))
-	{
-		PRINTMARK();
-		ti->prv[PRV_CONV_FUNC] = NULL; 
-		ti->type = (obj == Py_True) ? JT_TRUE : JT_FALSE;
 		return;
 	}
 	else
@@ -710,8 +682,22 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 	char *ret;
 	PyObject *newobj;
 
-	//FIXME: Add support for max recursion to eliminiate OOM scenario on cyclic references
+	g_encState.recursionMax = 16;
+
 	ret = JSON_EncodeObject (arg, &g_encState, buffer, sizeof (buffer));
+
+
+	if (g_encState.recursionError)
+	{
+		if (ret != buffer)
+		{
+			g_encState.free (ret);
+		}
+
+		PyErr_Format (PyExc_OverflowError, "Maximum recursion depth reached when encoding object. Check for circular references");
+		return NULL;
+	}
+
 	newobj = PyString_FromString (ret);
 
 	if (ret != buffer)

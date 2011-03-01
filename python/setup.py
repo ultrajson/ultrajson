@@ -5,7 +5,7 @@ module1 = Extension('ujson',
                     sources = ['ujson.c', 'objToJSON.c'],
                     include_dirs = ['../'],
 					library_dirs = ['./lib/'],
-					libraries=['libultrajson'])
+					libraries=['ujson'])
 					
 setup (name = 'ujson',
 		version = '1.0',

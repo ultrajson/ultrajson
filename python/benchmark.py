@@ -5,7 +5,7 @@ import json
 import cjson
 import time
 
-user = { "userId": 3381293, "username": "johndoe", "fullname": u"John Doe the Second", "isAuthorized": True, "approval": 31.1471, "jobs": [ 1, 2 ], "currJob": None }
+user = { "userId": 3381293, "age": 213, "username": "johndoe", "fullname": u"John Doe the Second", "isAuthorized": True, "liked": 31231.31231202, "approval": 31.1471, "jobs": [ 1, 2 ], "currJob": None }
 friends = [ user, user, user, user, user, user, user, user ]
 testObject = [ [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends]]
 
@@ -37,7 +37,7 @@ def jsonDec():
 	x = json.loads(decodeData)
 
 def cjsonDec():
-	x = cjson.encode(decodeData)
+	x = cjson.decode(decodeData)
 	
 """=========================================================================="""
 	
@@ -45,7 +45,7 @@ def cjsonDec():
 if __name__ == "__main__":
 	import timeit
 	
-	COUNT = 10000
+	COUNT = 3000
 	"""
 	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,5, COUNT)), )
 	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,5, COUNT)), )
@@ -58,9 +58,9 @@ if __name__ == "__main__":
 	file.write(decodeData)
 	file.close()
 
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,5, COUNT)), )
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,5, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,5, COUNT)), )
+	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
 	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 5, COUNT)), )
 
 	

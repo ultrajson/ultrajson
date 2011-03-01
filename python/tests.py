@@ -24,8 +24,14 @@ class UltraJSONTests(TestCase):
 		pass
 
 	def test_encodeStringConversion(self):
-		input = "A \"string\"\"\\\/\b\f\n\r\t"
+	
+	
+		input = "A string \\ \/ \b \f \n \r \t"
 		output = ujson.encode(input)
+		print "OUTPUT ===========", output
+		print "CJSON SAYS ========", json.loads(output)
+		print "UJSON SAYS =======", ujson.decode(output)
+				
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(output, json.dumps(input))
 		self.assertEquals(input, ujson.decode(output))

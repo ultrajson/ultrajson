@@ -116,6 +116,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
+				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="C:\Python26\include;../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"

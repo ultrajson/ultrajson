@@ -126,8 +126,11 @@ Encoding in details:
 #endif
 
 #ifdef _WIN32
+
 typedef __int64 JSLONG;
 typedef unsigned __int64 JSULONG;
+
+
 #define EXPORTFUNCTION __declspec(dllexport)
 #define INLINEFUNCTION __inline
 typedef unsigned __int32 uint32_t;

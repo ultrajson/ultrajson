@@ -50,7 +50,7 @@ struct DecoderState
 	JSONObjectDecoder *dec;
 };
 
-JSOBJ decode_any( struct DecoderState *ds);
+JSOBJ __fastcall decode_any( struct DecoderState *ds);
 
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 
@@ -70,7 +70,7 @@ static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000
 
 #define RETURN_JSOBJ_NULLCHECK(_expr) return(_expr);
 
-INLINEFUNCTION double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
+double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
 {
 	return (intValue + (frcValue / g_pow10[frcDecimalCount])) * intNeg;
 }
@@ -83,22 +83,15 @@ JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 }
 
 
-JSOBJ decode_numeric ( struct DecoderState *ds)
+JSOBJ __fastcall decode_numeric ( struct DecoderState *ds)
 {
 	int intNeg = 1;
-	int expNeg = 1;
+	int expNeg;
 	int chr;
 	int decimalCount = 0;
 	JSLONG intValue;
 	double frcValue = 0.0;
 	double expValue;
-	
-	//return ds->dec->newInteger(31337);
-
-	ds->lastType = JT_INVALID;
-
-	// Go one back since the scanner ate one
-	ds->start --;
 
 	if (*(ds->start) == '-')
 	{
@@ -126,6 +119,7 @@ JSOBJ decode_numeric ( struct DecoderState *ds)
 		case '8':
 		case '9':
 			//FIXME: Check for arithemtic overflow here
+			//PERF: Don't do 64-bit arithmetic here unless we know we have to
 			intValue = intValue * 10 + (JSLONG) (chr - 48);
 			ds->start ++;
 			break;
@@ -210,6 +204,8 @@ BREAK_FRC_LOOP:
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount)));
 
 DECODE_EXPONENT:
+	expNeg = 1;
+
 	if (*(ds->start) == '-')
 	{
 		expNeg = -1;
@@ -262,9 +258,9 @@ BREAK_EXP_LOOP:
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue)));
 }
 
-JSOBJ decode_true ( struct DecoderState *ds)
+JSOBJ __fastcall decode_true ( struct DecoderState *ds)
 {
-	ds->lastType = JT_INVALID;
+	ds->start ++;
 
 	if (*(ds->start++) != 'r')
 		goto SETERROR;
@@ -280,9 +276,9 @@ SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'true'");
 }
 
-JSOBJ decode_false ( struct DecoderState *ds)
+JSOBJ __fastcall decode_false ( struct DecoderState *ds)
 {
-	ds->lastType = JT_INVALID;
+	ds->start ++;
 
 	if (*(ds->start++) != 'a')
 		goto SETERROR;
@@ -302,9 +298,9 @@ SETERROR:
 }
 
 
-JSOBJ decode_null ( struct DecoderState *ds)
+JSOBJ __fastcall decode_null ( struct DecoderState *ds)
 {
-	ds->lastType = JT_INVALID;
+	ds->start ++;
 
 	if (*(ds->start++) != 'u')
 		goto SETERROR;
@@ -341,12 +337,44 @@ static char g_unescapeLookup[] = {
 	/* 0xf0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
 };
 
-JSOBJ decode_string ( struct DecoderState *ds)
+__inline void __fastcall SkipWhitespace(struct DecoderState *ds)
+{
+	while (1)
+	{
+		switch (*ds->start)
+		{
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			ds->start ++;
+			break;
+
+			/*
+			case '\x00':
+			case '\x01':
+			case '\x02':
+			case '\x03':
+			case '\x04':
+			case '\x05':
+			case '\x06':
+			case '\x07':
+			return;
+			*/
+
+		default:
+			return;
+		}
+	}
+}
+
+JSOBJ __fastcall decode_string ( struct DecoderState *ds)
 {
 	char *escOffset;
 	char chr;
 	size_t escLen = (ds->escEnd - ds->escStart);
 	ds->lastType = JT_INVALID;
+	ds->start ++;
 
 	if ( (ds->end - ds->start) > escLen)
 	{
@@ -369,50 +397,63 @@ JSOBJ decode_string ( struct DecoderState *ds)
 
 	escOffset = ds->escStart;
 
-	while (1)
+	while(1)
 	{
 		chr = (*ds->start++);
 
 		switch (chr)
 		{
-			case '\0':
-				return SetError(ds, -1, "Unmatched ''\"' when when decoding 'string'");
+		case '\0':
+			return SetError(ds, -1, "Unmatched ''\"' when when decoding 'string'");
 
-			case '\"':
-				ds->lastType = JT_UTF8;
-				RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
+		case '\"':
+			ds->lastType = JT_UTF8;
+			RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
 
-			case '\\':
-				if (*ds->start == '\0')
-				{
-					return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
-				}
+		case '\\':
+			switch (*(ds->start))
+			{
+			case '\\': *(escOffset++) = '\\'; ds->start++; continue;
+			case '\"': *(escOffset++) = '\"'; ds->start++; continue;
+			case '/':  *(escOffset++) = '/'; ds->start++; continue;
+			case 'b':  *(escOffset++) = '\b'; ds->start++; continue;
+			case 'f':  *(escOffset++) = '\f'; ds->start++; continue;
+			case 'n':  *(escOffset++) = '\n'; ds->start++; continue;
+			case 'r':  *(escOffset++) = '\r'; ds->start++; continue;
+			case 't':  *(escOffset++) = '\t'; ds->start++; continue;
 
-				chr = g_unescapeLookup[ (unsigned char) (*ds->start++)];
+			case '\0': 
+				return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
 
-				if (chr == '\0')
-				{
-					return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
-				}
-				break;
+			default:
+				return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
+			}
+			break;
+
+		default:
+			*(escOffset++) = chr;
 		}
-
-		*(escOffset++) = chr;
 	}
-
-
 
 }
 
-JSOBJ decode_array( struct DecoderState *ds)
+JSOBJ __fastcall decode_array( struct DecoderState *ds)
 {
 	JSOBJ itemValue;
 	JSOBJ newObj = ds->dec->newArray();
 
 	ds->lastType = JT_INVALID;
+	ds->start ++;
 
-	while ((*ds->start) != '\0')
+	while (1)//(*ds->start) != '\0')
 	{
+		SkipWhitespace(ds);
+
+		if ((*ds->start) == ']')
+		{
+			return newObj;
+		}
+
 		itemValue = decode_any(ds);
 
 		if (itemValue == NULL)
@@ -422,142 +463,139 @@ JSOBJ decode_array( struct DecoderState *ds)
 		}
 
 		ds->dec->arrayAddItem (newObj, itemValue);
+
+		SkipWhitespace(ds);
+
+		switch (*(ds->start++))
+		{
+			case ']':
+				return newObj;
+
+			case ',':
+				break;
+
+			default:
+				return SetError(ds, -1, "Unexpected character in found when decoding array value");
+		}
 	}
+
+	//FIXME: Must release newObj here!
 
 	return SetError(ds, -1, "Unmatched ']' when decoding 'array'");
 }
 
 
 
-JSOBJ decode_object( struct DecoderState *ds)
+JSOBJ __fastcall decode_object( struct DecoderState *ds)
 {
 	JSOBJ itemName;
 	JSOBJ itemValue;
 	JSOBJ newObj = ds->dec->newObject();
-	ds->lastType = JT_INVALID;
 
-	while ((*ds->start) != '\0')
+	ds->start ++;
+
+	while (1)
 	{
+		SkipWhitespace(ds);
+
+		if ((*ds->start) == '}')
+		{
+			return newObj;
+		}
+
+		ds->lastType = JT_INVALID;
 		itemName = decode_any(ds);
 
+		//FIXME: Why should we accept this?
 		if (itemName == NULL)
 		{
 			ds->lastType = JT_OBJECT;
 			return newObj;
 		}
 
-		if (itemName)
+		if (ds->lastType != JT_UTF8)
 		{
-			if (ds->lastType != JT_UTF8)
-			{
-				return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
-			}
+			return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
+		}
 
-			// Expect ':'
-			while ((*ds->start) != '\0')
-			{
-				if (*(ds->start++) == ':')
-					break;
-			}
+		SkipWhitespace(ds);
 
-			if (ds->start == ds->end)
-			{
-				return SetError(ds, -1, "No ':' found when decoding object value");
-			}
+		if (*(ds->start++) != ':')
+		{
+			return SetError(ds, -1, "No ':' found when decoding object value");
+		}
 
-			itemValue = decode_any(ds);
-			ds->dec->objectAddKey (newObj, itemName, itemValue);
+		SkipWhitespace(ds);
+
+		itemValue = decode_any(ds);
+
+		//FIXME: itemName will leak here
+		if (itemValue == NULL)
+		{
+			return newObj;
+		}
+
+		ds->dec->objectAddKey (newObj, itemName, itemValue);
+
+		SkipWhitespace(ds);
+
+		switch (*(ds->start++))
+		{
+			case '}':
+				return newObj;
+
+			case ',':
+				break;
+
+			default:
+				return SetError(ds, -1, "Unexpected character in found when decoding object value");
 		}
 	}
+
+	//FIXME: newobj will leak here
 
 	return SetError(ds, -1, "Unmatched '}' when decoding object");
 }
 
-
-JSOBJ decode_array_begin( struct DecoderState *ds)
+JSOBJ __fastcall decode_any(struct DecoderState *ds)
 {
-	return decode_array(ds);
-}
-
-JSOBJ decode_array_end( struct DecoderState *ds)
-{
-	return NULL;
-}
-
-JSOBJ decode_object_begin( struct DecoderState *ds)
-{
-	return decode_object(ds);
-}
-
-JSOBJ decode_object_end( struct DecoderState *ds)
-{
-	return NULL;
-}
-
-
-
-
-JSOBJ decode_item_separator( struct DecoderState *ds)
-{
-	//FIXME: Validate that we are inside array or object here
-	return decode_any(ds);
-}
-
-
-JSOBJ decode_any(struct DecoderState *ds)
-{
-	ds->lastType = JT_INVALID;
-
 	while (1)
 	{
-		switch ((*ds->start++))
+		switch (*ds->start)
 		{
-			case '\"': return decode_string (ds);
-			case '0': return decode_numeric (ds);
-			case '1': return decode_numeric (ds);
-			case '2': return decode_numeric (ds);
-			case '3': return decode_numeric (ds);
-			case '4': return decode_numeric (ds);
-			case '5': return decode_numeric (ds);
-			case '6': return decode_numeric (ds);
-			case '7': return decode_numeric (ds);
-			case '8': return decode_numeric (ds);
-			case '9': return decode_numeric (ds);
-			case '-': return decode_numeric (ds);
-			case '[': return decode_array (ds);
+			case '\"': 
+				return decode_string (ds);
+			case '0': 
+			case '1':
+			case '2': 
+			case '3': 
+			case '4': 
+			case '5':
+			case '6': 
+			case '7': 
+			case '8': 
+			case '9': 
+			case '-': 
+				return decode_numeric (ds);
+
+			case '[':	return decode_array (ds);
 			case '{': return decode_object (ds);
 			case 't': return decode_true (ds);
 			case 'f': return decode_false (ds);
 			case 'n': return decode_null (ds);
-			/*
-			case '}': return decode_object_end (ds);
-			case ']': return decode_array_end (ds);
-			case ',': return decode_item_separator (ds);
-			*/
-			case '}':
-			case ']':
-				return NULL;
-
-			case ',':
-				// FIXME: Validate
-				// Trailers
-				break; 
 
 			case ' ':
 			case '\t':
 			case '\r':
 			case '\n':
 				// White space
+				ds->start ++;
 				break;
 
 			default:
-				return NULL;
-
+				return SetError(ds, -1, "Expected object or value");
 		}
-
 	}
-
-	return NULL;
 }
 
 
@@ -573,7 +611,6 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 
 	ds.start = (char *) buffer;
 	ds.end = ds.start + cbBuffer;
-	ds.lastType = JT_INVALID;
 	ds.escStart = escBuffer;
 	ds.escEnd = ds.escStart + sizeof(escBuffer);
 	ds.escHeap = 0;
@@ -584,6 +621,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	if (s_once)
 	{
 		//FIXME: Move to static initialization instead
+		/*
 		g_identTable['\"'] = decode_string;
 		g_identTable['0'] = decode_numeric;
 		g_identTable['1'] = decode_numeric;
@@ -609,6 +647,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 		{
 			g_identTable[index] = (PFN_DECODER) 1; 
 		}
+		*/
 
 		for (index = 0; index < 256; index ++)
 		{

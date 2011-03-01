@@ -26,6 +26,12 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Portions of code from:
+MODP_ASCII - Ascii transformations (upper/lower, etc)
+http://code.google.com/p/stringencoders/
+Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights reserved.
+
 */
 
 #include "ultrajson.h"

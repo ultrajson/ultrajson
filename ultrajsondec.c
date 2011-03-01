@@ -43,7 +43,7 @@ struct DecoderState
 	int lastType;
 };
 
-JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds);
+INLINEFUNCTION JSOBJ decode_any(JSONObjectDecoder *dec, struct DecoderState *ds);
 
 typedef JSOBJ (*PFN_DECODER)(JSONObjectDecoder *dec, struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 

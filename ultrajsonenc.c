@@ -41,7 +41,6 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <malloc.h>
 #include <math.h>
 
-
 typedef struct _Buffer
 {
 	char *start;
@@ -54,10 +53,12 @@ typedef struct _Buffer
 
 } Buffer;
 
-static void Buffer_Realloc (Buffer *buffer);
+void Buffer_Realloc (Buffer *buffer);
 
+//FIXME: Simply remove this macro
 #define FastMemCopy memcpy
 
+//FIXME: Perhaps a bit premature. Let the compilre handle this instead and make these into functions
 #define Buffer_AppendEscape(__buffer, __pstr, __len)											\
 				while ((__buffer)->offset + ((__len * 2) + 2) > (__buffer)->end)	\
 				{																																	\
@@ -102,14 +103,14 @@ static void Buffer_Realloc (Buffer *buffer);
  */
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-INLINEFUNCTION static void strreverse(char* begin, char* end)
+void strreverse(char* begin, char* end)
 {
     char aux;
     while (end > begin)
         aux = *end, *end-- = *begin, *begin++ = aux;
 }
 
-INLINEFUNCTION void Buffer_AppendIntUnchecked(Buffer *buffer, JSLONG value)
+void Buffer_AppendIntUnchecked(Buffer *buffer, JSLONG value)
 {
     char* wstr;
 		JSULONG uvalue = (value < 0) ? -value : value;
@@ -133,9 +134,11 @@ INLINEFUNCTION void Buffer_AppendIntUnchecked(Buffer *buffer, JSLONG value)
 		buffer->offset += (wstr - (buffer->offset));
 }
 
+/*
+FIXME:
+Pass prec as a configurable parameter in a shared encoder context instead */
 
-
-INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, int prec)
+void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, int prec)
 {
     /* if input is larger than thres_max, revert to exponential */
     const double thres_max = (double)(0x7FFFFFFF);
@@ -154,6 +157,7 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
      * to link with libmath (bad) or hack IEEE double bits (bad)
      */
     if (! (value == value)) {
+				//FIXME: Don't return nan it's not supported by JSON
         str[0] = 'n'; str[1] = 'a'; str[2] = 'n'; str[3] = '\0';
         return;
     }
@@ -198,6 +202,7 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
       which can be 100s of characters overflowing your buffers == bad
     */
     if (value > thres_max) {
+				//FIXME: sprintf might code Nan or InF here, it's not in the standard
 				buffer->offset += sprintf(str, "%e", neg ? -value : value);
         return;
     }
@@ -249,7 +254,12 @@ INLINEFUNCTION void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, i
 		buffer->offset += (wstr - (buffer->offset));
 }
 
-static void Buffer_Realloc (Buffer *buffer)
+
+/*
+FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
+Thay way we won't run our head into the wall each call */
+
+void Buffer_Realloc (Buffer *buffer)
 {
 	size_t newSize = buffer->end - buffer->start;
 	size_t offset = buffer->offset - buffer->start;
@@ -271,51 +281,52 @@ static void Buffer_Realloc (Buffer *buffer)
 
 }
 
-static char g_escapeLookup[] = {
-	/*				 0x00   0x01   0x02    0x03   0x04   0x05    0x06  0x07   0x08   0x09   0x0a   0x0b   0x0c   0x0d   0x0e   0x0f */
-	/* 0x00 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  'b',  't',  'n',  '\0',  'f',  'r',  '\0',  '\0',
-	/* 0x10 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x20 */ '\0',  '\0',  '\"',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x30 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x40 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x50 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\\',  '\0',  '\0',  '\0',
-	/* 0x60 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x70 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x80 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x90 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xa0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xb0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xc0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xd0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xe0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xf0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-};
-
-static void Buffer_Escape (Buffer *buffer, char *inputOffset, size_t len)
+void Buffer_Escape (Buffer *buffer, char *inputOffset, size_t len)
 {
 	char *inputEnd = inputOffset + len;
 	char output;
 
-	while (inputOffset < inputEnd)
+	//FIXME: Encode '\uXXXX' here
+	while (1)
 	{
-		output = g_escapeLookup[(unsigned char) *(inputOffset)];
-
-		if (output == '\0')
+		switch (*inputOffset)
 		{
-				*(buffer->offset++) = *(inputOffset++);
+			case '\0': return;
+			case '\"': *(buffer->offset++) = '\\'; *(buffer->offset++) = '\"';break;
+			case '\\': *(buffer->offset++) = '\\'; *(buffer->offset++) = '\\';break;
+			
+			/*
+			NOTE: The RFC says escape solidus but none of the reference encoders does so.
+			We don't do it either now ;)
+			case '/': *(buffer->offset++) = '\\'; *(buffer->offset++) = '/';break;
+			*/
+			case '\b': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'b';break;
+			case '\f': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'f';break;
+			case '\n': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'n';break;
+			case '\r': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'r';break;
+			case '\t': *(buffer->offset++) = '\\'; *(buffer->offset++) = 't';break;
+			default: (*buffer->offset++) = *(inputOffset); break;
 		}
-		else
-		{
-			*(buffer->offset++) = '\\';
-			*(buffer->offset++) = output;
-			inputOffset ++;
-		}
+		inputOffset ++;
 	}
 }
 
-static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder *def, Buffer *buffer, int insideList)
+/*
+FIXME:
+Merge Buffer, JSONObjectEncoder and JSONTypeContext into one common type including _name, _cbName, level and obj
+*/
+
+/*
+FIXME:
+Handle functions actually returning NULL here */
+
+/*
+FIXME:
+Perhaps implement recursion detection */
+
+void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder *def, Buffer *buffer, int insideList)
 {
-	JSTYPEINFO ti;
+	JSONTypeContext ti;
 	size_t szlen;
 	const char *name = (insideList || level == 0) ? NULL : _name;
 
@@ -470,6 +481,9 @@ static void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObject
 	}
 }
 
+
+
+//FIXME: Make JSON_MAX_RECURSION_DEPTH and depending on performance JSON_NO_EXTRA_WHITESPACE as configuration options
 char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *_buffer, size_t _cbBuffer)
 {
 	Buffer buffer;

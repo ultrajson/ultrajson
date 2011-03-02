@@ -7,7 +7,7 @@ LINKFLAGS=-shared
 #-Wl,-soname,libultrajson.so.1
 
 CPPFLAGS=-D_REENTRANT -D_LINUX
-all : CPPFLAGS += -O2 -DNDEBUG -fPIC
+all : CPPFLAGS += -O3 -DNDEBUG -fPIC
 all : libultrajson
 
 libultrajson : $(OBJS)

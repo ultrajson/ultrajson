@@ -28,10 +28,6 @@ class UltraJSONTests(TestCase):
 	
 		input = "A string \\ \/ \b \f \n \r \t"
 		output = ujson.encode(input)
-		print "OUTPUT ===========", output
-		print "CJSON SAYS ========", json.loads(output)
-		print "UJSON SAYS =======", ujson.decode(output)
-				
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(output, json.dumps(input))
 		self.assertEquals(input, ujson.decode(output))
@@ -59,7 +55,7 @@ class UltraJSONTests(TestCase):
 		pass
 
 	def test_encodeLongConversion(self):
-		input = 223372036854775807
+		input = 9223372036854775807
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(output, json.dumps(input))
@@ -67,7 +63,7 @@ class UltraJSONTests(TestCase):
 		pass
 
 	def test_encodeLongNegConversion(self):
-		input = -223372036854775808
+		input = -9223372036854775808
 		output = ujson.encode(input)
 		
 		outputjson = json.loads(output)
@@ -356,6 +352,13 @@ class UltraJSONTests(TestCase):
 	def test_decodeStringUTF8(self):
 		input = "someutfcharacters"
 		raise NotImplementedError("Implement this test!")
+	
+	def test_decodeNumericFloatInf(self):
+		pass
+
+	def test_decodeNumericFloatNan(self):
+		pass
+
 		
 if __name__ == "__main__":
 	unittest.main()

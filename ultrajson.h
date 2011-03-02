@@ -130,15 +130,23 @@ Encoding in details:
 typedef __int64 JSLONG;
 typedef unsigned __int64 JSULONG;
 
-
 #define EXPORTFUNCTION __declspec(dllexport)
-#define INLINEFUNCTION __inline
+#define FASTCALL_MSVC __fastcall
+#define FASTCALL_ATTR 
+
+
+
+
 typedef unsigned __int32 uint32_t;
 #else
 #include <sys/types.h>
 typedef int64_t JSLONG;
 typedef u_int64_t JSULONG;
-#define INLINEFUNCTION inline
+
+#define FASTCALL_MSVC 
+#define FASTCALL_ATTR __attribute__((fastcall))
+
+
 typedef u_int32_t uint32_t;
 #define EXPORTFUNCTION
 #endif
@@ -159,23 +167,23 @@ enum JSTYPES
 typedef void * JSOBJ;
 typedef void * JSITER;
 
-typedef struct __JSTYPEINFO
+typedef struct __JSONTypeContext
 {
-	// If release=1, the releaseValue function will be called with the JSTYPEINFO as argument
+	// If release=1, the releaseValue function will be called with the JSONTypeContext as argument
 	int release; 
 	// Type of value see JSTYPES
 	int type;
 	// Private fields to be used by the implementor for state keeping, life cycle etc
 	void *prv[32];
-} JSTYPEINFO;
+} JSONTypeContext;
 
 /*
 Function pointer declarations, suitable for implementing Ultra JSON */
-typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSTYPEINFO *ti);
-typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSTYPEINFO *ti);
-typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSTYPEINFO *ti);
-typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSTYPEINFO *ti);
-typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSTYPEINFO *ti, size_t *outLen);
+typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *ti);
+typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *ti);
+typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *ti);
+typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *ti);
+typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSONTypeContext *ti, size_t *outLen);
 typedef	void *(*JSPFN_MALLOC)(size_t size);
 typedef void (*JSPFN_FREE)(void *pptr);
 typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
@@ -186,7 +194,7 @@ typedef struct __JSONObjectEncoder
 	Return type of object as JSTYPES enum 
 	Implementors should setup necessary pointers or state in ti->prv
 	*/
-	void (*getType)(JSOBJ obj, JSTYPEINFO *ti);
+	void (*getType)(JSOBJ obj, JSONTypeContext *ti);
 
 	/*
 	Get value of object of a specific type
@@ -205,10 +213,10 @@ typedef struct __JSONObjectEncoder
 	outValue is ignored
 	set _outLen to length of returned string buffer (in bytes without trailing '\0') 
 
-	If it's required that returned resources are freed or released, set ti->release to 1 and releaseValue will be called with JSTYPEINFO as argument.
+	If it's required that returned resources are freed or released, set ti->release to 1 and releaseValue will be called with JSONTypeContext as argument.
 	Use ti->prv fields to store state for this
 	*/
-	void *(*getValue)(JSOBJ obj, JSTYPEINFO *ti, void *outValue, size_t *_outLen);
+	void *(*getValue)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
 	/*
 	Begin iteration of an iteratable object (JS_ARRAY or JS_OBJECT) 
@@ -244,7 +252,7 @@ typedef struct __JSONObjectEncoder
 	Release a value as indicated by setting ti->release = 1 in the previous getValue call.
 	The ti->prv array should contain the necessary context to release the value
 	*/
-	void (*releaseValue)(JSTYPEINFO *ti);
+	void (*releaseValue)(JSONTypeContext *ti);
 
 	/* Library functions 
 	Set to NULL to use STDLIB malloc,realloc,free */

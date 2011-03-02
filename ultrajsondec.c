@@ -50,7 +50,7 @@ struct DecoderState
 	JSONObjectDecoder *dec;
 };
 
-JSOBJ __fastcall decode_any( struct DecoderState *ds);
+JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 
@@ -78,28 +78,25 @@ double createDouble(double intNeg, double intValue, double frcValue, int frcDeci
 JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 {
 	ds->dec->errorOffset = ds->start + offset;
-	ds->dec->errorStr = message;
+	ds->dec->errorStr = (char *) message;
 	return NULL;
 }
 
 
-JSOBJ __fastcall decode_numeric ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 {
-	double intNeg = 1.0;
+	int intNeg = 1;
 	double expNeg;
 	int chr;
 	int decimalCount = 0;
-	double intValue;
-	double frcValue;
+	JSLONG intValue;
+	double frcValue = 0.0;
 	double expValue;
-
-	double dbg1;
-	JSLONG dbg2;
 
 	if (*(ds->start) == '-')
 	{
 		ds->start ++;
-		intNeg = -1.0;
+		intNeg = -1;
 	}
 
 	// Scan integer part
@@ -123,7 +120,7 @@ JSOBJ __fastcall decode_numeric ( struct DecoderState *ds)
 		case '9':
 			//FIXME: Check for arithemtic overflow here
 			//PERF: Don't do 64-bit arithmetic here unless we know we have to
-			intValue = intValue * 10.0 + (double) (chr - 48);
+			intValue = intValue * 10 + (JSLONG) (chr - 48);
 			ds->start ++;
 			break;
 
@@ -148,13 +145,11 @@ BREAK_INT_LOOP:
 
 	ds->lastType = JT_INTEGER;
 
-	/*
-	If input string is LONGLONG_MIN here the value is already negative so we should not flip it
+	//If input string is LONGLONG_MIN here the value is already negative so we should not flip it
 	if (intValue < 0)
 	{
 		intNeg = 1;
 	}
-	*/
 
 	//dbg1 = (intValue * intNeg);
 	//dbg2 = (JSLONG) dbg1;
@@ -267,7 +262,7 @@ BREAK_EXP_LOOP:
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue)));
 }
 
-JSOBJ __fastcall decode_true ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 
 {
 	ds->start ++;
 
@@ -285,7 +280,7 @@ SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'true'");
 }
 
-JSOBJ __fastcall decode_false ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds) 
 {
 	ds->start ++;
 
@@ -307,7 +302,7 @@ SETERROR:
 }
 
 
-JSOBJ __fastcall decode_null ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds) 
 {
 	ds->start ++;
 
@@ -346,7 +341,7 @@ static char g_unescapeLookup[] = {
 	/* 0xf0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
 };
 
-__inline void __fastcall SkipWhitespace(struct DecoderState *ds)
+FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds) 
 {
 	while (1)
 	{
@@ -377,7 +372,7 @@ __inline void __fastcall SkipWhitespace(struct DecoderState *ds)
 	}
 }
 
-JSOBJ __fastcall decode_string ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
 	char *escOffset;
 	char chr;
@@ -446,7 +441,7 @@ JSOBJ __fastcall decode_string ( struct DecoderState *ds)
 
 }
 
-JSOBJ __fastcall decode_array( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 {
 	JSOBJ itemValue;
 	JSOBJ newObj = ds->dec->newArray();
@@ -495,7 +490,7 @@ JSOBJ __fastcall decode_array( struct DecoderState *ds)
 
 
 
-JSOBJ __fastcall decode_object( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
 	JSOBJ itemName;
 	JSOBJ itemValue;
@@ -566,7 +561,7 @@ JSOBJ __fastcall decode_object( struct DecoderState *ds)
 	return SetError(ds, -1, "Unmatched '}' when decoding object");
 }
 
-JSOBJ __fastcall decode_any(struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
 {
 	while (1)
 	{

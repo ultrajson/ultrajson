@@ -23,6 +23,21 @@ class UltraJSONTests(TestCase):
 		self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
 		pass
 
+	def test_encodeArrayOfNestedArrays(self):
+		input = [[[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]] ]
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		#self.assertEquals(output, json.dumps(input))
+		self.assertEquals(input, ujson.decode(output))
+	
+	def test_encodeArrayOfDoubles(self):
+		input = [ 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337 ]
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		#self.assertEquals(output, json.dumps(input))
+		self.assertEquals(input, ujson.decode(output))
+		
+		
 	def test_encodeStringConversion(self):
 
 		input = "A string \\ \/ \b \f \n \r \t"
@@ -33,8 +48,9 @@ class UltraJSONTests(TestCase):
 		pass
 
 	def test_encodeArrayInArray(self):
-		input = "[[[[]]]]"
+		input = [[[[]]]]
 		output = ujson.encode(input)
+
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(output, json.dumps(input))
 		self.assertEquals(input, ujson.decode(output))
@@ -367,7 +383,23 @@ class UltraJSONTests(TestCase):
 
 	def test_decodeNumericFloatNan(self):
 		pass
-	"""
+
+	# Should fail!
+	def test_decodeDictWithNoKey(self):
+		input = "{{{{31337}}}}"
+		raise NotImplementedError("Implement this test!")
+
+	# Should fail!
+	def test_decodeDictWithNoColonOrValue(self):
+		input = "{{{{"key"}}}}"
+		raise NotImplementedError("Implement this test!")
+
+	# Should fail!
+	def test_decodeDictWithNoValue(self):
+		input = "{{{{"key":}}}}"
+		raise NotImplementedError("Implement this test!")
+		
+		"""
 
 		
 if __name__ == "__main__":

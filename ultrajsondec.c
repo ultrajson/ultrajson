@@ -472,6 +472,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
 		if ((*ds->start) == ']')
 		{
+			*ds->start ++;
 			return newObj;
 		}
 
@@ -521,6 +522,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
 		if ((*ds->start) == '}')
 		{
+			ds->start ++;
 			return newObj;
 		}
 

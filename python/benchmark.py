@@ -46,7 +46,7 @@ if __name__ == "__main__":
 	import timeit
 	
 	print "Ready? Configure affinity and priority, starting in 20..."
-	time.sleep(20)
+	#time.sleep(20)
 	
 	COUNT = 10000
 	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )

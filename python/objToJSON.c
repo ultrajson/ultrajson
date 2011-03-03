@@ -409,7 +409,25 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 {
 	TypeContext *pc = (TypeContext *) tc->prv;
 	PyObject *toDictFunc;
-	memset (pc, 0, sizeof (TypeContext));
+
+	tc->prv[0] = 0;
+	tc->prv[1] = 0;
+	tc->prv[2] = 0;
+	tc->prv[3] = 0;
+	tc->prv[4] = 0;
+	tc->prv[5] = 0;
+	tc->prv[6] = 0;
+	tc->prv[7] = 0;
+	tc->prv[8] = 0;
+	tc->prv[9] = 0;
+	tc->prv[10] = 0;
+	tc->prv[11] = 0;
+	tc->prv[12] = 0;
+	tc->prv[13] = 0;
+	tc->prv[14] = 0;
+	tc->prv[15] = 0;
+
+	//memset (pc, 0, sizeof (TypeContext));
 	
 	if (PyIter_Check(obj))
 	{
@@ -626,15 +644,11 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-
-
-
 PyObject* objToJSON(PyObject* self, PyObject *arg)
 {
 	char buffer[65536];
 	char *ret;
 	PyObject *newobj;
-
 
 	JSONObjectEncoder encoder = 
 	{
@@ -653,7 +667,7 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 		PyObject_Realloc, //JSPFN_REALLOC realloc;
 		PyObject_Free, //JSPFN_FREE free;
 		-1, //recursionMax
-		-1, //default decimal precision
+		5, //default decimal precision
 	};
 
 	ret = JSON_EncodeObject (arg, &encoder, buffer, sizeof (buffer));

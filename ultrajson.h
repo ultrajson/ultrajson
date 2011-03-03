@@ -135,11 +135,16 @@ typedef __int64 JSLONG;
 typedef unsigned __int64 JSULONG;
 
 #define EXPORTFUNCTION __declspec(dllexport)
+
 #define FASTCALL_MSVC __fastcall
 #define FASTCALL_ATTR 
+#define INLINE_PREFIX __inline
 
-
-
+/*
+#define FASTCALL_MSVC
+#define FASTCALL_ATTR
+#define INLINE_PREFIX
+*/
 
 typedef unsigned __int32 uint32_t;
 #else
@@ -149,7 +154,7 @@ typedef u_int64_t JSULONG;
 
 #define FASTCALL_MSVC 
 #define FASTCALL_ATTR __attribute__((fastcall))
-
+#define INLINE_PREFIX inline
 
 typedef u_int32_t uint32_t;
 #define EXPORTFUNCTION
@@ -174,7 +179,7 @@ typedef void * JSITER;
 typedef struct __JSONTypeContext
 {
 	int type;
-	char prv[sizeof(void *) * 15];
+	void *prv[15];
 } JSONTypeContext;
 
 /*

@@ -338,10 +338,6 @@
 				RelativePath=".\main.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\python\objToJSON.c"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

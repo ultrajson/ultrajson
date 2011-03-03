@@ -41,10 +41,6 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <malloc.h>
 #include <math.h>
 
-
-void FASTCALL_MSVC Buffer_Realloc (JSONObjectEncoder *enc) FASTCALL_ATTR;
-void FASTCALL_MSVC Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset) FASTCALL_ATTR;
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -53,7 +49,92 @@ void FASTCALL_MSVC Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset) FAS
 #endif
 
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendEscape(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
+//#define __LINE_PROFILER__
+
+#ifdef __LINE_PROFILER__
+unsigned int g_profLines[1000] = { 0 };
+#define PROFILE_MARK() g_profLines[__LINE__] ++;
+
+#else
+#define PROFILE_MARK()
+#endif
+
+/*
+FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
+Thay way we won't run our head into the wall each call */
+void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
+{
+	size_t curSize = enc->end - enc->start;
+	size_t newSize = curSize * 2;
+	size_t offset = enc->offset - enc->start;
+
+	PROFILE_MARK();
+
+	while (newSize < curSize + cbNeeded)
+	{
+		newSize *= 2;
+	}
+
+
+	if (enc->heap)
+	{
+		enc->start = (char *) enc->realloc (enc->start, newSize);
+	}
+	else
+	{
+		char *oldStart = enc->start;
+		enc->heap = 1;
+		enc->start = (char *) enc->malloc (newSize);
+		memcpy (enc->start, oldStart, offset);
+	}
+	enc->offset = enc->start + offset;
+	enc->end = enc->start + newSize;
+}
+
+void Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
+{
+	PROFILE_MARK();
+
+	//FIXME: Encode '\uXXXX' here
+	while (1)
+	{
+		switch (*inputOffset)
+		{
+			case '\0': return;
+			case '\"': *(enc->offset++) = '\\'; *(enc->offset++) = '\"';break;
+			case '\\': *(enc->offset++) = '\\'; *(enc->offset++) = '\\';break;
+			
+			/*
+			NOTE: The RFC says escape solidus but none of the reference encoders does so.
+			We don't do it either now ;)
+			case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
+			*/
+			case '\b': *(enc->offset++) = '\\'; *(enc->offset++) = 'b';break;
+			case '\f': *(enc->offset++) = '\\'; *(enc->offset++) = 'f';break;
+			case '\n': *(enc->offset++) = '\\'; *(enc->offset++) = 'n';break;
+			case '\r': *(enc->offset++) = '\\'; *(enc->offset++) = 'r';break;
+			case '\t': *(enc->offset++) = '\\'; *(enc->offset++) = 't';break;
+			default: (*enc->offset++) = *(inputOffset); break;
+		}
+		inputOffset ++;
+	}
+}
+
+
+
+
+#define Buffer_Reserve(__enc, __len) \
+	if ((__enc)->offset + (__len) > (__enc)->end)	\
+	{	\
+		Buffer_Realloc((__enc), (__len));\
+	}	\
+
+
+#define Buffer_AppendCharUnchecked(__enc, __chr)												\
+				*((__enc)->offset++) = __chr;																	\
+
+/*
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendEscape(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
 {
 	while (enc->offset + ((_len * 2) + 2) > enc->end)	
 	{
@@ -65,14 +146,15 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendEscape(JSONObjectEncoder *enc, con
 	*(enc->offset++) = '\"';
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendEscapeUnchecked(JSONObjectEncoder *enc, const char *_pstr)
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendEscapeUnchecked(JSONObjectEncoder *enc, const char *_pstr)
 {
 	*(enc->offset++) = '\"';
 	Buffer_Escape(enc, (char *)_pstr);
 	*(enc->offset++) = '\"';
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_Append(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
+
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_Append(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
 {
 	while (enc->offset + _len > enc->end)
 	{
@@ -82,16 +164,14 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_Append(JSONObjectEncoder *enc, const cha
 	enc->offset += _len;
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_Reserve(JSONObjectEncoder *enc, size_t _len)
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_Reserve(JSONObjectEncoder *enc, size_t _len)
 {
 	while (enc->offset + _len > enc->end)
 	{
 		Buffer_Realloc(enc);
 	}
 }
-
-#define Buffer_AppendCharUnchecked(__enc, __chr)												\
-				*((__enc)->offset++) = __chr;																	\
+*/
 
 
 
@@ -102,18 +182,22 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_Reserve(JSONObjectEncoder *enc, size_t _
  */
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-FASTCALL_ATTR void FASTCALL_MSVC strreverse(char* begin, char* end)
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end)
 {
 	char aux;
+	PROFILE_MARK();
 	while (end > begin)
 	aux = *end, *end-- = *begin, *begin++ = aux;
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSLONG value)
+
+void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSLONG value)
 {
 	char* wstr;
-		JSULONG uvalue = (value < 0) ? -value : value;
-		wstr = enc->offset;
+	JSULONG uvalue = (value < 0) ? -value : value;
+	PROFILE_MARK();
+
+	wstr = enc->offset;
 	// Conversion. Number is reversed.
 	do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
 	if (value < 0) *wstr++ = '-';
@@ -123,7 +207,7 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendIntUnchecked(JSONObjectEncoder *en
 	enc->offset += (wstr - (enc->offset));
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
+void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 {
 	/* if input is larger than thres_max, revert to exponential */
 	const double thres_max = (double)(0x7FFFFFFF);
@@ -135,6 +219,8 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendDoubleUnchecked(JSONObjectEncoder 
 	double tmp;
 	uint32_t frac;
 	int neg;
+
+	PROFILE_MARK();
 
 	/* Hacky test for NaN
 	 * under -fast-math this won't work, but then you also won't
@@ -256,58 +342,9 @@ FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendDoubleUnchecked(JSONObjectEncoder 
 }
 
 
-/*
-FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
-Thay way we won't run our head into the wall each call */
 
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_Realloc (JSONObjectEncoder *enc)
-{
-	size_t newSize = enc->end - enc->start;
-	size_t offset = enc->offset - enc->start;
-	newSize *= 2;
 
-	if (enc->heap)
-	{
-		enc->start = (char *) enc->realloc (enc->start, newSize);
-	}
-	else
-	{
-		char *oldStart = enc->start;
-		enc->heap = 1;
-		enc->start = (char *) enc->malloc (newSize);
-		memcpy (enc->start, oldStart, offset);
-	}
-	enc->offset = enc->start + offset;
-	enc->end = enc->start + newSize;
 
-}
-
-FASTCALL_ATTR void FASTCALL_MSVC Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
-{
-	//FIXME: Encode '\uXXXX' here
-	while (1)
-	{
-		switch (*inputOffset)
-		{
-			case '\0': return;
-			case '\"': *(enc->offset++) = '\\'; *(enc->offset++) = '\"';break;
-			case '\\': *(enc->offset++) = '\\'; *(enc->offset++) = '\\';break;
-			
-			/*
-			NOTE: The RFC says escape solidus but none of the reference encoders does so.
-			We don't do it either now ;)
-			case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
-			*/
-			case '\b': *(enc->offset++) = '\\'; *(enc->offset++) = 'b';break;
-			case '\f': *(enc->offset++) = '\\'; *(enc->offset++) = 'f';break;
-			case '\n': *(enc->offset++) = '\\'; *(enc->offset++) = 'n';break;
-			case '\r': *(enc->offset++) = '\\'; *(enc->offset++) = 'r';break;
-			case '\t': *(enc->offset++) = '\\'; *(enc->offset++) = 't';break;
-			default: (*enc->offset++) = *(inputOffset); break;
-		}
-		inputOffset ++;
-	}
-}
 
 /*
 FIXME:
@@ -329,6 +366,8 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 	JSONTypeContext tc;
 	size_t szlen;
 
+	PROFILE_MARK();
+
 	if (enc->level > enc->recursionMax)
 	{
 		SetError (obj, enc, "Maximum recursion level reached");
@@ -346,7 +385,10 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 	if (name)
 	{
-		Buffer_AppendEscapeUnchecked (enc, name);
+		Buffer_AppendCharUnchecked(enc, '\"');
+		Buffer_Escape(enc, name);
+		Buffer_AppendCharUnchecked(enc, '\"');
+
 		Buffer_AppendCharUnchecked (enc, ':');
 #ifndef JSON_NO_EXTRA_WHITESPACE
 		Buffer_AppendCharUnchecked (enc, ' ');
@@ -365,6 +407,9 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 		{
 			int count = 0;
 			JSOBJ iterObj;
+
+			PROFILE_MARK();
+
 			enc->iterBegin(obj, &tc);
 
 			Buffer_AppendCharUnchecked (enc, '[');
@@ -396,6 +441,9 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 			int count = 0;
 			JSOBJ iterObj;
 			char *objName;
+
+			PROFILE_MARK();
+
 			enc->iterBegin(obj, &tc);
 
 			Buffer_AppendCharUnchecked (enc, '{');
@@ -425,12 +473,16 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 		case JT_INTEGER:
 		{
+			PROFILE_MARK();
+
 			Buffer_AppendIntUnchecked (enc, enc->getLongValue(obj, &tc));
 			break;
 		}
 
 		case JT_TRUE:
 		{
+			PROFILE_MARK();
+
 			Buffer_AppendCharUnchecked (enc, 't');
 			Buffer_AppendCharUnchecked (enc, 'r');
 			Buffer_AppendCharUnchecked (enc, 'u');
@@ -441,6 +493,8 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 		case JT_FALSE:
 		{
 			//Buffer_AppendUnchecked (buffer, "false", 5);
+			PROFILE_MARK();
+
 			Buffer_AppendCharUnchecked (enc, 'f');
 			Buffer_AppendCharUnchecked (enc, 'a');
 			Buffer_AppendCharUnchecked (enc, 'l');
@@ -453,6 +507,8 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 		case JT_NULL: 
 		{
 			//Buffer_AppendUnchecked(buffer, "null", 4);
+			PROFILE_MARK();
+
 			Buffer_AppendCharUnchecked (enc, 'n');
 			Buffer_AppendCharUnchecked (enc, 'u');
 			Buffer_AppendCharUnchecked (enc, 'l');
@@ -462,6 +518,8 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 		case JT_DOUBLE:
 		{
+			PROFILE_MARK();
+
 			Buffer_AppendDoubleUnchecked (enc, enc->getDoubleValue(obj, &tc));
 			break;
 		}
@@ -469,7 +527,12 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 		case JT_UTF8:
 		{
 			const char *value = enc->getStringValue(obj, &tc, &szlen);
-			Buffer_AppendEscape(enc, value, szlen);
+			PROFILE_MARK();
+
+			Buffer_Reserve(enc, (szlen * 2) + 2);
+			Buffer_AppendCharUnchecked (enc, '\"');
+			Buffer_Escape(enc, value);
+			Buffer_AppendCharUnchecked (enc, '\"');
 			break;
 		}
 	}
@@ -519,6 +582,21 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 
 	encode (obj, enc, NULL, 0);
 	
-	Buffer_Append(enc, "\0", 1);
+	Buffer_Reserve(enc, 1);
+	Buffer_AppendCharUnchecked(enc, '\0');
+
+#ifdef __LINE_PROFILER__
+	{
+		int index;
+		for (index = 0; index < 1000; index ++)
+		{
+			if (g_profLines[index] > 0)
+				fprintf (stderr, "%d %u\n", index, g_profLines[index]);
+		}
+
+		getchar();
+	}
+#endif
+
 	return enc->start;
 }

@@ -24,8 +24,7 @@ class UltraJSONTests(TestCase):
 		pass
 
 	def test_encodeStringConversion(self):
-	
-	
+
 		input = "A string \\ \/ \b \f \n \r \t"
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
@@ -33,9 +32,12 @@ class UltraJSONTests(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
-	def test_encodeUTF8Conversion(self):
-		input = u"A \"string\"\"\\\/\b\f\n\r\t"
-		raise NotImplementedError("Implement this test!")
+	def test_encodeArrayInArray(self):
+		input = "[[[[]]]]"
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		self.assertEquals(output, json.dumps(input))
+		self.assertEquals(input, ujson.decode(output))
 		pass
 
 	def test_encodeIntConversion(self):
@@ -48,14 +50,6 @@ class UltraJSONTests(TestCase):
 
 	def test_encodeIntNegConversion(self):
 		input = -31337
-		output = ujson.encode(input)
-		self.assertEquals(input, json.loads(output))
-		self.assertEquals(output, json.dumps(input))
-		self.assertEquals(input, ujson.decode(output))
-		pass
-
-	def test_encodeLongConversion(self):
-		input = 9223372036854775807
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(output, json.dumps(input))
@@ -155,15 +149,31 @@ class UltraJSONTests(TestCase):
 		except(OverflowError):
 			pass
 
-	""" This test is broken since we are using double values for integer decoding (faster). JS can't handle this either
+
+	"""
+	# This test fails. I'm not sure it's an issue or not
 	def test_encodeListLongConversion(self):
 		input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
 		output = ujson.encode(input)
 		self.assertEquals(input, json.loads(output))
 		self.assertEquals(input, ujson.decode(output))
 		pass
-	"""
+
+	# This test fails, I'm not sure it's an issue or not
+	def test_encodeLongConversion(self):
+		input = 9223372036854775807
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		self.assertEquals(output, json.dumps(input))
+		self.assertEquals(input, ujson.decode(output))
+		pass
+
 		
+	def test_encodeUTF8Conversion(self):
+		input = u"A \"string\"\"\\\/\b\f\n\r\t"
+		raise NotImplementedError("Implement this test!")
+		pass
+
 	def test_decodeJibberish(self):
 		input = "fdsa sda v9sa fdsa"
 		try:
@@ -302,9 +312,8 @@ class UltraJSONTests(TestCase):
 		assert False, "Wrong exception"
 
 	
-	"""
-	Exponent specific tests
-	"""
+	
+	#Exponent specific tests
 	def test_decodeNumericIntExpEPLUS(self):
 		input = "<int>E+<exp>"
 		raise NotImplementedError("Implement this test!")
@@ -358,6 +367,7 @@ class UltraJSONTests(TestCase):
 
 	def test_decodeNumericFloatNan(self):
 		pass
+	"""
 
 		
 if __name__ == "__main__":

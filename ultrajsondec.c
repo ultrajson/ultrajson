@@ -75,7 +75,7 @@ double createDouble(double intNeg, double intValue, double frcValue, int frcDeci
 	return (intValue + (frcValue / g_pow10[frcDecimalCount])) * intNeg;
 }
 
-JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
+static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 {
 	ds->dec->errorOffset = ds->start + offset;
 	ds->dec->errorStr = (char *) message;
@@ -85,11 +85,17 @@ JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 {
+#ifdef JSON_NUMERIC_PRECISION_JAVASCRIPT
+	double intNeg = 1;
+	double intValue;
+#else
 	int intNeg = 1;
+	JSLONG intValue;
+#endif
+
 	double expNeg;
 	int chr;
 	int decimalCount = 0;
-	JSLONG intValue;
 	double frcValue = 0.0;
 	double expValue;
 
@@ -120,7 +126,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 		case '9':
 			//FIXME: Check for arithemtic overflow here
 			//PERF: Don't do 64-bit arithmetic here unless we know we have to
+#ifdef JSON_NUMERIC_PRECISION_JAVASCRIPT
+			intValue = intValue * 10.0 + (double) (chr - 48);
+#else
 			intValue = intValue * 10 + (JSLONG) (chr - 48);
+#endif
 			ds->start ++;
 			break;
 
@@ -146,10 +156,14 @@ BREAK_INT_LOOP:
 	ds->lastType = JT_INTEGER;
 
 	//If input string is LONGLONG_MIN here the value is already negative so we should not flip it
+
+#ifdef JSON_NUMERIC_PRECISION_JAVASCRIPT
+#else
 	if (intValue < 0)
 	{
 		intNeg = 1;
 	}
+#endif
 
 	//dbg1 = (intValue * intNeg);
 	//dbg2 = (JSLONG) dbg1;
@@ -252,10 +266,13 @@ DECODE_EXPONENT:
 
 BREAK_EXP_LOOP:
 
+#ifdef JSON_NUMERIC_PRECISION_JAVASCRIPT
+#else
 	if (intValue < 0)
 	{
 		intNeg = 1;
 	}
+#endif
 	
 	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;

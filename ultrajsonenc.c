@@ -41,60 +41,59 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <malloc.h>
 #include <math.h>
 
-typedef struct _Buffer
+
+void FASTCALL_MSVC Buffer_Realloc (JSONObjectEncoder *enc) FASTCALL_ATTR;
+void FASTCALL_MSVC Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset) FASTCALL_ATTR;
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendEscape(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
 {
-	char *start;
-	char *offset;
-	char *end;
-	int heap;
-	JSPFN_MALLOC malloc;
-	JSPFN_REALLOC realloc;
-	JSPFN_FREE free;
+	while (enc->offset + ((_len * 2) + 2) > enc->end)	
+	{
+		Buffer_Realloc(enc);
+	}
 
-} Buffer;
+	*(enc->offset++) = '\"';
+	Buffer_Escape(enc, (char *)_pstr);
+	*(enc->offset++) = '\"';
+}
 
-void Buffer_Realloc (Buffer *buffer);
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendEscapeUnchecked(JSONObjectEncoder *enc, const char *_pstr)
+{
+	*(enc->offset++) = '\"';
+	Buffer_Escape(enc, (char *)_pstr);
+	*(enc->offset++) = '\"';
+}
 
-//FIXME: Simply remove this macro
-#define FastMemCopy memcpy
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_Append(JSONObjectEncoder *enc, const char *_pstr, size_t _len)
+{
+	while (enc->offset + _len > enc->end)
+	{
+		Buffer_Realloc(enc);
+	}
+	memcpy (enc->offset, _pstr, _len);
+	enc->offset += _len;
+}
 
-//FIXME: Perhaps a bit premature. Let the compilre handle this instead and make these into functions
-#define Buffer_AppendEscape(__buffer, __pstr, __len)											\
-				while ((__buffer)->offset + ((__len * 2) + 2) > (__buffer)->end)	\
-				{																																	\
-					Buffer_Realloc((__buffer));																			\
-				}																																	\
-				*((__buffer)->offset++) = '\"';																		\
-				Buffer_Escape((__buffer), (char *)__pstr, __len);									\
-				*((__buffer)->offset++) = '\"';																		
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_Reserve(JSONObjectEncoder *enc, size_t _len)
+{
+	while (enc->offset + _len > enc->end)
+	{
+		Buffer_Realloc(enc);
+	}
+}
 
-#define Buffer_AppendEscapeUnchecked(__buffer, __pstr, __len)							\
-				*((__buffer)->offset++) = '\"';																		\
-				Buffer_Escape((__buffer), (char *)__pstr, __len);									\
-				*((__buffer)->offset++) = '\"';																		
-
-
-#define Buffer_Append(__buffer, __pstr, __len)														\
-				while ((__buffer)->offset + __len > (__buffer)->end)							\
-				{																																	\
-					Buffer_Realloc((__buffer));																			\
-				}																																	\
-				FastMemCopy ((__buffer)->offset, __pstr, __len);									\
-				(__buffer)->offset += __len;															
-
-#define Buffer_AppendUnchecked(__buffer, __pstr, __len)										\
-				FastMemCopy ((__buffer)->offset, __pstr, __len);									\
-				(__buffer)->offset += __len;															
+#define Buffer_AppendCharUnchecked(__enc, __chr)												\
+				*((__enc)->offset++) = __chr;																	\
 
 
-#define Buffer_AppendCharUnchecked(__buffer, __chr)												\
-				*((__buffer)->offset++) = __chr;																	\
-
-#define Buffer_Reserve(__buffer, __len)																		\
-				while ((__buffer)->offset + (__len) > (__buffer)->end)						\
-				{																																	\
-					Buffer_Realloc((__buffer));																			\
-				}																																	\
 
 
 /**
@@ -103,155 +102,157 @@ void Buffer_Realloc (Buffer *buffer);
  */
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-void strreverse(char* begin, char* end)
+FASTCALL_ATTR void FASTCALL_MSVC strreverse(char* begin, char* end)
 {
-    char aux;
-    while (end > begin)
-        aux = *end, *end-- = *begin, *begin++ = aux;
+	char aux;
+	while (end > begin)
+	aux = *end, *end-- = *begin, *begin++ = aux;
 }
 
-void Buffer_AppendIntUnchecked(Buffer *buffer, JSLONG value)
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSLONG value)
 {
-    char* wstr;
+	char* wstr;
 		JSULONG uvalue = (value < 0) ? -value : value;
+		wstr = enc->offset;
+	// Conversion. Number is reversed.
+	do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
+	if (value < 0) *wstr++ = '-';
 
-		// Reserve space
-		//FIXME: 33 seems a bit magic?
-		/*
-		while(buffer->offset + 33 > buffer->end)
-		{
-			Buffer_Realloc(buffer);
-		}*/
-
-		wstr = buffer->offset;
-    
-    // Conversion. Number is reversed.
-    do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
-    if (value < 0) *wstr++ = '-';
-    
-    // Reverse string
-    strreverse(buffer->offset,wstr - 1);
-		buffer->offset += (wstr - (buffer->offset));
+	// Reverse string
+	strreverse(enc->offset,wstr - 1);
+	enc->offset += (wstr - (enc->offset));
 }
 
-/*
-FIXME:
-Pass prec as a configurable parameter in a shared encoder context instead */
-
-void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, int prec)
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 {
-    /* if input is larger than thres_max, revert to exponential */
-    const double thres_max = (double)(0x7FFFFFFF);
-    int count;
-    double diff = 0.0;
-		char* str = buffer->offset;
-    char* wstr = str;
-    int whole;
-    double tmp;
-    uint32_t frac;
-		int neg;
-		
-		/* Hacky test for NaN
-     * under -fast-math this won't work, but then you also won't
-     * have correct nan values anyways.  The alternative is
-     * to link with libmath (bad) or hack IEEE double bits (bad)
-     */
-    if (! (value == value)) {
-				//FIXME: Don't return nan it's not supported by JSON
-        str[0] = 'n'; str[1] = 'a'; str[2] = 'n'; str[3] = '\0';
-        return;
-    }
+	/* if input is larger than thres_max, revert to exponential */
+	const double thres_max = (double)(0x7FFFFFFF);
+	int count;
+	double diff = 0.0;
+	char* str = enc->offset;
+	char* wstr = str;
+	int whole;
+	double tmp;
+	uint32_t frac;
+	int neg;
 
-    if (prec < 0) {
-        prec = 0;
-    } else if (prec > 9) {
-        /* precision of >= 10 can lead to overflow errors */
-        prec = 9;
-    }
+	/* Hacky test for NaN
+	 * under -fast-math this won't work, but then you also won't
+	 * have correct nan values anyways.  The alternative is
+	 * to link with libmath (bad) or hack IEEE double bits (bad)
+	 */
+	if (! (value == value)) 
+	{
+			//FIXME: Don't return nan it's not supported by JSON
+			str[0] = 'n'; str[1] = 'a'; str[2] = 'n'; str[3] = '\0';
+			return;
+	}
 
-    /* we'll work in positive values and deal with the
-       negative sign issue later */
-    neg = 0;
-    if (value < 0) {
-        neg = 1;
-        value = -value;
-    }
+	/* we'll work in positive values and deal with the
+	negative sign issue later */
+	neg = 0;
+	if (value < 0) 
+	{
+		neg = 1;
+		value = -value;
+	}
 
-    whole = (int) value;
-    tmp = (value - whole) * g_pow10[prec];
-    frac = (uint32_t)(tmp);
-    diff = tmp - frac;
+	//FIXME: Two lookups of same value in g_pow10 
+	whole = (int) value;
+	tmp = (value - whole) * g_pow10[enc->doublePrecision];
+	frac = (uint32_t)(tmp);
+	diff = tmp - frac;
 
-    if (diff > 0.5) {
-        ++frac;
-        /* handle rollover, e.g.  case 0.99 with prec 1 is 1.0  */
-        if (frac >= g_pow10[prec]) {
-            frac = 0;
-            ++whole;
-        }
-    } else if (diff == 0.5 && ((frac == 0) || (frac & 1))) {
-        /* if halfway, round up if odd, OR
-           if last digit is 0.  That last part is strange */
-        ++frac;
-    }
+	if (diff > 0.5) 
+	{
+		++frac;
+		/* handle rollover, e.g.  case 0.99 with prec 1 is 1.0  */
+		if (frac >= g_pow10[enc->doublePrecision]) 
+		{
+			frac = 0;
+			++whole;
+		}
+	} 
+	else 
+	if (diff == 0.5 && ((frac == 0) || (frac & 1))) 
+	{
+		/* if halfway, round up if odd, OR
+		if last digit is 0.  That last part is strange */
+		++frac;
+	}
 
-    /* for very large numbers switch back to native sprintf for exponentials.
-       anyone want to write code to replace this? */
-    /*
-      normal printf behavior is to print EVERY whole number digit
-      which can be 100s of characters overflowing your buffers == bad
-    */
-    if (value > thres_max) {
-				//FIXME: sprintf might code Nan or InF here, it's not in the standard
-				buffer->offset += sprintf(str, "%e", neg ? -value : value);
-        return;
-    }
+	/* for very large numbers switch back to native sprintf for exponentials.
+	anyone want to write code to replace this? */
+	/*
+	normal printf behavior is to print EVERY whole number digit
+	which can be 100s of characters overflowing your buffers == bad
+	*/
+	if (value > thres_max) 
+	{
+		//FIXME: sprintf might code Nan or InF here, it's not in the standard
+		enc->offset += sprintf(str, "%e", neg ? -value : value);
+		return;
+	}
 
-    if (prec == 0) {
-        diff = value - whole;
-        if (diff > 0.5) {
-            /* greater than 0.5, round up, e.g. 1.6 -> 2 */
-            ++whole;
-        } else if (diff == 0.5 && (whole & 1)) {
-            /* exactly 0.5 and ODD, then round up */
-            /* 1.5 -> 2, but 2.5 -> 2 */
-            ++whole;
-        }
+	if (enc->doublePrecision == 0) 
+	{
+		diff = value - whole;
 
-        //vvvvvvvvvvvvvvvvvvv  Diff from modp_dto2
-    } 
-		else if (frac) { 
+		if (diff > 0.5) 
+		{
+		/* greater than 0.5, round up, e.g. 1.6 -> 2 */
+		++whole;
+		}
+		else 
+		if (diff == 0.5 && (whole & 1)) 
+		{
+			/* exactly 0.5 and ODD, then round up */
+			/* 1.5 -> 2, but 2.5 -> 2 */
+			++whole;
+		}
 
-			count = prec;
-        // now do fractional part, as an unsigned number
-        // we know it is not 0 but we can have leading zeros, these
-        // should be removed
-        while (!(frac % 10)) {
-            --count;
-            frac /= 10;
-        }
-        //^^^^^^^^^^^^^^^^^^^  Diff from modp_dto2
+			//vvvvvvvvvvvvvvvvvvv  Diff from modp_dto2
+	} 
+	else 
+	if (frac) 
+	{ 
+		count = enc->doublePrecision;
+		// now do fractional part, as an unsigned number
+		// we know it is not 0 but we can have leading zeros, these
+		// should be removed
+		while (!(frac % 10))
+		{
+		--count;
+		frac /= 10;
+		}
+		//^^^^^^^^^^^^^^^^^^^  Diff from modp_dto2
 
-        // now do fractional part, as an unsigned number
-        do {
-            --count;
-            *wstr++ = (char)(48 + (frac % 10));
-        } while (frac /= 10);
-        // add extra 0s
-        while (count-- > 0) *wstr++ = '0';
-        // add decimal
-        *wstr++ = '.';
-    }
+		// now do fractional part, as an unsigned number
+		do 
+		{
+			--count;
+			*wstr++ = (char)(48 + (frac % 10));
+		} while (frac /= 10);
+		// add extra 0s
+		while (count-- > 0)
+		{
+			*wstr++ = '0';
+		}
+		// add decimal
+		*wstr++ = '.';
+	}
 
-    // do whole part
-    // Take care of sign
-    // Conversion. Number is reversed.
-    do *wstr++ = (char)(48 + (whole % 10)); while (whole /= 10);
-    if (neg) {
-        *wstr++ = '-';
-    }
-    strreverse(str, wstr-1);
-		buffer->offset += (wstr - (buffer->offset));
+	// do whole part
+	// Take care of sign
+	// Conversion. Number is reversed.
+	do *wstr++ = (char)(48 + (whole % 10)); while (whole /= 10);
+	
+	if (neg) 
+	{
+		*wstr++ = '-';
+	}
+	strreverse(str, wstr-1);
+	enc->offset += (wstr - (enc->offset));
 }
 
 
@@ -259,62 +260,54 @@ void Buffer_AppendDoubleUnchecked(Buffer *buffer, double value, int prec)
 FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
 Thay way we won't run our head into the wall each call */
 
-void Buffer_Realloc (Buffer *buffer)
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_Realloc (JSONObjectEncoder *enc)
 {
-	size_t newSize = buffer->end - buffer->start;
-	size_t offset = buffer->offset - buffer->start;
+	size_t newSize = enc->end - enc->start;
+	size_t offset = enc->offset - enc->start;
 	newSize *= 2;
 
-	if (buffer->heap)
+	if (enc->heap)
 	{
-		buffer->start = (char *) buffer->realloc (buffer->start, newSize);
+		enc->start = (char *) enc->realloc (enc->start, newSize);
 	}
 	else
 	{
-		char *oldStart = buffer->start;
-		buffer->heap = 1;
-		buffer->start = (char *) buffer->malloc (newSize);
-		memcpy (buffer->start, oldStart, offset);
+		char *oldStart = enc->start;
+		enc->heap = 1;
+		enc->start = (char *) enc->malloc (newSize);
+		memcpy (enc->start, oldStart, offset);
 	}
-	buffer->offset = buffer->start + offset;
-	buffer->end = buffer->start + newSize;
+	enc->offset = enc->start + offset;
+	enc->end = enc->start + newSize;
 
 }
 
-void Buffer_Escape (Buffer *buffer, char *inputOffset, size_t len)
+FASTCALL_ATTR void FASTCALL_MSVC Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
 {
-	char *inputEnd = inputOffset + len;
-	char output;
-
 	//FIXME: Encode '\uXXXX' here
 	while (1)
 	{
 		switch (*inputOffset)
 		{
 			case '\0': return;
-			case '\"': *(buffer->offset++) = '\\'; *(buffer->offset++) = '\"';break;
-			case '\\': *(buffer->offset++) = '\\'; *(buffer->offset++) = '\\';break;
+			case '\"': *(enc->offset++) = '\\'; *(enc->offset++) = '\"';break;
+			case '\\': *(enc->offset++) = '\\'; *(enc->offset++) = '\\';break;
 			
 			/*
 			NOTE: The RFC says escape solidus but none of the reference encoders does so.
 			We don't do it either now ;)
-			case '/': *(buffer->offset++) = '\\'; *(buffer->offset++) = '/';break;
+			case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
 			*/
-			case '\b': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'b';break;
-			case '\f': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'f';break;
-			case '\n': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'n';break;
-			case '\r': *(buffer->offset++) = '\\'; *(buffer->offset++) = 'r';break;
-			case '\t': *(buffer->offset++) = '\\'; *(buffer->offset++) = 't';break;
-			default: (*buffer->offset++) = *(inputOffset); break;
+			case '\b': *(enc->offset++) = '\\'; *(enc->offset++) = 'b';break;
+			case '\f': *(enc->offset++) = '\\'; *(enc->offset++) = 'f';break;
+			case '\n': *(enc->offset++) = '\\'; *(enc->offset++) = 'n';break;
+			case '\r': *(enc->offset++) = '\\'; *(enc->offset++) = 'r';break;
+			case '\t': *(enc->offset++) = '\\'; *(enc->offset++) = 't';break;
+			default: (*enc->offset++) = *(inputOffset); break;
 		}
 		inputOffset ++;
 	}
 }
-
-/*
-FIXME:
-Merge Buffer, JSONObjectEncoder and JSONTypeContext into one common type including _name, _cbName, level and obj
-*/
 
 /*
 FIXME:
@@ -324,15 +317,21 @@ Handle functions actually returning NULL here */
 FIXME:
 Perhaps implement recursion detection */
 
-void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder *def, Buffer *buffer, int insideList)
-{
-	JSONTypeContext ti;
-	size_t szlen;
-	const char *name = (insideList || level == 0) ? NULL : _name;
 
-	if (level > def->recursionMax)
+static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
+{
+	enc->errorMsg = message;
+	enc->errorObj = obj;
+}
+
+void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
+{
+	JSONTypeContext tc;
+	size_t szlen;
+
+	if (enc->level > enc->recursionMax)
 	{
-		def->recursionError = 1;
+		SetError (obj, enc, "Maximum recursion level reached");
 		return;
 	}
 
@@ -343,47 +342,52 @@ void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder
 	maxLength of double to string OR maxLength of JSLONG to string
 	*/
 
-	Buffer_Reserve(buffer, 256 + (_cbName * 2));
+	Buffer_Reserve(enc, 256 + (cbName * 2));
 
-	if (name != NULL)
+	if (name)
 	{
-		Buffer_AppendEscapeUnchecked (buffer, name, _cbName);
-		Buffer_AppendCharUnchecked (buffer, ':');
+		Buffer_AppendEscapeUnchecked (enc, name);
+		Buffer_AppendCharUnchecked (enc, ':');
 #ifndef JSON_NO_EXTRA_WHITESPACE
-		Buffer_AppendCharUnchecked (buffer, ' ');
+		Buffer_AppendCharUnchecked (enc, ' ');
 #endif
 	}
-	
-	ti.release = 0;
-	def->getType(obj, &ti);
 
-	switch (ti.type)
+	enc->beginTypeContext(obj, &tc);
+
+	switch (tc.type)
 	{
+		case JT_INVALID:
+			SetError(obj, enc, "Could not encode object");
+			return;
+
 		case JT_ARRAY:
 		{
 			int count = 0;
 			JSOBJ iterObj;
-			def->iterBegin(obj, &ti);
+			enc->iterBegin(obj, &tc);
 
-			Buffer_AppendCharUnchecked (buffer, '[');
+			Buffer_AppendCharUnchecked (enc, '[');
 
-			while (def->iterNext(obj, &ti))
+			while (enc->iterNext(obj, &tc))
 			{
 				if (count > 0)
 				{
-					Buffer_AppendCharUnchecked (buffer, ',');
+					Buffer_AppendCharUnchecked (enc, ',');
 #ifndef JSON_NO_EXTRA_WHITESPACE
 					Buffer_AppendCharUnchecked (buffer, ' ');
 #endif
 				}
 
-				iterObj = def->iterGetValue(obj, &ti);
-				encode (NULL, 0, level + 1, iterObj, def, buffer, 1);			
+				iterObj = enc->iterGetValue(obj, &tc);
+
+				enc->level ++;
+				encode (iterObj, enc, NULL, 0);			
 				count ++;
 			}
 
-			def->iterEnd(obj, &ti);
-			Buffer_AppendCharUnchecked (buffer, ']');
+			enc->iterEnd(obj, &tc);
+			Buffer_AppendCharUnchecked (enc, ']');
 			break;
 		}
 
@@ -392,58 +396,56 @@ void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder
 			int count = 0;
 			JSOBJ iterObj;
 			char *objName;
-			def->iterBegin(obj, &ti);
+			enc->iterBegin(obj, &tc);
 
-			Buffer_AppendCharUnchecked (buffer, '{');
+			Buffer_AppendCharUnchecked (enc, '{');
 
-			while (def->iterNext(obj, &ti))
+			while (enc->iterNext(obj, &tc))
 			{
 				if (count > 0)
 				{
-					Buffer_AppendCharUnchecked (buffer, ',');
+					Buffer_AppendCharUnchecked (enc, ',');
 #ifndef JSON_NO_EXTRA_WHITESPACE
-					Buffer_AppendCharUnchecked (buffer, ' ');
+					Buffer_AppendCharUnchecked (enc, ' ');
 #endif
 				}
 
-				iterObj = def->iterGetValue(obj, &ti);
-				objName = def->iterGetName(obj, &ti, &szlen);
+				iterObj = enc->iterGetValue(obj, &tc);
+				objName = enc->iterGetName(obj, &tc, &szlen);
 
-				encode (objName, szlen, level + 1, iterObj, def, buffer, 0);			
+				enc->level ++;
+				encode (iterObj, enc, objName, szlen);			
 				count ++;
 			}
 
-			def->iterEnd(obj, &ti);
-			Buffer_AppendCharUnchecked (buffer, '}');
+			enc->iterEnd(obj, &tc);
+			Buffer_AppendCharUnchecked (enc, '}');
 			break;
 		}
 
 		case JT_INTEGER:
 		{
-			JSLONG value;
-			def->getValue(obj, &ti, &value, &szlen);
-			Buffer_AppendIntUnchecked (buffer, value);
+			Buffer_AppendIntUnchecked (enc, enc->getLongValue(obj, &tc));
 			break;
 		}
 
 		case JT_TRUE:
 		{
-			//Buffer_AppendUnchecked (buffer, "true", 4);
-			Buffer_AppendCharUnchecked (buffer, 't');
-			Buffer_AppendCharUnchecked (buffer, 'r');
-			Buffer_AppendCharUnchecked (buffer, 'u');
-			Buffer_AppendCharUnchecked (buffer, 'e');
+			Buffer_AppendCharUnchecked (enc, 't');
+			Buffer_AppendCharUnchecked (enc, 'r');
+			Buffer_AppendCharUnchecked (enc, 'u');
+			Buffer_AppendCharUnchecked (enc, 'e');
 			break;
 		}
 
 		case JT_FALSE:
 		{
 			//Buffer_AppendUnchecked (buffer, "false", 5);
-			Buffer_AppendCharUnchecked (buffer, 'f');
-			Buffer_AppendCharUnchecked (buffer, 'a');
-			Buffer_AppendCharUnchecked (buffer, 'l');
-			Buffer_AppendCharUnchecked (buffer, 's');
-			Buffer_AppendCharUnchecked (buffer, 'e');
+			Buffer_AppendCharUnchecked (enc, 'f');
+			Buffer_AppendCharUnchecked (enc, 'a');
+			Buffer_AppendCharUnchecked (enc, 'l');
+			Buffer_AppendCharUnchecked (enc, 's');
+			Buffer_AppendCharUnchecked (enc, 'e');
 			break;
 		}
 
@@ -451,72 +453,72 @@ void encode(char *_name, size_t _cbName, int level, JSOBJ obj, JSONObjectEncoder
 		case JT_NULL: 
 		{
 			//Buffer_AppendUnchecked(buffer, "null", 4);
-			Buffer_AppendCharUnchecked (buffer, 'n');
-			Buffer_AppendCharUnchecked (buffer, 'u');
-			Buffer_AppendCharUnchecked (buffer, 'l');
-			Buffer_AppendCharUnchecked (buffer, 'l');
+			Buffer_AppendCharUnchecked (enc, 'n');
+			Buffer_AppendCharUnchecked (enc, 'u');
+			Buffer_AppendCharUnchecked (enc, 'l');
+			Buffer_AppendCharUnchecked (enc, 'l');
 			break;
 		}
 
 		case JT_DOUBLE:
 		{
-			double value;
-			def->getValue(obj, &ti, &value, &szlen);
-			Buffer_AppendDoubleUnchecked (buffer, value, JSON_DOUBLE_MAX_DECIMALS);
+			Buffer_AppendDoubleUnchecked (enc, enc->getDoubleValue(obj, &tc));
 			break;
 		}
 
 		case JT_UTF8:
 		{
-			char *value;
-			value = (char *) def->getValue(obj, &ti, &value, &szlen);
-			Buffer_AppendEscape(buffer, value, szlen);
+			const char *value = enc->getStringValue(obj, &tc, &szlen);
+			Buffer_AppendEscape(enc, value, szlen);
 			break;
 		}
 	}
 
-	if (ti.release)
-	{
-		def->releaseValue(&ti);
-	}
+	enc->endTypeContext(obj, &tc);
+	enc->level --;
+
 }
 
 
 
-//FIXME: Make JSON_MAX_RECURSION_DEPTH and depending on performance JSON_NO_EXTRA_WHITESPACE as configuration options
-char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *_buffer, size_t _cbBuffer)
+//FIXME: Depending on performance make JSON_NO_EXTRA_WHITESPACE as configuration option
+char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer)
 {
-	Buffer buffer;
+	enc->malloc = enc->malloc ? enc->malloc : malloc;
+	enc->free =  enc->free ? enc->free : free;
+	enc->realloc = enc->realloc ? enc->realloc : realloc;
+	enc->errorMsg = NULL;
+	enc->errorObj = NULL;
+	enc->level = 0;
 
-	buffer.malloc = def->malloc ? def->malloc : malloc;
-	buffer.free = def->free ? def->free : free;
-	buffer.realloc = def->realloc ? def->realloc : realloc;
-
-	def->recursionError = 0;
-
-	if (def->recursionMax < 1)
+	if (enc->recursionMax < 1)
 	{
-		def->recursionMax = JSON_MAX_RECURSION_DEPTH;
+		enc->recursionMax = JSON_MAX_RECURSION_DEPTH;
+	}
+
+	if (enc->doublePrecision < 0 ||
+			enc->doublePrecision > JSON_DOUBLE_MAX_DECIMALS)
+	{
+		enc->doublePrecision = JSON_DOUBLE_MAX_DECIMALS;
 	}
 
 	if (_buffer == NULL)
 	{
 		_cbBuffer = 32768;
-		buffer.start = (char *) buffer.malloc (_cbBuffer);
-		buffer.heap = 1;
+		enc->start = (char *) enc->malloc (_cbBuffer);
+		enc->heap = 1;
 	}
 	else
 	{
-		buffer.start = _buffer;
-		buffer.heap = 0;
+		enc->start = _buffer;
+		enc->heap = 0;
 	}
 
-	buffer.end = buffer.start + _cbBuffer;
-	buffer.offset = buffer.start;
+	enc->end = enc->start + _cbBuffer;
+	enc->offset = enc->start;
 
-	encode(NULL, 0, 0, obj, def, &buffer, 0);
-
-	Buffer_Append(&buffer, "\0", 1);
-	//return buffer.start;
-	return buffer.start;
+	encode (obj, enc, NULL, 0);
+	
+	Buffer_Append(enc, "\0", 1);
+	return enc->start;
 }

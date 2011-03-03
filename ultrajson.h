@@ -118,12 +118,16 @@ Encoding in details:
 #define JSON_NO_EXTRA_WHITESPACE
 
 #ifndef JSON_DOUBLE_MAX_DECIMALS
-#define JSON_DOUBLE_MAX_DECIMALS 5
+#define JSON_DOUBLE_MAX_DECIMALS 9
 #endif
 
 #ifndef JSON_MAX_RECURSION_DEPTH
 #define JSON_MAX_RECURSION_DEPTH 256
 #endif
+
+// Use the same numeric precision as JavaScript implementations does
+#define JSON_NUMERIC_PRECISION_JAVASCRIPT
+
 
 #ifdef _WIN32
 
@@ -169,21 +173,17 @@ typedef void * JSITER;
 
 typedef struct __JSONTypeContext
 {
-	// If release=1, the releaseValue function will be called with the JSONTypeContext as argument
-	int release; 
-	// Type of value see JSTYPES
 	int type;
-	// Private fields to be used by the implementor for state keeping, life cycle etc
-	void *prv[32];
+	char prv[sizeof(void *) * 15];
 } JSONTypeContext;
 
 /*
 Function pointer declarations, suitable for implementing Ultra JSON */
-typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *ti);
-typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *ti);
-typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *ti);
-typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *ti);
-typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSONTypeContext *ti, size_t *outLen);
+typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *tc);
+typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
+typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
+typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *tc);
+typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSONTypeContext *tc, size_t *outLen);
 typedef	void *(*JSPFN_MALLOC)(size_t size);
 typedef void (*JSPFN_FREE)(void *pptr);
 typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
@@ -194,8 +194,9 @@ typedef struct __JSONObjectEncoder
 	Return type of object as JSTYPES enum 
 	Implementors should setup necessary pointers or state in ti->prv
 	*/
-	void (*getType)(JSOBJ obj, JSONTypeContext *ti);
-
+	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
+	void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
+	
 	/*
 	Get value of object of a specific type
 
@@ -213,10 +214,12 @@ typedef struct __JSONObjectEncoder
 	outValue is ignored
 	set _outLen to length of returned string buffer (in bytes without trailing '\0') 
 
-	If it's required that returned resources are freed or released, set ti->release to 1 and releaseValue will be called with JSONTypeContext as argument.
+	If it's required that returned resources are freed or released, set ti->release to 1 and releaseValue will be called with JSONIterContext as argument.
 	Use ti->prv fields to store state for this
 	*/
-	void *(*getValue)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
+	const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
+	JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
+	double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 
 	/*
 	Begin iteration of an iteratable object (JS_ARRAY or JS_OBJECT) 
@@ -252,7 +255,7 @@ typedef struct __JSONObjectEncoder
 	Release a value as indicated by setting ti->release = 1 in the previous getValue call.
 	The ti->prv array should contain the necessary context to release the value
 	*/
-	void (*releaseValue)(JSONTypeContext *ti);
+	void (*releaseObject)(JSOBJ obj);
 
 	/* Library functions 
 	Set to NULL to use STDLIB malloc,realloc,free */
@@ -265,9 +268,22 @@ typedef struct __JSONObjectEncoder
 	int recursionMax;
 
 	/*
-	If equals 1 at the end of the encoding the recursionMax limit was hit meaning
-	either a recursive object scenario was found or the recursion was too deep */
-	int recursionError;
+	Configuration for max decimals of double floating poiunt numbers to encode (0-9) */
+	int doublePrecision;
+
+
+
+	/*
+	Set to an error message if error occured */
+	char *errorMsg;
+	JSOBJ errorObj;
+
+	/* Buffer stuff */
+	char *start;
+	char *offset;
+	char *end;
+	int heap;
+	int level;
 
 } JSONObjectEncoder;
 
@@ -291,7 +307,7 @@ Life cycle of the provided buffer must still be handled by caller.
 If the return value doesn't equal the specified buffer caller must release the memory using
 JSONObjectEncoder.free or free() as specified when calling this function.
 */
-EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *def, char *buffer, size_t cbBuffer);
+EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer);
 
 
 
@@ -313,6 +329,7 @@ typedef struct __JSONObjectDecoder
 
 	char *errorStr;
 	char *errorOffset;
+
 
 
 } JSONObjectDecoder;

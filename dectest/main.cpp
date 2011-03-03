@@ -11,19 +11,22 @@ extern "C"
 #include <time.h>
 
 //char indata[] = "[[{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]]]";
-char indata[] = "[9223372036854775807]";
+char indata[] = "[[{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"liked\": 31231.31231202, \"jobs\": [1, 2], \"currJob\": null, \"approval\": 31.147099999999998, \"age\": 213, \"isAuthorized\": true, \"userId\": 3381293, \"fullname\": \"John Doe the Second\"}]]]";
+
 using namespace std;
 
 class BaseObject
 {
 private:
 	JSTYPES m_type;
+	int m_cRef;
 
 public:
 
 	BaseObject (JSTYPES _type)
 	{
 		m_type = _type;
+		m_cRef = 1;
 	}
 
 	virtual ~BaseObject()
@@ -37,31 +40,46 @@ public:
 
 	virtual void print(int level, FILE *file) = 0;
 
-	virtual void iterBegin(JSTYPEINFO *ti)
+	virtual void iterBegin(JSONTypeContext *tc)
 	{
 		assert (false);
 	}
 
-	virtual int iterNext(JSTYPEINFO *ti)
+	virtual int iterNext(JSONTypeContext *tc)
 	{
 		assert (false);
 		return 0;
 	}
 
-	void iterEnd(JSTYPEINFO *ti)
+	void iterEnd(JSONTypeContext *tc)
 	{
 	}
 
-	virtual JSOBJ iterGetValue(JSTYPEINFO *ti)
+	virtual JSOBJ iterGetValue(JSONTypeContext *tc)
 	{
 		assert (false);
 		return NULL;
 	}
 
-	virtual char *iterGetName(JSTYPEINFO *ti, size_t *outLen)
+	virtual char *iterGetName(JSONTypeContext *tc, size_t *outLen)
 	{
 		assert (false);
 		return NULL;
+	}
+
+	void decRef()
+	{
+		m_cRef --;
+
+		if (m_cRef == 0)
+		{
+			delete this;
+		}
+	}
+
+	void incRef()
+	{
+		m_cRef ++;
 	}
 
 };
@@ -177,8 +195,8 @@ public:
 	{
 		for (map<StringObject *, BaseObject *>::iterator iter = m_map.begin(); iter != m_map.end(); iter ++)
 		{
-			delete (iter->first);
-			delete (iter->second);
+			(iter->first)->decRef();
+			(iter->second)->decRef();
 		}
 
 	}
@@ -214,13 +232,13 @@ public:
 
 	}
 
-	virtual void iterBegin(JSTYPEINFO *ti)
+	virtual void iterBegin(JSONTypeContext *tc)
 	{
 		m_iter = m_map.begin();
 		m_iterCount = 0;
 	}
 
-	virtual int iterNext(JSTYPEINFO *ti)
+	virtual int iterNext(JSONTypeContext *tc)
 	{
 		if (m_iterCount == 0)
 		{
@@ -244,12 +262,12 @@ public:
 		return 1;
 	}
 
-	virtual JSOBJ iterGetValue(JSTYPEINFO *ti)
+	virtual JSOBJ iterGetValue(JSONTypeContext *tc)
 	{
 		return m_iter->second;
 	}
 
-	virtual char *iterGetName(JSTYPEINFO *ti, size_t *outLen)
+	virtual char *iterGetName(JSONTypeContext *tc, size_t *outLen)
 	{
 		*outLen = m_iter->first->getValue().size();
 		return (char *) m_iter->first->getValue().c_str(); 
@@ -274,7 +292,7 @@ public:
 	{
 		for (list<BaseObject *>::iterator iter = m_list.begin(); iter != m_list.end(); iter ++)
 		{
-			delete (*iter);
+			(*iter)->decRef();
 		}
 	}
 
@@ -303,12 +321,12 @@ public:
 		fprintf (file, "]");
 	}
 	
-	virtual void iterBegin(JSTYPEINFO *ti)
+	virtual void iterBegin(JSONTypeContext *tc)
 	{
 		m_iterCount = 0;
 	}
 
-	virtual int iterNext(JSTYPEINFO *ti)
+	virtual int iterNext(JSONTypeContext *tc)
 	{
 		if (m_iterCount == 0)
 		{
@@ -332,7 +350,7 @@ public:
 		return 1;
 	}
 
-	virtual JSOBJ iterGetValue(JSTYPEINFO *ti)
+	virtual JSOBJ iterGetValue(JSONTypeContext *tc)
 	{
 		return *m_iter;
 	}
@@ -342,119 +360,120 @@ public:
 
 JSOBJ Object_newString(char *start, char *end)
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new StringObject(start, end);
 }
 
 void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
-	/**/return;
+	//return;
 	((MapObject *)obj)->addKey( (StringObject *) name, (BaseObject *) value);
 }
 
 void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 {
-	/**/return;
+	//return;
 	((ListObject *)obj)->addItem( (ListObject *) value);
 }
 
 JSOBJ Object_newTrue()
 { 
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(true, JT_TRUE);
 }
 
 JSOBJ Object_newFalse()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(false, JT_FALSE);
 }
 
 JSOBJ Object_newNull()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new NullObject();
 }
 
 JSOBJ Object_newObject()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new MapObject();
 }
 
 JSOBJ Object_newArray()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new ListObject();
 }
 
 JSOBJ Object_newInteger(JSLONG value)
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new IntegerObject(value);
 }
 
 JSOBJ Object_newDouble(double value)
 { 
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new DoubleObject(value);
 }
 
-void Object_getType(JSOBJ obj, JSTYPEINFO *ti)
+void Object_beginTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
-	ti->type = ((BaseObject *)obj)->getType();
+	tc->type = ((BaseObject *)obj)->getType();
 }
 
-void *Object_getValue(JSOBJ obj, JSTYPEINFO *ti, void *outValue, size_t *_outLen)
+void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
-	switch (ti->type)
-	{
-		case JT_INTEGER:
-			*((JSLONG *)outValue) = ((IntegerObject*)obj)->getValue();
-			break;
-		case JT_DOUBLE:
-			*((double *)outValue) = ((DoubleObject*)obj)->getValue();
-			break;
-		case JT_UTF8:
-			*_outLen = ((StringObject *) obj)->getValue().size();
-			return (void *) ((StringObject *) obj)->getValue().c_str ();
-
-		default:
-			assert(false);
-
-	}
-
-	return NULL;
 }
 
-void Object_iterBegin(JSOBJ obj, JSTYPEINFO *ti)
+JSLONG Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	((BaseObject *)obj)->iterBegin(ti);
+	return ((IntegerObject*)obj)->getValue();
+}
+
+double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
+{
+	return ((DoubleObject*)obj)->getValue();
+}
+
+const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
+{
+	const string &str = ((StringObject *) obj)->getValue();
+
+	*_outLen = str.size();
+	return str.c_str();
+}
+
+void Object_iterBegin(JSOBJ obj, JSONTypeContext *tc)
+{
+	((BaseObject *)obj)->iterBegin(tc);
 
 }
 
-int Object_iterNext(JSOBJ obj, JSTYPEINFO *ti)
+int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-	return ((BaseObject *)obj)->iterNext(ti);
+	return ((BaseObject *)obj)->iterNext(tc);
 }
 
-void Object_iterEnd(JSOBJ obj, JSTYPEINFO *ti)
+void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
-	((BaseObject *)obj)->iterEnd(ti);
+	((BaseObject *)obj)->iterEnd(tc);
 }
 
-JSOBJ Object_iterGetValue(JSOBJ obj, JSTYPEINFO *ti)
+JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	return ((BaseObject *)obj)->iterGetValue(ti);
+	return ((BaseObject *)obj)->iterGetValue(tc);
 }
 
-char *Object_iterGetName(JSOBJ obj, JSTYPEINFO *ti, size_t *outLen)
+char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
-	return ((BaseObject *)obj)->iterGetName(ti, outLen);
+	return ((BaseObject *)obj)->iterGetName(tc, outLen);
 }
 
-void Object_releaseValue(JSTYPEINFO *ti)
+void Object_releaseObject(JSOBJ obj)
 {
+
 }
 
 int main (int argc, char **argv)
@@ -462,19 +481,22 @@ int main (int argc, char **argv)
 	BaseObject *obj;
 	
 	JSONObjectEncoder encoder;
-	encoder.getType = Object_getType;
-	encoder.getValue = Object_getValue;
+	encoder.getLongValue = Object_getLongValue;
+	encoder.getDoubleValue = Object_getDoubleValue;
+	encoder.getStringValue = Object_getStringValue;
+	encoder.beginTypeContext = Object_beginTypeContext;
+	encoder.endTypeContext = Object_endTypeContext;
+
 	encoder.iterBegin = Object_iterBegin;
 	encoder.iterNext = Object_iterNext;
 	encoder.iterEnd = Object_iterEnd;
 	encoder.iterGetValue = Object_iterGetValue;
 	encoder.iterGetName = Object_iterGetName;
-	encoder.releaseValue = Object_releaseValue;
+	encoder.releaseObject = Object_releaseObject;
 	encoder.malloc = malloc;
 	encoder.realloc = realloc;
 	encoder.free = free;
 	encoder.recursionMax = 0;
-	encoder.recursionError = 0;
 
 	JSONObjectDecoder decoder;
 	decoder.arrayAddItem = Object_arrayAddItem;
@@ -494,36 +516,31 @@ int main (int argc, char **argv)
 	char buffer[65536];
 	#define N 1000000
 
-	char *pindata = (char *) malloc(sizeof(indata) + 256);
 
-	memcpy(pindata, indata, sizeof (indata));
+	obj = (BaseObject *) JSON_DecodeObject(&decoder, indata, sizeof (indata));
 
-	for (size_t index = sizeof(indata); index < sizeof(indata) + 256; index ++)
-	{
-		pindata[index] = ']';
-	}
+	size_t cCount = 0;
+
+	time_t tsStart = time(0);
 
 	while (true)
 	{
-
-		DWORD tsStart = GetTickCount();
-
-		for (int index = 0; index < N; index ++)
+		for (int index = 0; index < 1; index ++)
 		{
-
-			obj = (BaseObject *) JSON_DecodeObject (&decoder, indata, sizeof (indata));
-
-			assert (decoder.errorStr == NULL);
-			assert (obj);
-
-			//obj->print(0, stderr);
-			//fprintf (stderr, "\n");
-
-			//delete obj;
+			JSON_EncodeObject(obj, &encoder, buffer, sizeof (buffer));
+			obj->decRef();
+			obj = (BaseObject *) JSON_DecodeObject (&decoder, buffer, strlen(buffer));
 		}
 
-		DWORD tsElapsed = GetTickCount () - tsStart;
-		fprintf (stderr, "%s: Per sec %f\n", __FUNCTION__, (float) N / ((float) tsElapsed / 1000.0f));
+		cCount += 1;
+		time_t tsNow = time(0);
+
+		if (tsStart != tsNow)
+		{
+			fprintf (stderr, "%u / sec\n", cCount);
+			tsStart = tsNow;
+			cCount = 0;
+		}
 	}
 
 	getchar();

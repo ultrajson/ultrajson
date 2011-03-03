@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	print "Ready? Configure affinity and priority, starting in 20..."
 	time.sleep(20)
 	
-	COUNT = 30000
+	COUNT = 10000
 	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
 	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
 	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )

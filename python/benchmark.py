@@ -47,7 +47,7 @@ if __name__ == "__main__":
 	import timeit
 	
 	print "Ready? Configure affinity and priority, starting in 20..."
-	#time.sleep(20)
+	time.sleep(20)
 
 
 	print "Medium complex object:"

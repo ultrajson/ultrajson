@@ -55,6 +55,9 @@ JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 
 
+/*
+FIXME: Maybe move this to inside of createDouble function. Might increase memory locality and worst case 
+possibly polute the global namespace less */
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
 
@@ -337,27 +340,6 @@ SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'null'");
 }
 
-
-static char g_unescapeLookup[] = {
-	/*				 0x00   0x01   0x02    0x03   0x04   0x05    0x06  0x07   0x08   0x09   0x0a   0x0b   0x0c   0x0d   0x0e   0x0f */
-	/* 0x00 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x10 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x20 */ '\0',  '\0',  '\"',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x30 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x40 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x50 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x60 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x70 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x80 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0x90 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xa0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xb0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xc0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xd0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xe0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-	/* 0xf0 */ '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',
-};
-
 FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds) 
 {
 	while (1)
@@ -370,18 +352,6 @@ FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 		case '\n':
 			ds->start ++;
 			break;
-
-			/*
-			case '\x00':
-			case '\x01':
-			case '\x02':
-			case '\x03':
-			case '\x04':
-			case '\x05':
-			case '\x06':
-			case '\x07':
-			return;
-			*/
 
 		default:
 			return;
@@ -480,8 +450,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
 		if (itemValue == NULL)
 		{
-			ds->lastType = JT_ARRAY;
-			return newObj;
+			ds->dec->releaseObject(newObj);
+			return NULL;
 		}
 
 		ds->dec->arrayAddItem (newObj, itemValue);
@@ -497,12 +467,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 				break;
 
 			default:
+				ds->dec->releaseObject(newObj);
 				return SetError(ds, -1, "Unexpected character in found when decoding array value");
 		}
 	}
 
-	//FIXME: Must release newObj here!
-
+	ds->dec->releaseObject(newObj);
 	return SetError(ds, -1, "Unmatched ']' when decoding 'array'");
 }
 
@@ -529,15 +499,16 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 		ds->lastType = JT_INVALID;
 		itemName = decode_any(ds);
 
-		//FIXME: Why should we accept this?
 		if (itemName == NULL)
 		{
-			ds->lastType = JT_OBJECT;
+			ds->dec->releaseObject(newObj);
 			return newObj;
 		}
 
 		if (ds->lastType != JT_UTF8)
 		{
+			ds->dec->releaseObject(newObj);
+			ds->dec->releaseObject(itemName);
 			return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
 		}
 
@@ -545,6 +516,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
 		if (*(ds->start++) != ':')
 		{
+			ds->dec->releaseObject(newObj);
+			ds->dec->releaseObject(itemName);
 			return SetError(ds, -1, "No ':' found when decoding object value");
 		}
 
@@ -552,9 +525,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
 		itemValue = decode_any(ds);
 
-		//FIXME: itemName will leak here
 		if (itemValue == NULL)
 		{
+			ds->dec->releaseObject(newObj);
+			ds->dec->releaseObject(itemName);
 			return newObj;
 		}
 
@@ -571,12 +545,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 				break;
 
 			default:
+				ds->dec->releaseObject(newObj);
 				return SetError(ds, -1, "Unexpected character in found when decoding object value");
 		}
 	}
 
-	//FIXME: newobj will leak here
-
+	ds->dec->releaseObject(newObj);
 	return SetError(ds, -1, "Unmatched '}' when decoding object");
 }
 
@@ -640,55 +614,6 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	ds.dec = dec;
 	ds.dec->errorStr = NULL;
 	ds.dec->errorOffset = NULL;
-
-	if (s_once)
-	{
-		//FIXME: Move to static initialization instead
-		/*
-		g_identTable['\"'] = decode_string;
-		g_identTable['0'] = decode_numeric;
-		g_identTable['1'] = decode_numeric;
-		g_identTable['2'] = decode_numeric;
-		g_identTable['3'] = decode_numeric;
-		g_identTable['4'] = decode_numeric;
-		g_identTable['5'] = decode_numeric;
-		g_identTable['6'] = decode_numeric;
-		g_identTable['7'] = decode_numeric;
-		g_identTable['8'] = decode_numeric;
-		g_identTable['9'] = decode_numeric;
-		g_identTable['0'] = decode_numeric;
-		g_identTable['-'] = decode_numeric;
-		g_identTable['['] = decode_array;
-		g_identTable['{'] = decode_object; 
-		g_identTable['t'] = decode_true;
-		g_identTable['f'] = decode_false;
-		g_identTable['n'] = decode_null; 
-		g_identTable['}'] = decode_object_end; 
-		g_identTable[']'] = decode_array_end; 
-		g_identTable[','] = decode_item_separator; 
-		for (index = 0; index < 33; index ++)
-		{
-			g_identTable[index] = (PFN_DECODER) 1; 
-		}
-		*/
-
-		for (index = 0; index < 256; index ++)
-		{
-			g_unescapeLookup[index] = '\0';
-		}
-
-		g_unescapeLookup['\\'] = '\\';
-		g_unescapeLookup['\"'] = '\"';
-		g_unescapeLookup['/'] = '/';
-		g_unescapeLookup['b'] = '\b';
-		g_unescapeLookup['f'] = '\f';
-		g_unescapeLookup['n'] = '\n';
-		g_unescapeLookup['r'] = '\r';
-		g_unescapeLookup['t'] = '\t';
-
-		//FIXME: Implement unicode decode here
-		s_once = 0;
-	}
 
 	ds.dec = dec;
 

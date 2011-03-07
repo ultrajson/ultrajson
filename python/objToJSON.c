@@ -611,7 +611,7 @@ double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
 	return ret;
 }
 
-void Object_releaseObject(JSOBJ *_obj)
+static void Object_releaseObject(JSOBJ *_obj)
 {
 	Py_DECREF( (PyObject *) _obj);
 }

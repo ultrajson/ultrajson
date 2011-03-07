@@ -61,6 +61,11 @@ JSOBJ Object_newDouble(double value)
 	return PyFloat_FromDouble(value);
 }
 
+static void Object_releaseObject(JSOBJ obj)
+{
+	Py_DECREF( ((PyObject *)obj));
+}
+
 
 
 PyObject* JSONToObj(PyObject* self, PyObject *arg)
@@ -78,6 +83,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		Object_newArray,
 		Object_newInteger,
 		Object_newDouble,
+		Object_releaseObject,
 		PyObject_Malloc,
 		PyObject_Free,
 		PyObject_Realloc

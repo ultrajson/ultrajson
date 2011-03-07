@@ -475,7 +475,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 void Object_releaseObject(JSOBJ obj)
 {
-
+	delete (BaseObject *) obj;
 }
 
 int main (int argc, char **argv)
@@ -514,6 +514,7 @@ int main (int argc, char **argv)
 	decoder.malloc = malloc;
 	decoder.free = free;
 	decoder.realloc = realloc;
+	decoder.releaseObject = Object_releaseObject;
 
 	char buffer[65536];
 	#define N 1000000

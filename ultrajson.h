@@ -328,6 +328,7 @@ typedef struct __JSONObjectDecoder
 	JSOBJ (*newArray)();
 	JSOBJ (*newInteger)(JSLONG value);
 	JSOBJ (*newDouble)(double value);
+	void (*releaseObject)(JSOBJ obj);
 	JSPFN_MALLOC malloc;
 	JSPFN_FREE free;
 	JSPFN_REALLOC realloc;

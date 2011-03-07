@@ -166,30 +166,6 @@ class UltraJSONTests(TestCase):
 			pass
 
 
-	"""
-	# This test fails. I'm not sure it's an issue or not
-	def test_encodeListLongConversion(self):
-		input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
-		output = ujson.encode(input)
-		self.assertEquals(input, json.loads(output))
-		self.assertEquals(input, ujson.decode(output))
-		pass
-
-	# This test fails, I'm not sure it's an issue or not
-	def test_encodeLongConversion(self):
-		input = 9223372036854775807
-		output = ujson.encode(input)
-		self.assertEquals(input, json.loads(output))
-		self.assertEquals(output, json.dumps(input))
-		self.assertEquals(input, ujson.decode(output))
-		pass
-
-		
-	def test_encodeUTF8Conversion(self):
-		input = u"A \"string\"\"\\\/\b\f\n\r\t"
-		raise NotImplementedError("Implement this test!")
-		pass
-
 	def test_decodeJibberish(self):
 		input = "fdsa sda v9sa fdsa"
 		try:
@@ -288,6 +264,96 @@ class UltraJSONTests(TestCase):
 		except(ValueError):
 			return
 		assert False, "Wrong exception"
+			
+
+	def test_decodeBrokenDictKeyTypeLeakTest(self):
+		input = '{{1337:""}}'
+		for x in xrange(1000):
+			try:
+				ujson.decode(input)
+				assert False, "Expected exception!"
+			except(ValueError),e:
+				continue
+
+			assert False, "Wrong exception"
+			
+	def test_decodeBrokenDictLeakTest(self):
+		input = '{{"key":"}'
+		for x in xrange(1000):
+			try:
+				ujson.decode(input)
+				assert False, "Expected exception!"
+			except(ValueError):
+				continue
+
+			assert False, "Wrong exception"
+			
+	def test_decodeBrokenListLeakTest(self):
+		input = '[[[true'
+		for x in xrange(1000):
+			try:
+				ujson.decode(input)
+				assert False, "Expected exception!"
+			except(ValueError):
+				continue
+
+			assert False, "Wrong exception"
+
+	def test_decodeDictWithNoKey(self):
+		input = "{{{{31337}}}}"
+		try:
+			ujson.decode(input)
+			assert False, "Expected exception!"
+		except(ValueError):
+			return
+
+		assert False, "Wrong exception"
+
+	def test_decodeDictWithNoColonOrValue(self):
+		input = "{{{{\"key\"}}}}"
+		try:
+			ujson.decode(input)
+			assert False, "Expected exception!"
+		except(ValueError):
+			return
+
+		assert False, "Wrong exception"
+
+	def test_decodeDictWithNoValue(self):
+		input = "{{{{\"key\":}}}}"
+		try:
+			ujson.decode(input)
+			assert False, "Expected exception!"
+		except(ValueError):
+			return
+
+		assert False, "Wrong exception"
+
+			
+	"""
+	# This test fails. I'm not sure it's an issue or not
+	def test_encodeListLongConversion(self):
+		input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		self.assertEquals(input, ujson.decode(output))
+		pass
+
+	# This test fails, I'm not sure it's an issue or not
+	def test_encodeLongConversion(self):
+		input = 9223372036854775807
+		output = ujson.encode(input)
+		self.assertEquals(input, json.loads(output))
+		self.assertEquals(output, json.dumps(input))
+		self.assertEquals(input, ujson.decode(output))
+		pass
+
+		
+	def test_encodeUTF8Conversion(self):
+		input = u"A \"string\"\"\\\/\b\f\n\r\t"
+		raise NotImplementedError("Implement this test!")
+		pass
+
 
 	def test_decodeNumericIntExp(self):
 		input = "<int>E<exp>"
@@ -384,22 +450,7 @@ class UltraJSONTests(TestCase):
 	def test_decodeNumericFloatNan(self):
 		pass
 
-	# Should fail!
-	def test_decodeDictWithNoKey(self):
-		input = "{{{{31337}}}}"
-		raise NotImplementedError("Implement this test!")
-
-	# Should fail!
-	def test_decodeDictWithNoColonOrValue(self):
-		input = "{{{{"key"}}}}"
-		raise NotImplementedError("Implement this test!")
-
-	# Should fail!
-	def test_decodeDictWithNoValue(self):
-		input = "{{{{"key":}}}}"
-		raise NotImplementedError("Implement this test!")
-		
-		"""
+	"""
 
 		
 if __name__ == "__main__":

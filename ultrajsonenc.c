@@ -38,7 +38,7 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h>
 
 #ifndef TRUE

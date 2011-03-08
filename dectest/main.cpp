@@ -10,11 +10,16 @@ extern "C"
 #include <assert.h>
 #include <time.h>
 
-char indata[] = "[[{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]]]";
+//char indata[] = "[[{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]], [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, [{\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}, {\"username\": \"johndoe\", \"jobs\": [1, 2], \"isAuthorized\": true, \"userId\": 3381293, \"currJob\": null, \"approval\": 31.147099999999998, \"fullname\": \"John Doe the Second\"}]]]";
 //char indata[] = "[[[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]] ]";
 //char indata[] = "[[[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]] ]";
 //char indata[] = "[[[[]]]]";
 
+//char indata[] = "R├ñksm├Ârg├Ñs ÏºÏ│Ïº┘àÏ® Ï¿┘å ┘àÏ¡┘àÏ» Ï¿┘å Ï╣┘êÏÂ Ï¿┘å ┘äÏºÏ»┘å";
+//char indata[] = "اسامة بن محمد بن عوض بن لادن,";
+char indata[] = "\xf3\xbf\xbf\xbfTRAILINGNORMAL";
+/*
+\xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e*/
 using namespace std;
 
 class BaseObject
@@ -384,68 +389,68 @@ public:
 
 JSOBJ Object_newString(char *start, char *end)
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new StringObject(start, end);
 }
 
 void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
-	/**/return;
+	//return;
 	((MapObject *)obj)->addKey( (StringObject *) name, (BaseObject *) value);
 }
 
 void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 {
-	/**/return;
+	//return;
 	((ListObject *)obj)->addItem( (ListObject *) value);
 }
 
 JSOBJ Object_newTrue()
 { 
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(true, JT_TRUE);
 }
 
 JSOBJ Object_newFalse()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(false, JT_FALSE);
 }
 
 JSOBJ Object_newNull()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new NullObject();
 }
 
 JSOBJ Object_newObject()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new MapObject();
 }
 
 JSOBJ Object_newArray()
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new ListObject();
 }
 
 JSOBJ Object_newLong(JSINT64 value)
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new LongObject(value);
 }
 
 JSOBJ Object_newInteger(JSINT32 value)
 {
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new IntegerObject(value);
 }
 
 
 JSOBJ Object_newDouble(double value)
 { 
-	/**/return (JSOBJ) 1;
+	//return (JSOBJ) 1;
 	return (JSOBJ) new DoubleObject(value);
 }
 
@@ -555,35 +560,11 @@ int main (int argc, char **argv)
 	char buffer[65536];
 	#define N 10000
 
+	obj = new StringObject(indata, indata + sizeof(indata));
 
-	obj = (BaseObject *) JSON_DecodeObject(&decoder, indata, sizeof (indata));
+	JSON_EncodeObject (obj, &encoder, buffer, sizeof (buffer));
 
-	size_t cCount = 0;
-
-	time_t tsStart = time(0);
-
-	while (true)
-	{
-		for (int index = 0; index < N; index ++)
-		{
-			//JSON_EncodeObject(obj, &encoder, buffer, sizeof (buffer));
-			//obj->decRef();
-			obj = (BaseObject *) JSON_DecodeObject (&decoder, indata, sizeof (indata));
-			//obj->print(0, stderr);
-			//obj->decRef();
-		}
-
-		cCount += 1;
-		time_t tsNow = time(0);
-
-		if (tsStart != tsNow)
-		{
-			//fprintf (stderr, "%u / sec\n", cCount);
-			tsStart = tsNow;
-			cCount = 0;
-		}
-	}
-
+	BaseObject *obj2 = (BaseObject *) JSON_DecodeObject(&decoder, buffer, strlen(buffer));
 	getchar();
 	return 0;
 }

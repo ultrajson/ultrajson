@@ -128,6 +128,11 @@ Encoding in details:
 // Use the same numeric precision as JavaScript implementations does
 #define JSON_NUMERIC_PRECISION_JAVASCRIPT
 
+/*
+Dictates and limits how much stack space for buffers UltraJSON will use before resorting to provided heap functions */
+#ifndef JSON_MAX_STACK_BUFFER_SIZE
+#define JSON_MAX_STACK_BUFFER_SIZE 131072
+#endif
 
 #ifdef _WIN32
 
@@ -137,6 +142,9 @@ typedef unsigned __int64 JSUINT64;
 typedef unsigned __int32 uint32_t;
 typedef __int32 JSINT32;
 typedef uint32_t JSUINT32;
+
+typedef unsigned __int16 JSUTF16;
+typedef unsigned __int32 JSUTF32;
 
 
 #define EXPORTFUNCTION __declspec(dllexport)
@@ -165,6 +173,10 @@ typedef u_int32_t JSUINT32;
 #define INLINE_PREFIX inline
 
 typedef u_int32_t uint32_t;
+
+typedef u_int16_t JSUTF16;
+typedef u_int16_t JSUTF32;
+
 #define EXPORTFUNCTION
 #endif
 
@@ -285,7 +297,6 @@ typedef struct __JSONObjectEncoder
 	/*
 	Configuration for max decimals of double floating poiunt numbers to encode (0-9) */
 	int doublePrecision;
-
 
 
 	/*

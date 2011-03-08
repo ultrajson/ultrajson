@@ -371,14 +371,25 @@ FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 	}
 }
 
+#define MASKBITS 0x3F
+#define MASKBYTE 0x80
+#define MASK2BYTES 0xC0
+#define MASK3BYTES 0xE0
+#define MASK4BYTES 0xF0
+#define MASK5BYTES 0xF8
+#define MASK6BYTES 0xFC
+
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
+	JSUTF16 sur[2] = { 0 };
+	int iSur = 0;
 	char *escOffset;
 	char chr;
 	size_t escLen = (ds->escEnd - ds->escStart);
 	char *inputOffset;
 	ds->lastType = JT_INVALID;
 	ds->start ++;
+
 
 	if ( (ds->end - ds->start) > escLen)
 	{
@@ -428,6 +439,140 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 			case 'n':  *(escOffset++) = '\n'; inputOffset++; continue;
 			case 'r':  *(escOffset++) = '\r'; inputOffset++; continue;
 			case 't':  *(escOffset++) = '\t'; inputOffset++; continue;
+
+			case 'u':
+			{
+				int index;
+				JSUTF32 u32chr;
+				inputOffset ++;
+
+				//FIXME: Can't use this function in real life
+
+				for (index = 0; index < 4; index ++)
+				{
+					switch (*inputOffset)
+					{
+						case '\0':	return SetError (ds, -1, "Unterminated unicode escape sequence when decoding 'string'");
+						default:		return SetError (ds, -1, "Unexpected character in unicode escape sequence when decoding 'string'");
+
+						case '0':
+						case '1':
+						case '2':
+						case '3':
+						case '4':
+						case '5':
+						case '6':
+						case '7':
+						case '8':
+						case '9':
+							sur[iSur] = (sur[iSur] << 4) + (JSUTF16) (*inputOffset - '0');
+							break;
+
+						case 'a':
+						case 'b':
+						case 'c':
+						case 'd':
+						case 'e':
+						case 'f':
+							sur[iSur] = (sur[iSur] << 4) + 10 + (JSUTF16) (*inputOffset - 'a');
+							break;
+
+						case 'A':
+						case 'B':
+						case 'C':
+						case 'D':
+						case 'E':
+						case 'F':
+							sur[iSur] = (sur[iSur] << 4) + 10 + (JSUTF16) (*inputOffset - 'A');
+							break;
+					}
+
+					inputOffset ++;
+				}
+
+
+				if (iSur == 0)
+				{
+					if((sur[iSur] & 0xfc00) == 0xd800)
+					{
+						// First of a surrogate pair, continue parsing
+						iSur ++;
+						break;
+					} 
+					/*
+					else
+					if ((sur[iSur] & 0xfc00) != 0xdc00)
+					{
+						// Unpaired surogate
+						return SetError (ds, -1, "Unpaired low surrogate when decoding 'string'");
+					}
+					*/
+				
+					u32chr = sur[iSur];
+					iSur = 0;
+				}
+				else
+				{
+					// Decode pair
+					if ((sur[1] & 0xfc00) != 0xdc00)
+					{
+						return SetError (ds, -1, "Unpaired high surrogate when decoding 'string'");
+					}
+
+					u32chr = 0x10000 + (((sur[0] - 0xd800) << 10) | (sur[1] - 0xdc00));
+					iSur = 0;
+				}
+
+				// Convert UTF32 char to UTF-8 (gah!)
+				if(u32chr < 0x80)
+				{
+					*(escOffset++) = u32chr;
+				}
+				else 
+				if(u32chr < 0x800)
+				{
+					*(escOffset++) = (MASK2BYTES | u32chr >> 6);
+					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+				}
+				else 
+				if(u32chr < 0x10000)
+				{
+					*(escOffset++) = (MASK3BYTES | u32chr >> 12);
+					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+				}
+				else
+				if(u32chr < 0x200000)
+				{
+					*(escOffset++) = (MASK4BYTES | u32chr >> 18);
+					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+				}
+				else
+				if(u32chr < 0x4000000)
+				{
+					*(escOffset++) = (MASK5BYTES | u32chr >> 24);
+					*(escOffset++) = (MASKBYTE | u32chr >> 18 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+				}
+				else
+				if(u32chr < 0x8000000)
+				{
+					*(escOffset++) = (MASK6BYTES | u32chr >> 30);
+					*(escOffset++) = (MASKBYTE | u32chr >> 24 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 18 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
+					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+				}
+				
+
+				break;
+			}
+
 
 			case '\0': 
 				return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
@@ -614,16 +759,16 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
 
 JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer)
 {
-	static int s_once = 1;
 
+	/*
+	FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time */
 	struct DecoderState ds;
-	int index;
-	char escBuffer[65536];
+	char escBuffer[JSON_MAX_STACK_BUFFER_SIZE];
 	JSOBJ ret;
 	
-
 	ds.start = (char *) buffer;
 	ds.end = ds.start + cbBuffer;
+
 	ds.escStart = escBuffer;
 	ds.escEnd = ds.escStart + sizeof(escBuffer);
 	ds.escHeap = 0;

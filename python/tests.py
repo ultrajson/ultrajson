@@ -1,3 +1,4 @@
+﻿# coding=UTF-8
 import unittest
 from unittest import TestCase
 
@@ -47,6 +48,51 @@ class UltraJSONTests(TestCase):
 		self.assertEquals(input, ujson.decode(output))
 		pass
 
+	def test_decodeUnicodeConversion(self):
+		pass
+
+	def test_encodeUnicodeConversion1(self):
+		input = "Räksmörgås اسامة بن محمد بن عوض بن لادن"
+		enc = ujson.encode(input)
+		dec = ujson.decode(enc)
+
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+		
+	def test_encodeUnicodeConversion2(self):
+		input = "\xe6\x97\xa5\xd1\x88"
+		enc = ujson.encode(input)
+		dec = ujson.decode(enc)
+		
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+
+	def test_encodeUnicodeSurrogatePair(self):
+		input = "\xf0\x90\x8d\x86"
+		enc = ujson.encode(input)
+		dec = ujson.decode(enc)
+				
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+		
+	def test_encodeUnicode4BytesUTF8(self):
+		input = "\xf0\xbf\xbf\xbfTRAILINGNORMAL"
+		enc = ujson.encode(input)
+		
+		dec = ujson.decode(enc)
+				
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+				
+	def test_encodeUnicode4BytesUTF8Highest(self):
+		input = "\xf3\xbf\xbf\xbfTRAILINGNORMAL"
+		enc = ujson.encode(input)
+		
+		dec = ujson.decode(enc)
+				
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))				
+		
 	def test_encodeArrayInArray(self):
 		input = [[[[]]]]
 		output = ujson.encode(input)
@@ -336,9 +382,19 @@ class UltraJSONTests(TestCase):
 	def test_decodeNumericIntNeg(self):
 		input = "-31337"
 		self.assertEquals (-31337, ujson.decode(input))
-
 		
 	"""
+	# Should fail with exception
+	def test_encodeUnicode4BytesUTF8Fail(self):
+		input = "\xfd\xbf\xbf\xbf\xbf\xbf"
+		enc = ujson.encode(input)
+		
+		dec = ujson.decode(enc)
+				
+		self.assertEquals(input, dec)
+		self.assertEquals(enc, json.dumps(input, encoding="utf-8"))				
+
+
 	# This test fails. I'm not sure it's an issue or not
 	def test_encodeListLongConversion(self):
 		input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]

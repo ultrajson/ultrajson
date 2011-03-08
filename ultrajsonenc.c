@@ -91,41 +91,158 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 	enc->end = enc->start + newSize;
 }
 
+FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
+{
+	static const char s_hexChars[] = "0123456789abcdef";
+	*(outputOffset++) = s_hexChars[(value & 0xf000) >> 12];
+	*(outputOffset++) = s_hexChars[(value & 0x0f00) >> 8];
+	*(outputOffset++) = s_hexChars[(value & 0x00f0) >> 4];
+	*(outputOffset++) = s_hexChars[(value & 0x000f) >> 0];
+
+}
+
 /*
 TODO: 
-Performance hotspot. A lot of time is spent here
-*/
-
-void Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
+Performance hotspot. A lot of time is spent here */
+void Buffer_EscapeString (JSONObjectEncoder *enc, char *io)
 {
-	char *outputOffset = enc->offset;
+	char *of = enc->offset;
 	PROFILE_MARK();
 
-	//FIXME: Encode '\uXXXX' here
 	while (1)
 	{
-		switch (*inputOffset)
+		unsigned char chr = (unsigned char) *io;
+		int temp;
+
+		if (chr >= 0x80)
 		{
+			unsigned int len = 1;
+			JSUTF32 u32chr = 0;
+
+			io ++;
+
+			while (chr & (1 << (7 - len)) && len < 4)
+			{
+				if (*io == '\0')
+				{
+					//FIXME: Suppose this is decoding error, let's not take that crap
+					return;
+				}
+
+				temp = (*io & 0x3f);
+
+				u32chr <<= 6;
+				u32chr |= (*io & 0x3f);
+
+				io ++;
+				len ++;
+			}
+
+			//u32chr >>= (len * 6);
+
+			/*
+			FIXME: Performance issue
+			I guess we can do this with a lookup of some sort */
+
+			switch (len)
+			{
+			case 2: u32chr |= (chr & 0x1f) << ((len - 1) * 6); break;
+			case 3: u32chr |= (chr & 0x0f) << ((len - 1) * 6); break;
+			case 4: u32chr |= (chr & 0x07) << ((len - 1) * 6); break;
+
+			default: 
+				/*
+				FIXME: This happens when a UTF-8 sequence which we can't encode it UTF-16 anyhow is encountered */
+				return;
+			//case 5: u32chr |= (chr & 0x03) << ((len - 1) * 6); break;
+			//case 6: u32chr |= (chr & 0x01) << ((len - 1) * 6); break;
+			}
+
+			if (u32chr > 0x10000)
+			{
+				JSUTF16 s1;
+				JSUTF16 s2;
+				u32chr -= 0x10000;
+
+				s1 = (u32chr >> 10) + 0xd800;
+				s2 = (u32chr & 0x3ff) + 0xdc00;
+
+				*(of++) = '\\';
+				*(of++) = 'u';
+				Buffer_AppendShortHexUnchecked(of, s1);
+				of += 4;
+
+				*(of++) = '\\';
+				*(of++) = 'u';
+				Buffer_AppendShortHexUnchecked(of, s2);
+				of += 4;
+			}
+			else
+			{
+				*(of++) = '\\';
+				*(of++) = 'u';
+				Buffer_AppendShortHexUnchecked(of, u32chr);
+				of += 4;
+			}
+
+
+
+
+		}
+		else
+		{
+			switch (chr)
+			{
 			case '\0': 
-				enc->offset += (outputOffset - enc->offset);
+				enc->offset += (of - enc->offset);
 				return;
 
-			case '\"': *(outputOffset++) = '\\'; *(outputOffset++) = '\"';break;
-			case '\\': *(outputOffset++) = '\\'; *(outputOffset++) = '\\';break;
-			
-			//NOTE: The RFC says escape solidus but none of the reference encoders does so.
-			//We don't do it either now ;)
-			//case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
-			case '\b': *(outputOffset++) = '\\'; *(outputOffset++) = 'b';break;
-			case '\f': *(outputOffset++) = '\\'; *(outputOffset++) = 'f';break;
-			case '\n': *(outputOffset++) = '\\'; *(outputOffset++) = 'n';break;
-			case '\r': *(outputOffset++) = '\\'; *(outputOffset++) = 'r';break;
-			case '\t': *(outputOffset++) = '\\'; *(outputOffset++) = 't';break;
-			default: (*outputOffset++) = *(inputOffset); break;
+			case '\"': *(of++) = '\\'; *(of++) = '\"';break;
+			case '\\': *(of++) = '\\'; *(of++) = '\\';break;
+
+				//NOTE: The RFC says escape solidus but none of the reference encoders does so.
+				//We don't do it either now ;)
+				//case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
+			case '\b': *(of++) = '\\'; *(of++) = 'b';break;
+			case '\f': *(of++) = '\\'; *(of++) = 'f';break;
+			case '\n': *(of++) = '\\'; *(of++) = 'n';break;
+			case '\r': *(of++) = '\\'; *(of++) = 'r';break;
+			case '\t': *(of++) = '\\'; *(of++) = 't';break;
+
+			case 0x01: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; break;
+			case 0x02: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '2'; break;
+			case 0x03: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '3'; break;
+			case 0x04: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '4'; break;
+			case 0x05: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '5'; break;
+			case 0x06: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '6'; break;
+			case 0x07: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '7'; break;
+			case 0x0b: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'b'; break;
+			case 0x0e: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'e'; break;
+			case 0x0f: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'f'; break;
+			case 0x10: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '0'; break;
+			case 0x11: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '1'; break;
+			case 0x12: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '2'; break;
+			case 0x13: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '3'; break;
+			case 0x14: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '4'; break;
+			case 0x15: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '5'; break;
+			case 0x16: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '6'; break;
+			case 0x17: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '7'; break;
+			case 0x18: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '8'; break;
+			case 0x19: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '9'; break;
+			case 0x1a: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'a'; break;
+			case 0x1b: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'b'; break;
+			case 0x1c: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'c'; break;
+			case 0x1d: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'd'; break;
+			case 0x1e: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'e'; break;
+			case 0x1f: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'f'; break;
+			default: *(of++)= chr; break;
+			}
+			io ++;
 		}
-		inputOffset ++;
 	}
 }
+
+
 
 
 
@@ -406,6 +523,15 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 	length of _name as encoded worst case +
 	maxLength of double to string OR maxLength of JSLONG to string
+
+	Since input is assumed to be UTF-8 the worst character length is:
+	
+	UTF-8:   6 bytes (31 bit real data) =>
+	UCS-4:   4 bytes =>
+	UTF-16:  2 surrogate pairs (4 bytes) =>
+	Encoded: \uXXXX\uXXXX (12 bytes)
+
+	12 / 6 => 2
 	*/
 
 	Buffer_Reserve(enc, 256 + (cbName * 2));
@@ -413,7 +539,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 	if (name)
 	{
 		Buffer_AppendCharUnchecked(enc, '\"');
-		Buffer_Escape(enc, name);
+		Buffer_EscapeString(enc, name);
 		Buffer_AppendCharUnchecked(enc, '\"');
 
 		Buffer_AppendCharUnchecked (enc, ':');
@@ -566,7 +692,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 			Buffer_Reserve(enc, (szlen * 2) + 2);
 			Buffer_AppendCharUnchecked (enc, '\"');
-			Buffer_Escape(enc, value);
+			Buffer_EscapeString(enc, value);
 			Buffer_AppendCharUnchecked (enc, '\"');
 			break;
 		}
@@ -614,6 +740,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 
 	enc->end = enc->start + _cbBuffer;
 	enc->offset = enc->start;
+
 
 	encode (obj, enc, NULL, 0);
 	

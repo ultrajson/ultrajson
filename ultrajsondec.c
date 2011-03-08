@@ -156,7 +156,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 
 BREAK_INT_LOOP:
 
-	ds->lastType = JT_INTEGER;
+	ds->lastType = JT_INT;
 
 	//If input string is LONGLONG_MIN here the value is already negative so we should not flip it
 
@@ -171,8 +171,9 @@ BREAK_INT_LOOP:
 	//dbg1 = (intValue * intNeg);
 	//dbg2 = (JSLONG) dbg1;
 
+	//FIXME: Check value size here, don't decode everything as 64-bit
 
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newInteger( (JSLONG) (intValue * intNeg)));
+	RETURN_JSOBJ_NULLCHECK(ds->dec->newLong( (JSINT64) (intValue * intNeg)));
 
 DECODE_FRACTION:
 
@@ -245,7 +246,7 @@ DECODE_EXPONENT:
 	{
 		chr = (int) (unsigned char) *(ds->start);
 
-		switch ((chr = (int) (unsigned char) *(ds->start++)))
+		switch (chr)
 		{
 		case '0':
 		case '1':

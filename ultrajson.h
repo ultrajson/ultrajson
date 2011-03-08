@@ -131,8 +131,13 @@ Encoding in details:
 
 #ifdef _WIN32
 
-typedef __int64 JSLONG;
-typedef unsigned __int64 JSULONG;
+typedef __int64 JSINT64;
+typedef unsigned __int64 JSUINT64;
+
+typedef unsigned __int32 uint32_t;
+typedef __int32 JSINT32;
+typedef uint32_t JSUINT32;
+
 
 #define EXPORTFUNCTION __declspec(dllexport)
 
@@ -146,11 +151,14 @@ typedef unsigned __int64 JSULONG;
 #define INLINE_PREFIX
 */
 
-typedef unsigned __int32 uint32_t;
+
 #else
 #include <sys/types.h>
-typedef int64_t JSLONG;
-typedef u_int64_t JSULONG;
+typedef int64_t JSINT64;
+typedef u_int64_t JSUINT64;
+
+typedef int32_t JSINT32;
+typedef u_int32_t JSUINT32;
 
 #define FASTCALL_MSVC 
 #define FASTCALL_ATTR __attribute__((fastcall))
@@ -165,7 +173,8 @@ enum JSTYPES
 	JT_NULL,		// NULL
 	JT_TRUE,		//boolean true
 	JT_FALSE,		//boolean false
-	JT_INTEGER, //(JSLONG (signed 64-bit))
+	JT_INT,			//(JSINT32 (signed 32-bit))
+	JT_LONG,		//(JSINT64 (signed 64-bit))
 	JT_DOUBLE,	//(double)
 	JT_UTF8,		//(char)
 	JT_ARRAY,		// Array structure
@@ -223,7 +232,8 @@ typedef struct __JSONObjectEncoder
 	Use ti->prv fields to store state for this
 	*/
 	const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
-	JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
+	JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
+	JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
 	double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 
 	/*
@@ -326,7 +336,8 @@ typedef struct __JSONObjectDecoder
 	JSOBJ (*newNull)();
 	JSOBJ (*newObject)();
 	JSOBJ (*newArray)();
-	JSOBJ (*newInteger)(JSLONG value);
+	JSOBJ (*newInt)(JSINT32 value);
+	JSOBJ (*newLong)(JSINT64 value);
 	JSOBJ (*newDouble)(double value);
 	void (*releaseObject)(JSOBJ obj);
 	JSPFN_MALLOC malloc;

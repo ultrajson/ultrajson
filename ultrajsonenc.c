@@ -91,8 +91,14 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 	enc->end = enc->start + newSize;
 }
 
+/*
+TODO: 
+Performance hotspot. A lot of time is spent here
+*/
+
 void Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
 {
+	char *outputOffset = enc->offset;
 	PROFILE_MARK();
 
 	//FIXME: Encode '\uXXXX' here
@@ -100,21 +106,22 @@ void Buffer_Escape (JSONObjectEncoder *enc, char *inputOffset)
 	{
 		switch (*inputOffset)
 		{
-			case '\0': return;
-			case '\"': *(enc->offset++) = '\\'; *(enc->offset++) = '\"';break;
-			case '\\': *(enc->offset++) = '\\'; *(enc->offset++) = '\\';break;
+			case '\0': 
+				enc->offset += (outputOffset - enc->offset);
+				return;
+
+			case '\"': *(outputOffset++) = '\\'; *(outputOffset++) = '\"';break;
+			case '\\': *(outputOffset++) = '\\'; *(outputOffset++) = '\\';break;
 			
-			/*
-			NOTE: The RFC says escape solidus but none of the reference encoders does so.
-			We don't do it either now ;)
-			case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
-			*/
-			case '\b': *(enc->offset++) = '\\'; *(enc->offset++) = 'b';break;
-			case '\f': *(enc->offset++) = '\\'; *(enc->offset++) = 'f';break;
-			case '\n': *(enc->offset++) = '\\'; *(enc->offset++) = 'n';break;
-			case '\r': *(enc->offset++) = '\\'; *(enc->offset++) = 'r';break;
-			case '\t': *(enc->offset++) = '\\'; *(enc->offset++) = 't';break;
-			default: (*enc->offset++) = *(inputOffset); break;
+			//NOTE: The RFC says escape solidus but none of the reference encoders does so.
+			//We don't do it either now ;)
+			//case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
+			case '\b': *(outputOffset++) = '\\'; *(outputOffset++) = 'b';break;
+			case '\f': *(outputOffset++) = '\\'; *(outputOffset++) = 'f';break;
+			case '\n': *(outputOffset++) = '\\'; *(outputOffset++) = 'n';break;
+			case '\r': *(outputOffset++) = '\\'; *(outputOffset++) = 'r';break;
+			case '\t': *(outputOffset++) = '\\'; *(outputOffset++) = 't';break;
+			default: (*outputOffset++) = *(inputOffset); break;
 		}
 		inputOffset ++;
 	}
@@ -191,14 +198,34 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end
 }
 
 
-void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSLONG value)
+void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
 	char* wstr;
-	JSULONG uvalue = (value < 0) ? -value : value;
+	JSUINT32 uvalue = (value < 0) ? -value : value;
+	
 	PROFILE_MARK();
 
 	wstr = enc->offset;
 	// Conversion. Number is reversed.
+	
+	do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
+	if (value < 0) *wstr++ = '-';
+
+	// Reverse string
+	strreverse(enc->offset,wstr - 1);
+	enc->offset += (wstr - (enc->offset));
+}
+
+void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
+{
+	char* wstr;
+	JSUINT64 uvalue = (value < 0) ? -value : value;
+	
+	PROFILE_MARK();
+
+	wstr = enc->offset;
+	// Conversion. Number is reversed.
+	
 	do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
 	if (value < 0) *wstr++ = '-';
 
@@ -471,11 +498,19 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 			break;
 		}
 
-		case JT_INTEGER:
+		case JT_LONG:
 		{
 			PROFILE_MARK();
 
-			Buffer_AppendIntUnchecked (enc, enc->getLongValue(obj, &tc));
+			Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
+			break;
+		}
+
+		case JT_INT:
+		{
+			PROFILE_MARK();
+
+			Buffer_AppendIntUnchecked (enc, enc->getIntValue(obj, &tc));
 			break;
 		}
 

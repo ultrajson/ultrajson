@@ -49,11 +49,14 @@ JSOBJ Object_newArray()
 	return PyList_New(0);
 }
 
-JSOBJ Object_newInteger(JSLONG value)
+JSOBJ Object_newInteger(JSINT32 value)
 {
-	if (value > LONG_MAX || value < LONG_MIN)
-		return PyLong_FromLongLong (value);
 	return PyInt_FromLong( (long) value);
+}
+
+JSOBJ Object_newLong(JSINT64 value)
+{
+	return PyLong_FromLongLong (value);
 }
 
 JSOBJ Object_newDouble(double value)
@@ -82,6 +85,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		Object_newObject,
 		Object_newArray,
 		Object_newInteger,
+		Object_newLong,
 		Object_newDouble,
 		Object_releaseObject,
 		PyObject_Malloc,

@@ -88,17 +88,17 @@ static void *PyBoolToBOOLEAN(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 	return NULL;
 }
 
-static void *PyIntToINTEGER(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
-	*((JSLONG *) outValue) = PyInt_AS_LONG (obj);
+	*((JSINT32 *) outValue) = PyInt_AS_LONG (obj);
 	return NULL;
 }
 
-static void *PyLongToINTEGER(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
-	*((JSLONG *) outValue) = PyLong_AsLongLong (obj);
+	*((JSINT64 *) outValue) = PyLong_AsLongLong (obj);
 	return NULL;
 }
 
@@ -127,20 +127,20 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 	return PyString_AS_STRING(newObj);
 }
 
-static void *PyDateTimeToINTEGER(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
 
 	PyObject* timetuple = PyObject_CallMethod(obj, "utctimetuple", NULL);
 	PyObject* unixTimestamp = PyObject_CallMethodObjArgs(mod_calendar, meth_timegm, timetuple, NULL);
 	
-	*( (JSLONG *) outValue) = PyLong_AsLongLong (unixTimestamp);
+	*( (JSINT64 *) outValue) = PyLong_AsLongLong (unixTimestamp);
 	Py_DECREF(timetuple);
 	Py_DECREF(unixTimestamp);
 	return NULL;
 }
 
-static void *PyDateToINTEGER(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
 
@@ -159,7 +159,7 @@ static void *PyDateToINTEGER(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 
 	unixTimestamp = PyObject_CallMethodObjArgs(mod_calendar, meth_timegm, timetuple, NULL);
 
-	*( (JSLONG *) outValue) = PyLong_AsLongLong (unixTimestamp);
+	*( (JSINT64 *) outValue) = PyLong_AsLongLong (unixTimestamp);
 	Py_DECREF(timetuple);
 	Py_DECREF(unixTimestamp);
 	return NULL;
@@ -444,14 +444,14 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	if (PyInt_Check(obj))
 	{
 		PRINTMARK();
-		pc->PyTypeToJSON = PyIntToINTEGER; tc->type = JT_INTEGER;
+		pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
 		return;
 	}
 	else 
 	if (PyLong_Check(obj))
 	{
 		PRINTMARK();
-		pc->PyTypeToJSON = PyLongToINTEGER; tc->type = JT_INTEGER;
+		pc->PyTypeToJSON = PyLongToINT64; tc->type = JT_LONG;
 		return;
 	}
 	else
@@ -479,14 +479,14 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	if (PyDateTime_Check(obj))
 	{
 		PRINTMARK();
-		pc->PyTypeToJSON = PyDateTimeToINTEGER; tc->type = JT_INTEGER;
+		pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
 		return;
 	}
 	else 
 	if (PyDate_Check(obj))
 	{
 		PRINTMARK();
-		pc->PyTypeToJSON = PyDateToINTEGER; tc->type = JT_INTEGER;
+		pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
 		return;
 	}
 	else
@@ -597,12 +597,20 @@ const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLe
 	return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
 }
 
-JSLONG Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
+JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	JSLONG ret;
+	JSINT64 ret;
 	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
 	return ret;
 }
+
+JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
+{
+	JSINT32 ret;
+	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+	return ret;
+}
+
 
 double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
 {
@@ -656,6 +664,7 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 		Object_endTypeContext, //void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
 		Object_getStringValue, //const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
 		Object_getLongValue, //JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
+		Object_getIntValue, //JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
 		Object_getDoubleValue, //double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 		Object_iterBegin, //JSPFN_ITERBEGIN iterBegin;
 		Object_iterNext, //JSPFN_ITERNEXT iterNext;

@@ -329,7 +329,15 @@ class UltraJSONTests(TestCase):
 
 		assert False, "Wrong exception"
 
-			
+	def test_decodeNumericIntPos(self):
+		input = "31337"
+		self.assertEquals (31337, ujson.decode(input))
+	
+	def test_decodeNumericIntNeg(self):
+		input = "-31337"
+		self.assertEquals (-31337, ujson.decode(input))
+
+		
 	"""
 	# This test fails. I'm not sure it's an issue or not
 	def test_encodeListLongConversion(self):
@@ -365,14 +373,6 @@ class UltraJSONTests(TestCase):
 
 	def test_decodeNumericIntFrcOverflow(self):
 		input = "X.Y"
-		raise NotImplementedError("Implement this test!")
-
-	def test_decodeNumericIntPos(self):
-		input = "31337"
-		raise NotImplementedError("Implement this test!")
-	
-	def test_decodeNumericIntNeg(self):
-		input = "-31337"
 		raise NotImplementedError("Implement this test!")
 		
 	def test_decodeNumericIntPosOverflow(self):

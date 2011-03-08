@@ -376,6 +376,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 	char *escOffset;
 	char chr;
 	size_t escLen = (ds->escEnd - ds->escStart);
+	char *inputOffset;
 	ds->lastType = JT_INVALID;
 	ds->start ++;
 
@@ -400,9 +401,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
 	escOffset = ds->escStart;
 
+	inputOffset = ds->start;
+
 	while(1)
 	{
-		chr = (*ds->start++);
+		chr = (*inputOffset++);
 
 		switch (chr)
 		{
@@ -411,19 +414,20 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
 		case '\"':
 			ds->lastType = JT_UTF8;
+			ds->start += (inputOffset - ds->start);
 			RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
 
 		case '\\':
-			switch (*(ds->start))
+			switch (*inputOffset)
 			{
-			case '\\': *(escOffset++) = '\\'; ds->start++; continue;
-			case '\"': *(escOffset++) = '\"'; ds->start++; continue;
-			case '/':  *(escOffset++) = '/'; ds->start++; continue;
-			case 'b':  *(escOffset++) = '\b'; ds->start++; continue;
-			case 'f':  *(escOffset++) = '\f'; ds->start++; continue;
-			case 'n':  *(escOffset++) = '\n'; ds->start++; continue;
-			case 'r':  *(escOffset++) = '\r'; ds->start++; continue;
-			case 't':  *(escOffset++) = '\t'; ds->start++; continue;
+			case '\\': *(escOffset++) = '\\'; inputOffset++; continue;
+			case '\"': *(escOffset++) = '\"'; inputOffset++; continue;
+			case '/':  *(escOffset++) = '/';  inputOffset++; continue;
+			case 'b':  *(escOffset++) = '\b'; inputOffset++; continue;
+			case 'f':  *(escOffset++) = '\f'; inputOffset++; continue;
+			case 'n':  *(escOffset++) = '\n'; inputOffset++; continue;
+			case 'r':  *(escOffset++) = '\r'; inputOffset++; continue;
+			case 't':  *(escOffset++) = '\t'; inputOffset++; continue;
 
 			case '\0': 
 				return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");

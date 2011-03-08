@@ -384,68 +384,68 @@ public:
 
 JSOBJ Object_newString(char *start, char *end)
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new StringObject(start, end);
 }
 
 void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
-	//return;
+	/**/return;
 	((MapObject *)obj)->addKey( (StringObject *) name, (BaseObject *) value);
 }
 
 void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 {
-	//return;
+	/**/return;
 	((ListObject *)obj)->addItem( (ListObject *) value);
 }
 
 JSOBJ Object_newTrue()
 { 
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(true, JT_TRUE);
 }
 
 JSOBJ Object_newFalse()
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new BoolObject(false, JT_FALSE);
 }
 
 JSOBJ Object_newNull()
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new NullObject();
 }
 
 JSOBJ Object_newObject()
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new MapObject();
 }
 
 JSOBJ Object_newArray()
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new ListObject();
 }
 
 JSOBJ Object_newLong(JSINT64 value)
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new LongObject(value);
 }
 
 JSOBJ Object_newInteger(JSINT32 value)
 {
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new IntegerObject(value);
 }
 
 
 JSOBJ Object_newDouble(double value)
 { 
-	//return (JSOBJ) 1;
+	/**/return (JSOBJ) 1;
 	return (JSOBJ) new DoubleObject(value);
 }
 
@@ -566,9 +566,11 @@ int main (int argc, char **argv)
 	{
 		for (int index = 0; index < N; index ++)
 		{
-			JSON_EncodeObject(obj, &encoder, buffer, sizeof (buffer));
+			//JSON_EncodeObject(obj, &encoder, buffer, sizeof (buffer));
 			//obj->decRef();
-			//obj = (BaseObject *) JSON_DecodeObject (&decoder, buffer, strlen(buffer));
+			obj = (BaseObject *) JSON_DecodeObject (&decoder, indata, sizeof (indata));
+			//obj->print(0, stderr);
+			//obj->decRef();
 		}
 
 		cCount += 1;

@@ -181,6 +181,10 @@ typedef u_int16_t JSUTF32;
 #endif
 
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define __LITTLE_ENDIAN__
+#endif
+
 #ifndef __LITTLE_ENDIAN__
 #error "Endianess not supported"
 #endif

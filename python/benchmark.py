@@ -1,4 +1,4 @@
-# coding=UTF-8
+﻿# coding=UTF-8
 import simplejson
 import ujson
 import json
@@ -15,164 +15,190 @@ decodeData = ""
 """=========================================================================="""
 
 def ujsonEnc():
-	x = ujson.encode(testObject)
-	
+    x = ujson.encode(testObject)
+    #print "ujsonEnc", x
+
 def simplejsonEnc():
-	x = simplejson.dumps(testObject)
+    x = simplejson.dumps(testObject)
+    #print "simplejsonEnc", x
 
 def jsonEnc():
-	x = json.dumps(testObject)
+    x = json.dumps(testObject)
+    #print "jsonEnc", x
 
 def cjsonEnc():
-	x = cjson.encode(testObject)
+    x = cjson.encode(testObject)
+    #print "cjsonEnc", x
 
 """=========================================================================="""
 
 def ujsonDec():
-	x = ujson.decode(decodeData)
-	
+    x = ujson.decode(decodeData)
+    #print "ujsonDec: ", x
+
 def simplejsonDec():
-	x = simplejson.loads(decodeData)
+    x = simplejson.loads(decodeData)
+    #print "simplejsonDec: ", x
 
 def jsonDec():
-	x = json.loads(decodeData)
+    x = json.loads(decodeData)
+    #print "jsonDec: ", x
 
 def cjsonDec():
-	x = cjson.decode(decodeData)
-	
+    x = cjson.decode(decodeData)
+    #print "cjsonDec: ", x
+
 """=========================================================================="""
-	
-	
+
+
 if __name__ == "__main__":
-	import timeit
-	
-	print "Ready? Configure affinity and priority, starting in 20..."
-	time.sleep(20)
+    import timeit
+
+print "Ready? Configure affinity and priority, starting in 20..."
+time.sleep(20)
+
+print "Array with 256 utf-8 strings:"
+testObject = []
+
+for x in xrange(256):
+    testObject.append("نظام الحكم سلطاني وراثي في الذكور من ذرية السيد تركي بن سعيد بن سلطان ويشترط فيمن يختار لولاية الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين ")
+
+COUNT = 5000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+
+print "Medium complex object:"
+testObject = [ [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends]]
+COUNT = 5000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+
+print "Array with 256 strings:"
+testObject = []
+
+for x in xrange(256):
+    testObject.append("A pretty long string which is in a list")
+
+COUNT = 10000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+
+print "Array with 256 doubles:"
+testObject = []
+
+for x in xrange(256):
+    testObject.append(sys.maxint * random.random())
+    
+COUNT = 10000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+
+print "Array with 256 True values:"
+testObject = []
+
+for x in xrange(256):
+    testObject.append(True)
+
+COUNT = 50000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
 
 
-	print "Medium complex object:"
-	testObject = [ [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends],  [user, friends]]
-	COUNT = 5000
+print "Array with 256 dict{string, int} pairs:"
+testObject = []
 
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+for x in xrange(256):
+    testObject.append({str(random.random()*20): int(random.random()*1000000)})
 
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+COUNT = 5000
 
-	print "Array with 256 strings:"
-	testObject = []
-	
-	for x in xrange(256):
-		testObject.append("A pretty long string which is in a list")
-	
-	COUNT = 10000
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
 
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+decodeData = json.dumps(testObject)
 
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
-	
-	print "Array with 256 doubles:"
-	testObject = []
-	
-	for x in xrange(256):
-		testObject.append(sys.maxint * random.random())
-	
-	COUNT = 10000
-
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
-
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
-
-	print "Array with 256 True values:"
-	testObject = []
-	
-	for x in xrange(256):
-		testObject.append(True)
-	
-	COUNT = 50000
-
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
-
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
-	
-
-	print "Array with 256 dict{string, int} pairs:"
-	testObject = []
-	
-	for x in xrange(256):
-		testObject.append({str(random.random()*20): int(random.random()*1000000)})
-	
-	COUNT = 5000
-
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
-
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
 
 
-	
-	print "Dict with 256 arrays with 256 dict{string, int} pairs:"
-	testObject = {}
+
+print "Dict with 256 arrays with 256 dict{string, int} pairs:"
+testObject = {}
 
 
-	for y in xrange(256):
-		arrays = []
-		for x in xrange(256):
-			arrays.append({str(random.random()*20): int(random.random()*1000000)})
-	
-		testObject[str(random.random()*20)] = arrays
-	
-	
-	COUNT = 50
+for y in xrange(256):
+    arrays = []
+    for x in xrange(256):
+        arrays.append({str(random.random()*20): int(random.random()*1000000)})
 
-	print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
-	print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
-	print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
-	#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+testObject[str(random.random()*20)] = arrays
 
-	decodeData = json.dumps(testObject)
-	
-	print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
-	print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
-	print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
-	#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
 
-	
+COUNT = 50
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
+print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", time.clock, 10, COUNT)), )
+#print "json encode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonEnc()", "from __main__ import jsonEnc", time.clock, 3, COUNT)), )
+
+decodeData = json.dumps(testObject)
+
+print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonDec()", "from __main__ import ujsonDec", time.clock,10, COUNT)), )
+print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonDec()", "from __main__ import cjsonDec", time.clock,10, COUNT)), )
+print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
+#print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
+

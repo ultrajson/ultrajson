@@ -142,7 +142,7 @@ typedef unsigned __int64 JSUINT64;
 typedef unsigned __int32 uint32_t;
 typedef __int32 JSINT32;
 typedef uint32_t JSUINT32;
-
+typedef unsigned __int8 JSUINT8;
 typedef unsigned __int16 JSUTF16;
 typedef unsigned __int32 JSUTF32;
 
@@ -153,14 +153,12 @@ typedef unsigned __int32 JSUTF32;
 #define FASTCALL_ATTR 
 #define INLINE_PREFIX __inline
 
-/*
-#define FASTCALL_MSVC
-#define FASTCALL_ATTR
-#define INLINE_PREFIX
-*/
-
+#ifndef __LITTLE_ENDIAN__
+#define __LITTLE_ENDIAN__
+#endif
 
 #else
+
 #include <sys/types.h>
 typedef int64_t JSINT64;
 typedef u_int64_t JSUINT64;
@@ -174,10 +172,16 @@ typedef u_int32_t JSUINT32;
 
 typedef u_int32_t uint32_t;
 
+typedef u_int8_t JSUINT8;
 typedef u_int16_t JSUTF16;
 typedef u_int16_t JSUTF32;
 
 #define EXPORTFUNCTION
+#endif
+
+
+#ifndef __LITTLE_ENDIAN__
+#error "Endianess not supported"
 #endif
 
 enum JSTYPES

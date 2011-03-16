@@ -446,8 +446,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 				JSUTF32 u32chr;
 				inputOffset ++;
 
-				//FIXME: Can't use this function in real life
-
 				for (index = 0; index < 4; index ++)
 				{
 					switch (*inputOffset)
@@ -499,15 +497,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 						iSur ++;
 						break;
 					} 
-					/*
-					else
-					if ((sur[iSur] & 0xfc00) != 0xdc00)
-					{
-						// Unpaired surogate
-						return SetError (ds, -1, "Unpaired low surrogate when decoding 'string'");
-					}
-					*/
-				
 					u32chr = sur[iSur];
 					iSur = 0;
 				}
@@ -523,50 +512,54 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 					iSur = 0;
 				}
 
-				// Convert UTF32 char to UTF-8 (gah!)
-				if(u32chr < 0x80)
+				if (u32chr < 0x80)
 				{
-					*(escOffset++) = u32chr;
-				}
-				else 
-				if(u32chr < 0x800)
-				{
-					*(escOffset++) = (MASK2BYTES | u32chr >> 6);
-					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
-				}
-				else 
-				if(u32chr < 0x10000)
-				{
-					*(escOffset++) = (MASK3BYTES | u32chr >> 12);
-					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+					*(escOffset++) = (char) u32chr;
 				}
 				else
-				if(u32chr < 0x200000)
+				if (u32chr < 0x0800)
 				{
-					*(escOffset++) = (MASK4BYTES | u32chr >> 18);
-					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+					(*escOffset++) = 0xC0 | ((u32chr >> 6) & 0x1F);
+					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
 				}
 				else
+				if (u32chr < 0x10000)
+				{
+					(*escOffset++) = 0xE0 | ((u32chr >> 12) & 0x0F);
+					(*escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
+					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
+				}
+				else
+				if (u32chr < 0x200000)
+				{
+					(*escOffset++) = 0xF0 | ((u32chr >> 18) & 0x07);
+					(*escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
+					(*escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
+					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
+				}
+				else
+				//FIXME: Does it even make sense supporting 4+ bytes UTF-8 sequences?
 				if(u32chr < 0x4000000)
 				{
-					*(escOffset++) = (MASK5BYTES | u32chr >> 24);
-					*(escOffset++) = (MASKBYTE | u32chr >> 18 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+					*(escOffset++) = 0xF8 | ((u32chr >> 24) & 0x03);
+					*(escOffset++) = 0x80 | ((u32chr >> 18) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
 				}
 				else
 				if(u32chr < 0x8000000)
 				{
-					*(escOffset++) = (MASK6BYTES | u32chr >> 30);
-					*(escOffset++) = (MASKBYTE | u32chr >> 24 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 18 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 12 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr >> 6 & MASKBITS);
-					*(escOffset++) = (MASKBYTE | u32chr & MASKBITS);
+					*(escOffset++) = 0xFC | ((u32chr >> 30) & 0x01);
+					*(escOffset++) = 0x80 | ((u32chr >> 24) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 18) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
+					*(escOffset++) = 0x80 | ((u32chr >> 0)& 0x3F);
+				}
+				else
+				{
+						return SetError (ds, -1, "Unicode code point of out bounds when decoding 'string'");
 				}
 				
 

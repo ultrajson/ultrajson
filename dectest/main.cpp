@@ -17,7 +17,7 @@ extern "C"
 
 //char indata[] = "R├ñksm├Ârg├Ñs ÏºÏ│Ïº┘àÏ® Ï¿┘å ┘àÏ¡┘àÏ» Ï¿┘å Ï╣┘êÏÂ Ï¿┘å ┘äÏºÏ»┘å";
 //char indata[] = "اسامة بن محمد بن عوض بن لادن,";
-char indata[] = "\xf3\xbf\xbf\xbfTRAILINGNORMAL";
+char indata[] = "\xf0\x91\x80\xb0TRAILINGNORMAL";
 /*
 \xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e*/
 using namespace std;
@@ -517,6 +517,7 @@ void Object_releaseObject(JSOBJ obj)
 {
 	delete (BaseObject *) obj;
 }
+
 
 int main (int argc, char **argv)
 {

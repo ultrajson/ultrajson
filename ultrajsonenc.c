@@ -49,24 +49,27 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #endif
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-static const unsigned char g_utf8LengthLookup[256] = 
+static const char g_hexChars[] = "0123456789abcdef";
+
+static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\";
+static const JSUINT8 g_utf8LengthLookup[256] = 
 {
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 
-  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1
+/* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 
+/* 0x10 */ 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x40 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 22, 1, 1, 1,
+/* 0x60 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x70 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x80 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x90 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0xa0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0xb0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0xc0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+/* 0xd0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* 0xe0 */ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 
+/* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1
 };
 
 static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
@@ -106,11 +109,10 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 
 FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
 {
-	static const char s_hexChars[] = "0123456789abcdef";
-	*(outputOffset++) = s_hexChars[(value & 0xf000) >> 12];
-	*(outputOffset++) = s_hexChars[(value & 0x0f00) >> 8];
-	*(outputOffset++) = s_hexChars[(value & 0x00f0) >> 4];
-	*(outputOffset++) = s_hexChars[(value & 0x000f) >> 0];
+	*(outputOffset++) = g_hexChars[(value & 0xf000) >> 12];
+	*(outputOffset++) = g_hexChars[(value & 0x0f00) >> 8];
+	*(outputOffset++) = g_hexChars[(value & 0x00f0) >> 4];
+	*(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
 }
 
 /*
@@ -132,71 +134,36 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, char *io, char *end)
 	
 	while (1)
 	{
-		unsigned char utflen;
-		unsigned char chr;
 
-NEXT_CHARACTER:
-		chr = (unsigned char) *io;
-		
-		utflen = g_utf8LengthLookup[chr];
+		//JSUINT8 chr = (unsigned char) *io;
+		JSUINT8 utflen = g_utf8LengthLookup[(unsigned char) *io];
 
-		if (io + (utflen - 1) > end)
+		switch (utflen)
 		{
-			enc->offset += (of - enc->offset);
-			SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
-			return FALSE;
-		}
+			case 0: 
+			{
+				enc->offset += (of - enc->offset); 
+				return TRUE;
+			}
 
-		switch(utflen)
-		{
 			case 1:
 			{
-				switch (chr)
-				{
-				case '\0': enc->offset += (of - enc->offset); return TRUE;
-				case '\"': *(of++) = '\\'; *(of++) = '\"';break;
-				case '\\': *(of++) = '\\'; *(of++) = '\\';break;
-				//case '/': *(enc->offset++) = '\\'; *(enc->offset++) = '/';break;
-				case '\b': *(of++) = '\\'; *(of++) = 'b';break;
-				case '\f': *(of++) = '\\'; *(of++) = 'f';break;
-				case '\n': *(of++) = '\\'; *(of++) = 'n';break;
-				case '\r': *(of++) = '\\'; *(of++) = 'r';break;
-				case '\t': *(of++) = '\\'; *(of++) = 't';break;
-				case 0x01: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; break;
-				case 0x02: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '2'; break;
-				case 0x03: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '3'; break;
-				case 0x04: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '4'; break;
-				case 0x05: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '5'; break;
-				case 0x06: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '6'; break;
-				case 0x07: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = '7'; break;
-				case 0x0b: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'b'; break;
-				case 0x0e: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'e'; break;
-				case 0x0f: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '0'; *(of++) = 'f'; break;
-				case 0x10: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '0'; break;
-				case 0x11: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '1'; break;
-				case 0x12: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '2'; break;
-				case 0x13: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '3'; break;
-				case 0x14: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '4'; break;
-				case 0x15: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '5'; break;
-				case 0x16: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '6'; break;
-				case 0x17: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '7'; break;
-				case 0x18: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '8'; break;
-				case 0x19: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = '9'; break;
-				case 0x1a: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'a'; break;
-				case 0x1b: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'b'; break;
-				case 0x1c: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'c'; break;
-				case 0x1d: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'd'; break;
-				case 0x1e: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'e'; break;
-				case 0x1f: *(of++) = '\\'; *(of++) = 'u'; *(of++) = '0'; *(of++) = '0'; *(of++) = '1'; *(of++) = 'f'; break;
-				default: *(of++)= chr; break;
-				}
-				io ++;
-
-				goto NEXT_CHARACTER;
+				*(of++)= (*io++); 
+				continue;
 			}
+
 			case 2:
 			{
-				JSUTF32 in = *((JSUTF16 *) io);
+				JSUTF32 in;
+
+				if (io + 1 > end)
+				{
+					enc->offset += (of - enc->offset);
+					SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
+					return FALSE;
+				}
+
+				in = *((JSUTF16 *) io);
 				ucs = ((in & 0x1f) << 6) | ((in >> 8) & 0x3f);
 
 				if (ucs < 0x80)
@@ -209,9 +176,18 @@ NEXT_CHARACTER:
 				io += 2;
 				break;
 			}
+
 			case 3:
 			{
-				JSUTF32 in = *((JSUTF16 *) io);
+				JSUTF32 in;
+
+				if (io + 2 > end)
+				{
+					enc->offset += (of - enc->offset);
+					SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
+					return FALSE;
+				}
+				in = *((JSUTF16 *) io);
 				in |= *((JSUINT8 *) io + 2) << 16;
 
 				ucs = ((in & 0x0f) << 12) | ((in & 0x3f00) >> 2) | ((in & 0x3f0000) >> 16);
@@ -226,10 +202,18 @@ NEXT_CHARACTER:
 				io += 3;
 				break;
 			}
-
 			case 4:
 			{
-				JSUTF32 in = *((JSUTF32 *) io);
+				JSUTF32 in;
+				
+				if (io + 3 > end)
+				{
+					enc->offset += (of - enc->offset);
+					SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
+					return FALSE;
+				}
+
+				in = *((JSUTF32 *) io);
 				ucs = ((in & 0x07) << 18) | ((in & 0x3f00) << 4) | ((in & 0x3f0000) >> 10) | ((in & 0x3f000000) >> 24);
 
 				if (ucs < 0x10000)
@@ -243,14 +227,35 @@ NEXT_CHARACTER:
 				break;
 			}
 
-			case 5: 
+
+			case 5:
 			case 6:
-			default:
-			{
 				enc->offset += (of - enc->offset);
 				SetError (obj, enc, "Unsupported UTF-8 sequence length when encoding string");
 				return FALSE;
-			}
+
+			case 30:
+				// \uXXXX encode
+				*(of++) = '\\';
+				*(of++) = 'u';
+				*(of++) = '0';
+				*(of++) = '0';
+				*(of++) = g_hexChars[ (unsigned char) (*io) & 0xf0];
+				*(of++) = g_hexChars[ (unsigned char) (*io) & 0x0f];
+				io ++;
+				continue;
+
+			case 10:
+			case 12:
+			case 14:
+			case 16:
+			case 18:
+			case 20:
+			case 22:
+				*(of++) = *( (char *) (g_escapeChars + utflen + 0));
+				*(of++) = *( (char *) (g_escapeChars + utflen + 1));
+				io ++;
+				continue;
 		}
 
 		/*

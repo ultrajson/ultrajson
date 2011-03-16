@@ -371,14 +371,6 @@ FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 	}
 }
 
-#define MASKBITS 0x3F
-#define MASKBYTE 0x80
-#define MASK2BYTES 0xC0
-#define MASK3BYTES 0xE0
-#define MASK4BYTES 0xF0
-#define MASK5BYTES 0xF8
-#define MASK6BYTES 0xFC
-
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
 	JSUTF16 sur[2] = { 0 };
@@ -537,7 +529,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 					(*escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
 					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
 				}
-				else
+				/* Removed for now!
+				else 
 				//FIXME: Does it even make sense supporting 4+ bytes UTF-8 sequences?
 				if(u32chr < 0x4000000)
 				{
@@ -557,6 +550,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 					*(escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
 					*(escOffset++) = 0x80 | ((u32chr >> 0)& 0x3F);
 				}
+				*/
 				else
 				{
 						return SetError (ds, -1, "Unicode code point of out bounds when decoding 'string'");

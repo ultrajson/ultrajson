@@ -115,6 +115,7 @@ Encoding in details:
 #include <stdio.h>
 
 
+// Don't decode any extra whitespaces
 #define JSON_NO_EXTRA_WHITESPACE
 
 #ifndef JSON_DOUBLE_MAX_DECIMALS

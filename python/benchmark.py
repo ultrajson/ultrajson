@@ -63,7 +63,7 @@ testObject = []
 for x in xrange(256):
     testObject.append("نظام الحكم سلطاني وراثي في الذكور من ذرية السيد تركي بن سعيد بن سلطان ويشترط فيمن يختار لولاية الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين ")
 
-COUNT = 5000
+COUNT = 2000
 
 print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", time.clock,10, COUNT)), )
 print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEnc()", "from __main__ import simplejsonEnc", time.clock,10, COUNT)), )
@@ -174,19 +174,14 @@ print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonD
 print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", time.clock,10, COUNT)), )
 #print "json decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("jsonDec()", "from __main__ import jsonDec", time.clock, 3, COUNT)), )
 
-
-
 print "Dict with 256 arrays with 256 dict{string, int} pairs:"
 testObject = {}
-
 
 for y in xrange(256):
     arrays = []
     for x in xrange(256):
         arrays.append({str(random.random()*20): int(random.random()*1000000)})
-
-testObject[str(random.random()*20)] = arrays
-
+    testObject[str(random.random()*20)] = arrays
 
 COUNT = 50
 

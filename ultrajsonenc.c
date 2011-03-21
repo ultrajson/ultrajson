@@ -127,10 +127,10 @@ FIXME: I guess it would be possible to combine the UTF-8 length lookup with esca
 to make one bug super lookup table!
 */
 
-int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, char *io, char *end)
+int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
 	JSUTF32 ucs;
-	char *of = enc->offset;
+	char *of = (char *) enc->offset;
 	
 	while (1)
 	{

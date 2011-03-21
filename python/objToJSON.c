@@ -425,7 +425,6 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	tc->prv[12] = 0;
 	tc->prv[13] = 0;
 	tc->prv[14] = 0;
-	tc->prv[15] = 0;
 
 	//memset (pc, 0, sizeof (TypeContext));
 	

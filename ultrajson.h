@@ -310,7 +310,7 @@ typedef struct __JSONObjectEncoder
 
 	/*
 	Set to an error message if error occured */
-	char *errorMsg;
+	const char *errorMsg;
 	JSOBJ errorObj;
 
 	/* Buffer stuff */

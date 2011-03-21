@@ -4,6 +4,77 @@ Python bindings are available as the module ujson with the methods decode and en
 
 Preliminary benchmarks:
 
+64-bit benchmarks Linux
+Python 2.6.6 (r266:84292, Sep 15 2010, 16:22:56)
+OS Version: Ubuntu 10.10
+System Type: x64-based PC
+Processor: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
+Total Physical Memory: 4096 MB
+
+Array with 256 utf-8 strings:
+ujson encode      : 2874.54652 calls/sec
+simplejson encode : 1539.47999 calls/sec
+cjson encode      : 132.33571 calls/sec
+
+ujson decode      : 2072.09417 calls/sec
+cjson decode      : 991.20903 calls/sec
+simplejson decode : 310.75309 calls/sec
+
+Medium complex object:
+ujson encode      : 19001.01929 calls/sec
+simplejson encode : 3512.29205 calls/sec
+cjson encode      : 3063.69959 calls/sec
+
+ujson decode      : 12791.80993 calls/sec
+cjson decode      : 8288.32916 calls/sec
+simplejson decode : 6640.22169 calls/sec
+
+Array with 256 strings:
+ujson encode      : 40161.78453 calls/sec
+simplejson encode : 19301.40779 calls/sec
+cjson encode      : 12337.13166 calls/sec
+
+ujson decode      : 36944.81317 calls/sec
+cjson decode      : 30187.40167 calls/sec
+simplejson decode : 25105.56562 calls/sec
+
+Array with 256 doubles:
+ujson encode      : 6054.71950 calls/sec
+simplejson encode : 2912.44353 calls/sec
+cjson encode      : 3539.51228 calls/sec
+
+ujson decode      : 27794.29735 calls/sec
+cjson decode      : 14892.38775 calls/sec
+simplejson decode : 14879.00070 calls/sec
+
+Array with 256 True values:
+ujson encode      : 168086.95325 calls/sec
+simplejson encode : 49348.93309 calls/sec
+cjson encode      : 67392.90623 calls/sec
+
+ujson decode      : 139359.25968 calls/sec
+cjson decode      : 82552.26652 calls/sec
+simplejson decode : 114998.51396 calls/sec
+
+Array with 256 dict{string, int} pairs:
+ujson encode      : 24125.68837 calls/sec
+simplejson encode : 5751.74871 calls/sec
+cjson encode      : 4735.65147 calls/sec
+
+ujson decode      : 17176.70493 calls/sec
+cjson decode      : 13420.93963 calls/sec
+simplejson decode : 9854.27352 calls/sec
+
+Dict with 256 arrays with 256 dict{string, int} pairs:
+ujson encode      : 86.52449 calls/sec
+simplejson encode : 17.46117 calls/sec
+cjson encode      : 18.31323 calls/sec
+
+ujson decode      : 49.54660 calls/sec
+cjson decode      : 38.34094 calls/sec
+simplejson decode : 28.18035 calls/sec
+
+32-bit benchmarks Windows
 Python 2.6.6 (r266:84297, Aug 24 2010, 18:46:32) [MSC v.1500 32 bit (Intel)]
 OS Version: 6.1.7601 Service Pack 1 Build 7601
 System Type: x64-based PC

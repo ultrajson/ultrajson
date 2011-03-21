@@ -562,6 +562,7 @@ int main (int argc, char **argv)
 	#define N 10000
 
 	obj = new StringObject(indata, indata + sizeof(indata));
+	obj = new LongObject (-9223372036854775808LL);
 
 	JSON_EncodeObject (obj, &encoder, buffer, sizeof (buffer));
 

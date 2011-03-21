@@ -334,7 +334,7 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 	wstr = enc->offset;
 	// Conversion. Number is reversed.
 	
-	do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
+	do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
 	if (value < 0) *wstr++ = '-';
 
 	// Reverse string

@@ -24,27 +24,27 @@ JSOBJ Object_newString(char *start, char *end)
 	return PyString_FromStringAndSize(start, (end - start));
 }
 
-JSOBJ Object_newTrue()
+JSOBJ Object_newTrue(void)
 { 
 	Py_RETURN_TRUE;
 }
 
-JSOBJ Object_newFalse()
+JSOBJ Object_newFalse(void)
 {
 	Py_RETURN_FALSE;
 }
 
-JSOBJ Object_newNull()
+JSOBJ Object_newNull(void)
 {
 	Py_RETURN_NONE;
 }
 
-JSOBJ Object_newObject()
+JSOBJ Object_newObject(void)
 {
 	return PyDict_New();
 }
 
-JSOBJ Object_newArray()
+JSOBJ Object_newArray(void)
 {
 	return PyList_New(0);
 }

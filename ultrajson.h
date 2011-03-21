@@ -229,6 +229,7 @@ typedef struct __JSONObjectEncoder
 	Return type of object as JSTYPES enum 
 	Implementors should setup necessary pointers or state in ti->prv
 	*/
+
 	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
 	void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
 	
@@ -351,11 +352,11 @@ typedef struct __JSONObjectDecoder
 	JSOBJ (*newString)(char *start, char *end);
 	void (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
 	void (*arrayAddItem)(JSOBJ obj, JSOBJ value);
-	JSOBJ (*newTrue)();
-	JSOBJ (*newFalse)();
-	JSOBJ (*newNull)();
-	JSOBJ (*newObject)();
-	JSOBJ (*newArray)();
+	JSOBJ (*newTrue)(void);
+	JSOBJ (*newFalse)(void);
+	JSOBJ (*newNull)(void);
+	JSOBJ (*newObject)(void);
+	JSOBJ (*newArray)(void);
 	JSOBJ (*newInt)(JSINT32 value);
 	JSOBJ (*newLong)(JSINT64 value);
 	JSOBJ (*newDouble)(double value);

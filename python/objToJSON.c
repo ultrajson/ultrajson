@@ -18,8 +18,8 @@ typedef struct __TypeContext
 	PFN_PyTypeToJSON PyTypeToJSON;
 	PyObject *newObj;
 	PyObject *dictObj;
-	size_t index;
-	size_t size;
+	Py_ssize_t index;
+	Py_ssize_t size;
 	PyObject *itemValue;
 	PyObject *itemName;
 	PyObject *attrList;
@@ -71,21 +71,6 @@ void initObjToJSON()
 
 	Py_INCREF(mod_calendar);
 
-}
-
-
-
-static void *PyNoneToNULL(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
-{
-	return NULL;
-}
-
-static void *PyBoolToBOOLEAN(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
-{
-	PyObject *obj = (PyObject *) _obj;
-	//FIXME: Perhaps we can use the PyBoolObject->ival directly here?
-	*((int *) outValue) = (obj == Py_True) ? 1 : 0;
-	return NULL;
 }
 
 static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -244,8 +229,6 @@ int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
 		GET_TC(tc)->itemValue = itemValue = NULL;
 	}
 
-	//fprintf (stderr, "%s: ti=%p obj=%p, i=%u, sz=%u\n", __FUNCTION__, ti, _obj, i, sz);
-
 	for (; GET_TC(tc)->index  < GET_TC(tc)->size; GET_TC(tc)->index ++)
 	{
 		PyObject* attr = PyList_GET_ITEM(GET_TC(tc)->attrList, GET_TC(tc)->index);
@@ -360,7 +343,6 @@ void Dict_iterBegin(JSOBJ obj, JSONTypeContext *tc)
 
 int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-	//fprintf (stderr, "%s: ti=%p obj=%p, i=%u, sz=%u\n", __FUNCTION__, ti, _obj, i, sz);
 	if (GET_TC(tc)->itemName)
 	{
 		Py_DECREF(GET_TC(tc)->itemName);
@@ -405,7 +387,7 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
+void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 {
 	TypeContext *pc = (TypeContext *) tc->prv;
 	PyObject *toDictFunc;
@@ -425,8 +407,6 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	tc->prv[12] = 0;
 	tc->prv[13] = 0;
 	tc->prv[14] = 0;
-
-	//memset (pc, 0, sizeof (TypeContext));
 	
 	if (PyIter_Check(obj))
 	{
@@ -457,7 +437,7 @@ static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	if (PyString_Check(obj))
 	{
 		PRINTMARK();
-		pc->PyTypeToJSON = (void *) PyStringToUTF8; tc->type = JT_UTF8;
+		pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
 		return;
 	}
 	else
@@ -688,7 +668,7 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 			encoder.free (ret);
 		}
 
-		PyErr_Format (PyExc_OverflowError, encoder.errorMsg);
+		PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
 		return NULL;
 	}
 

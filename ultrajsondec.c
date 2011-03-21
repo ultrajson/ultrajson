@@ -56,21 +56,6 @@ JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 PFN_DECODER g_identTable[256] = { NULL }; 
 
-/*
-FIXME: Maybe move this to inside of createDouble function. Might increase memory locality and worst case 
-possibly polute the global namespace less */
-
-
-/*
-#define RETURN_JSOBJ_NULLCHECK(_expr)\
-{ \
-	JSOBJ obj__ = (_expr); \
-	if (obj__ == NULL) \
-		fprintf (stderr, "Function at %s:%d returned NULL", __FUNCTION__, __LINE__); \
-	return obj__; \
-} \
-*/
-
 #define RETURN_JSOBJ_NULLCHECK(_expr) return(_expr);
 
 double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
@@ -172,8 +157,6 @@ BREAK_INT_LOOP:
 
 	//dbg1 = (intValue * intNeg);
 	//dbg2 = (JSLONG) dbg1;
-
-	//FIXME: Check value size here, don't decode everything as 64-bit
 
 	if (intValue > (INT_MAX - 1))
 	{

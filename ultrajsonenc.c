@@ -47,11 +47,15 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #ifndef FALSE
 #define FALSE 0
 #endif
+
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
-
 static const char g_hexChars[] = "0123456789abcdef";
-
 static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\";
+
+
+/*
+FIXME: While this is fine dandy and working it's a magic value mess which probably only the author understands.
+Needs a cleanup and more documentation */
 static const JSUINT8 g_utf8LengthLookup[256] = 
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 
@@ -80,7 +84,7 @@ static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
 
 /*
 FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
-They way we won't run our head into the wall each call */
+That way we won't run our head into the wall each call */
 void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 {
 	size_t curSize = enc->end - enc->start;
@@ -123,8 +127,12 @@ There's a preprocessor check for this so you really can't compile on non little 
 FIXME: The JSON spec says escape "/" but non of the others do and we don't 
 want to be left alone doing it so we don't :)
 
-FIXME: I guess it would be possible to combine the UTF-8 length lookup with escaping lookup
-to make one bug super lookup table!
+FIXME: It should be faster to do SHIFT and then AND instead of AND and SHIFT.
+Example:
+(x & 0x3f00) >> 8) => Longer/more opcodes than below
+(x >> 8) & 0x3f)   => Probably faster/smaller
+Seems that atleast MSVC9 does this optimization by itself from time to time. Not sure really
+
 */
 
 int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
@@ -474,13 +482,11 @@ void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 
 /*
 FIXME:
-Handle functions actually returning NULL here */
+Handle integration functions returning NULL here */
 
 /*
 FIXME:
 Perhaps implement recursion detection */
-
-
 
 void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 {

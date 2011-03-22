@@ -415,41 +415,63 @@ class UltraJSONTests(TestCase):
         except OverflowError:
             pass
             
-            
+    def test_encodeListLongConversion(self):
+        input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
+        output = ujson.encode(input)
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(input, ujson.decode(output))
+        pass
 
+    def test_encodeLongConversion(self):
+        input = 9223372036854775807
+        output = ujson.encode(input)
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(output, json.dumps(input))
+        self.assertEquals(input, ujson.decode(output))
+        pass
+
+    def test_numericIntExp(self):
+        input = "1337E40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+        
+    def test_numericIntFrcExp(self):
+        input = "1.337E40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpEPLUS(self):
+        input = "1337E+40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpePLUS(self):
+        input = "1.337e+40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpE(self):
+        input = "1337E40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpe(self):
+        input = "1337e40"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpEMinus(self):
+        input = "1.337E-4"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+
+    def test_decodeNumericIntExpeMinus(self):
+        input = "1.337e-4"
+        output = ujson.decode(input)
+        self.assertEquals(output, json.loads(input))
+        
+      
 """
-# This test fails. I'm not sure it's an issue or not
-def test_encodeListLongConversion(self):
-input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
-output = ujson.encode(input)
-self.assertEquals(input, json.loads(output))
-self.assertEquals(input, ujson.decode(output))
-pass
-
-# This test fails, I'm not sure it's an issue or not
-def test_encodeLongConversion(self):
-input = 9223372036854775807
-output = ujson.encode(input)
-self.assertEquals(input, json.loads(output))
-self.assertEquals(output, json.dumps(input))
-self.assertEquals(input, ujson.decode(output))
-pass
-
-
-def test_encodeUTF8Conversion(self):
-input = u"A \"string\"\"\\\/\b\f\n\r\t"
-raise NotImplementedError("Implement this test!")
-pass
-
-
-def test_decodeNumericIntExp(self):
-input = "<int>E<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntFrcExp(self):
-input = "<int>.<frc>E<exp>"
-raise NotImplementedError("Implement this test!")
-
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
 raise NotImplementedError("Implement this test!")
@@ -472,41 +494,6 @@ except(ValueError):
     return
 assert False, "Wrong exception"
 
-
-
-#Exponent specific tests
-def test_decodeNumericIntExpEPLUS(self):
-input = "<int>E+<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpePLUS(self):
-input = "<int>e+<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpE(self):
-input = "<int>E<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpe(self):
-input = "<int>e<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpE(self):
-input = "<int>E<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpe(self):
-input = "<int>e<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpEMinus(self):
-input = "<int>E-<exp>"
-raise NotImplementedError("Implement this test!")
-
-def test_decodeNumericIntExpeMinus(self):
-input = "<int>e-<exp>"
-raise NotImplementedError("Implement this test!")
-
 def test_decodeStringUnicodeEscape(self):
 input = "\u3131"
 raise NotImplementedError("Implement this test!")
@@ -523,11 +510,6 @@ def test_decodeStringUTF8(self):
 input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
-def test_decodeNumericFloatInf(self):
-pass
-
-def test_decodeNumericFloatNan(self):
-pass
 
 """
 

@@ -278,7 +278,7 @@ BREAK_EXP_LOOP:
 	
 	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue)));
+	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg)));
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 

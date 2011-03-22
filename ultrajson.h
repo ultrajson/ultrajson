@@ -114,7 +114,7 @@ Encoding in details:
 
 #include <stdio.h>
 
-#define JSON_DECODE_NUMERIC_AS_DOUBLE
+//#define JSON_DECODE_NUMERIC_AS_DOUBLE
 
 // Don't decode any extra whitespaces
 #define JSON_NO_EXTRA_WHITESPACE

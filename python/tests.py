@@ -226,6 +226,14 @@ class UltraJSONTests(TestCase):
             return
         assert False, "Wrong exception"
             
+    def test_encodeDoubleNegInf(self):
+        input = -float('inf')
+        try:
+            ujson.encode(input)
+            assert False, "Expected exception!"
+        except(OverflowError):
+            return
+        assert False, "Wrong exception"
             
 
     def test_decodeJibberish(self):

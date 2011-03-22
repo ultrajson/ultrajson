@@ -80,6 +80,13 @@ static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_
 	return NULL;
 }
 
+static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+	PyObject *obj = (PyObject *) _obj;
+	*((JSINT64 *) outValue) = PyInt_AS_LONG (obj);
+	return NULL;
+}
+
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
@@ -423,7 +430,11 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	if (PyInt_Check(obj))
 	{
 		PRINTMARK();
+#ifdef _LP64
+		pc->PyTypeToJSON = PyIntToINT64; tc->type = JT_LONG;
+#else
 		pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
+#endif
 		return;
 	}
 	else 

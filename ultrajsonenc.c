@@ -123,8 +123,7 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (c
 
 /*
 FIXME:
-This function only works on Little Endian at the moment. 
-There's a preprocessor check for this so you really can't compile on non little endian
+This code only works with Little and Big Endian
 
 FIXME: The JSON spec says escape "/" but non of the others do and we don't 
 want to be left alone doing it so we don't :)
@@ -174,7 +173,12 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 				}
 
 				in = *((JSUTF16 *) io);
+
+#ifdef __LITTLE_ENDIAN__
 				ucs = ((in & 0x1f) << 6) | ((in >> 8) & 0x3f);
+#else
+				ucs = ((in & 0x1f00) >> 2) | (in & 0x3f);
+#endif
 
 				if (ucs < 0x80)
 				{
@@ -197,10 +201,17 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 					SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
 					return FALSE;
 				}
+
+#ifdef __LITTLE_ENDIAN__
 				in = *((JSUTF16 *) io);
 				in |= *((JSUINT8 *) io + 2) << 16;
-
 				ucs = ((in & 0x0f) << 12) | ((in & 0x3f00) >> 2) | ((in & 0x3f0000) >> 16);
+#else
+				in = *((JSUTF16 *) io) << 8;
+				in |= *((JSUINT8 *) io + 2);
+				ucs = ((in & 0x0f0000) >> 4) | ((in & 0x3f00) >> 2) | (in & 0x3f);
+#endif
+
 
 				if (ucs < 0x800)
 				{
@@ -223,9 +234,13 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 					return FALSE;
 				}
 
+#ifdef __LITTLE_ENDIAN__
 				in = *((JSUTF32 *) io);
 				ucs = ((in & 0x07) << 18) | ((in & 0x3f00) << 4) | ((in & 0x3f0000) >> 10) | ((in & 0x3f000000) >> 24);
-
+#else
+				in = *((JSUTF32 *) io);
+				ucs = ((in & 0x07000000) >> 6) | ((in & 0x3f0000) >> 4) | ((in & 0x3f00) >> 2) | (in & 0x3f);
+#endif
 				if (ucs < 0x10000)
 				{
 					enc->offset += (of - enc->offset);

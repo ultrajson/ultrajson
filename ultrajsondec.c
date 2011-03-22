@@ -52,10 +52,7 @@ struct DecoderState
 };
 
 JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
-
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
-PFN_DECODER g_identTable[256] = { NULL }; 
-
 #define RETURN_JSOBJ_NULLCHECK(_expr) return(_expr);
 
 double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)

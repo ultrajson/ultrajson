@@ -153,11 +153,6 @@ typedef __int64 JSLONG;
 #define FASTCALL_ATTR 
 #define INLINE_PREFIX __inline
 
-#ifndef __LITTLE_ENDIAN__
-#define __LITTLE_ENDIAN__
-#endif
-
-
 #else
 
 #include <sys/types.h>
@@ -184,9 +179,15 @@ typedef int64_t JSLONG;
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__
+#else
+
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define __BIG_ENDIAN__
 #endif
 
-#ifndef __LITTLE_ENDIAN__
+#endif
+
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
 #error "Endianess not supported"
 #endif
 

@@ -41,6 +41,8 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <stdlib.h>
 #include <math.h>
 
+#include <float.h>
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -342,7 +344,7 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 	enc->offset += (wstr - (enc->offset));
 }
 
-void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
+int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
 {
 	/* if input is larger than thres_max, revert to exponential */
 	const double thres_max = (double)(0x7FFFFFFF);
@@ -355,18 +357,17 @@ void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 	uint32_t frac;
 	int neg;
 
-
-	/* Hacky test for NaN
-	 * under -fast-math this won't work, but then you also won't
-	 * have correct nan values anyways.  The alternative is
-	 * to link with libmath (bad) or hack IEEE double bits (bad)
-	 */
+	if (value == HUGE_VAL || value == -HUGE_VAL)
+	{
+		SetError (obj, enc, "Invalid Inf value when encoding double");
+		return FALSE;
+	}
 	if (! (value == value)) 
 	{
-			//FIXME: Don't return nan it's not supported by JSON
-			str[0] = 'n'; str[1] = 'a'; str[2] = 'n'; str[3] = '\0';
-			return;
+		SetError (obj, enc, "Invalid Nan value when encoding double");
+		return FALSE;
 	}
+
 
 	/* we'll work in positive values and deal with the
 	negative sign issue later */
@@ -409,9 +410,8 @@ void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 	*/
 	if (value > thres_max) 
 	{
-		//FIXME: sprintf might code Nan or InF here, it's not in the standard
 		enc->offset += sprintf(str, "%e", neg ? -value : value);
-		return;
+		return TRUE;
 	}
 
 	if (enc->doublePrecision == 0) 
@@ -473,6 +473,8 @@ void Buffer_AppendDoubleUnchecked(JSONObjectEncoder *enc, double value)
 	}
 	strreverse(str, wstr-1);
 	enc->offset += (wstr - (enc->offset));
+
+	return TRUE;
 }
 
 
@@ -641,7 +643,12 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
 		case JT_DOUBLE:
 		{
-			Buffer_AppendDoubleUnchecked (enc, enc->getDoubleValue(obj, &tc));
+			if (!Buffer_AppendDoubleUnchecked (obj, enc, enc->getDoubleValue(obj, &tc)))
+			{
+				enc->endTypeContext(obj, &tc);
+				enc->level --;
+				return;
+			}
 			break;
 		}
 

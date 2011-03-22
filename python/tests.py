@@ -113,6 +113,7 @@ class UltraJSONTests(TestCase):
         self.assertEquals(output, json.dumps(input))
         self.assertEquals(input, ujson.decode(output))
         pass
+        
 
     def test_encodeLongNegConversion(self):
         input = -9223372036854775808
@@ -207,6 +208,25 @@ class UltraJSONTests(TestCase):
         except(OverflowError):
             pass
 
+    def test_encodeDoubleNan(self):
+        input = float('nan')
+        try:
+            ujson.encode(input)
+            assert False, "Expected exception!"
+        except(OverflowError):
+            return
+        assert False, "Wrong exception"
+        
+    def test_encodeDoubleInf(self):
+        input = float('inf')
+        try:
+            ujson.encode(input)
+            assert False, "Expected exception!"
+        except(OverflowError):
+            return
+        assert False, "Wrong exception"
+            
+            
 
     def test_decodeJibberish(self):
         input = "fdsa sda v9sa fdsa"
@@ -386,6 +406,8 @@ class UltraJSONTests(TestCase):
             assert False, "Expected exception"
         except OverflowError:
             pass
+            
+            
 
 """
 # This test fails. I'm not sure it's an issue or not

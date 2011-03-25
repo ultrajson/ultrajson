@@ -1,6 +1,6 @@
 #include <Python.h>
 #include <datetime.h>
-#include "../ultrajson.h"
+#include <ultrajson.h>
 
 static PyObject* meth_timegm;
 static PyObject* mod_calendar;

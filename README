@@ -1,6 +1,8 @@
 UltraJSON is a fast and extendable JSON encoder and decoder written in pure C
 
-Python bindings are available as the module ujson with the methods decode and encode
+Python bindings are available as the module ujson (through easy_install / pypi):
+http://pypi.python.org/pypi/ujson/1.1
+
 
 Installation instructions:
 

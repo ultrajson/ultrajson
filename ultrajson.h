@@ -36,76 +36,15 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 
 /*
 Ultra fast JSON encoder
-Developed by Jonas Tärnström (jonas@esn.me).
+Developed by Jonas Tarnstrom (jonas@esn.me).
 
-Notes:
-
-:: Float poing valus ::
-All floating point values are converted as doubles using an optimized algorithm
-which is close but not entirely IEEE complaint.
-Known issues with floating point to string conversion:
-x) NaN, -Inf or Inf are not supported
-x) Exponents are not supported
-x) Max 10 decimals are converted
-x) Result might differ in general from IEEE complaint conversion
-
-:: Strings ::
-Characters are assumed to be 1 octet. This makes ISO-8859-* 
-or UTF8 suitable as input data.
-
-The following characters are escaped:
-\"
-\\
-\/
-\b
-\f
-\n
-\r
-\t
-
-All other characters are accepted making control characters harmful if present 
-in the string octet stream.
-The JSON '\uXXXX' conversion is not implemented
-
-:: Integers ::
-All integers are converted as signed 64-bit. See JSLONG
+Encoder notes:
+------------------
 
 :: Cyclic references ::
 Cyclic referenced objects are not detected. 
 Set JSONObjectEncoder.recursionMax to suitable value or make sure input object 
 tree doesn't have cyclic references.
-
-How to implement:
-
-1. Add ultrajson.c and ultrajson.h to your project or makefile
-2. Fill out JSONObjectEncoder
-3. Call JSON_EncodeObject with root object and a suitable buffer size
-
-Encoding in details:
-
-1. encode(obj):
-	1. call getType(obj)
-	2. if JT_ARRAY:
-		call iterBegin
-		while iterNext
-			call iterGetValue
-			call encode(value)
-		call iterEnd
-
-	3. if JT_OBJECT:
-		call iterBegin
-		while iterNext
-			call iterGetName
-			call iterGetValue
-			call encode (value, name)
-		call iterEnd
-
-	4. if JT_*:
-		call getValue
-		writeOutput
-
-	5. if ti->release is 1:
-		call releaseValue
 
 */
 
@@ -199,7 +138,7 @@ enum JSTYPES
 	JT_INT,			//(JSINT32 (signed 32-bit))
 	JT_LONG,		//(JSINT64 (signed 64-bit))
 	JT_DOUBLE,	//(double)
-	JT_UTF8,		//(char)
+	JT_UTF8,		//(char 8-bit)
 	JT_ARRAY,		// Array structure
 	JT_OBJECT,	// Key/Value structure 
 	JT_INVALID,	// Internal, do not return nor expect
@@ -215,7 +154,7 @@ typedef struct __JSONTypeContext
 } JSONTypeContext;
 
 /*
-Function pointer declarations, suitable for implementing Ultra JSON */
+Function pointer declarations, suitable for implementing UltraJSON */
 typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *tc);
 typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
 typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
@@ -227,34 +166,8 @@ typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
 typedef struct __JSONObjectEncoder
 {
-	/*
-	Return type of object as JSTYPES enum 
-	Implementors should setup necessary pointers or state in ti->prv
-	*/
-
 	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
 	void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
-	
-	/*
-	Get value of object of a specific type
-
-	JT_NULL			: getValue is never called for this type
-	JT_TRUE			: getValue is never called for this type
-	JT_FALSE		: getValue is never called for this type
-	JT_ARRAY		: getValue is never called for this type
-	JT_OBJECT		: getValue is never called for this type
-	JT_INTEGER, : return NULL, outValue points to a "JSLONG" (64-bit signed), _outLen is ignored
-	JT_DOUBLE,	: return NULL, outValue points to a "double", _outLen is ignored
-	JT_BOOLEAN,	: return NULL, outValue points to an "int", _outLen is ignored 
-
-	JT_UTF8,		: 
-	return pointer to the string buffer
-	outValue is ignored
-	set _outLen to length of returned string buffer (in bytes without trailing '\0') 
-
-	If it's required that returned resources are freed or released, set ti->release to 1 and releaseValue will be called with JSONIterContext as argument.
-	Use ti->prv fields to store state for this
-	*/
 	const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
 	JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
 	JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);

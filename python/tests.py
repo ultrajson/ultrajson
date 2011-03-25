@@ -55,6 +55,14 @@ class UltraJSONTests(TestCase):
         dec = ujson.decode(enc)
         self.assertEquals(input, dec)
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        
+    def test_encodeControlEscaping(self):
+        input = "\x19"
+        enc = ujson.encode(input)
+        dec = ujson.decode(enc)
+        self.assertEquals(input, dec)
+        self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        
 
     def test_encodeUnicodeConversion2(self):
         input = "\xe6\x97\xa5\xd1\x88"

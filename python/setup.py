@@ -15,7 +15,7 @@ module1 = Extension('ujson',
 					
 setup (name = 'ujson',
 		version = '1.0',
-		description = 'UltraJSON',
+		description = 'Ultra fast JSON encoder and decoder for Python',
 		ext_modules = [module1],
 		author = "Jonas Tarnstrom",
 		author_email = "jonas.tarnstrom@esn.me",

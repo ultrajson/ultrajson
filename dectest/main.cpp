@@ -17,7 +17,7 @@ extern "C"
 
 //char indata[] = "R├ñksm├Ârg├Ñs ÏºÏ│Ïº┘àÏ® Ï¿┘å ┘àÏ¡┘àÏ» Ï¿┘å Ï╣┘êÏÂ Ï¿┘å ┘äÏºÏ»┘å";
 //char indata[] = "اسامة بن محمد بن عوض بن لادن,";
-char indata[] = "\xc2\x90\xe3\xb2\x83\xf0\xbc\xa0\xb9";
+char indata[] = "\x19";
 /*
 \xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e*/
 using namespace std;

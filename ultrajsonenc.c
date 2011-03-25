@@ -265,8 +265,8 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 				*(of++) = 'u';
 				*(of++) = '0';
 				*(of++) = '0';
-				*(of++) = g_hexChars[ (unsigned char) (*io) & 0xf0];
-				*(of++) = g_hexChars[ (unsigned char) (*io) & 0x0f];
+				*(of++) = g_hexChars[ (unsigned char) (((*io) & 0xf0) >> 4)];
+				*(of++) = g_hexChars[ (unsigned char) ((*io) & 0x0f)];
 				io ++;
 				continue;
 

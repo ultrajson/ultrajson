@@ -39,13 +39,14 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#include <wchar.h>
 
 struct DecoderState
 {
 	char *start;
 	char *end;
-	char *escStart;
-	char *escEnd;
+	wchar_t *escStart;
+	wchar_t *escEnd;
 	int escHeap;
 	int lastType;
 	JSONObjectDecoder *dec;
@@ -355,32 +356,62 @@ FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 	}
 }
 
+
+enum DECODESTRINGSTATE
+{
+	DS_ISNULL = 0x32,
+	DS_ISQUOTE,
+	DS_ISESCAPE,
+	DS_UTFLENERROR,
+
+};
+
+static const JSUINT8 g_decoderLookup[256] = 
+{
+/* 0x00 */ DS_ISNULL, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x10 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x20 */ 1, 1, DS_ISQUOTE, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x40 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, DS_ISESCAPE, 1, 1, 1,
+/* 0x60 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x70 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x80 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x90 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0xa0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0xb0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0xc0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+/* 0xd0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+/* 0xe0 */ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 
+/* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, 
+};
+
+
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
 	JSUTF16 sur[2] = { 0 };
 	int iSur = 0;
-	char *escOffset;
-	char chr;
+	wchar_t *escOffset;
 	size_t escLen = (ds->escEnd - ds->escStart);
 	char *inputOffset;
+	JSUINT8 utfLen;
 	ds->lastType = JT_INVALID;
 	ds->start ++;
 
-
 	if ( (ds->end - ds->start) > escLen)
 	{
-		size_t newSize = escLen * 2;
+		size_t newSize = (ds->end - ds->start);
 
 		if (ds->escHeap)
 		{
-			ds->escStart = (char *) ds->dec->realloc (ds->escStart, escLen);
+			ds->escStart = (wchar_t *) ds->dec->realloc (ds->escStart, newSize * sizeof(wchar_t));
 		}
 		else
 		{
-			char *oldStart = ds->escStart;
+			wchar_t *oldStart = ds->escStart;
 			ds->escHeap = 1;
-			ds->escStart = (char *) ds->dec->malloc (newSize);
-			memcpy (ds->escStart, oldStart, escLen);
+			ds->escStart = (wchar_t *) ds->dec->malloc (newSize * sizeof(wchar_t));
+			memcpy (ds->escStart, oldStart, escLen * sizeof(wchar_t));
 		}
 
 		ds->escEnd = ds->escStart + newSize;
@@ -392,40 +423,44 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
 	while(1)
 	{
-		chr = (*inputOffset++);
+		utfLen = g_decoderLookup[(JSUINT8)(*inputOffset)];
 
-		switch (chr)
+		switch (utfLen)
 		{
-		case '\0':
+		case DS_ISNULL:
 			return SetError(ds, -1, "Unmatched ''\"' when when decoding 'string'");
 
-		case '\"':
+		case DS_ISQUOTE:
 			ds->lastType = JT_UTF8;
+			inputOffset ++;
 			ds->start += (inputOffset - ds->start);
 			RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
 
-		case '\\':
+		case DS_UTFLENERROR:
+			return SetError (ds, -1, "Invalid UTF-8 sequence length when decoding 'string'");
+
+		case DS_ISESCAPE:
+			inputOffset ++;
 			switch (*inputOffset)
 			{
-			case '\\': *(escOffset++) = '\\'; inputOffset++; continue;
-			case '\"': *(escOffset++) = '\"'; inputOffset++; continue;
-			case '/':  *(escOffset++) = '/';  inputOffset++; continue;
-			case 'b':  *(escOffset++) = '\b'; inputOffset++; continue;
-			case 'f':  *(escOffset++) = '\f'; inputOffset++; continue;
-			case 'n':  *(escOffset++) = '\n'; inputOffset++; continue;
-			case 'r':  *(escOffset++) = '\r'; inputOffset++; continue;
-			case 't':  *(escOffset++) = '\t'; inputOffset++; continue;
+			case '\\': *(escOffset++) = L'\\'; inputOffset++; continue;
+			case '\"': *(escOffset++) = L'\"'; inputOffset++; continue;
+			case '/':  *(escOffset++) = L'/';  inputOffset++; continue;
+			case 'b':  *(escOffset++) = L'\b'; inputOffset++; continue;
+			case 'f':  *(escOffset++) = L'\f'; inputOffset++; continue;
+			case 'n':  *(escOffset++) = L'\n'; inputOffset++; continue;
+			case 'r':  *(escOffset++) = L'\r'; inputOffset++; continue;
+			case 't':  *(escOffset++) = L'\t'; inputOffset++; continue;
 
 			case 'u':
-			{
-				int index;
-				JSUTF32 u32chr;
-				inputOffset ++;
-
-				for (index = 0; index < 4; index ++)
 				{
-					switch (*inputOffset)
+					int index;
+					inputOffset ++;
+
+					for (index = 0; index < 4; index ++)
 					{
+						switch (*inputOffset)
+						{
 						case '\0':	return SetError (ds, -1, "Unterminated unicode escape sequence when decoding 'string'");
 						default:		return SetError (ds, -1, "Unexpected character in unicode escape sequence when decoding 'string'");
 
@@ -459,105 +494,137 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 						case 'F':
 							sur[iSur] = (sur[iSur] << 4) + 10 + (JSUTF16) (*inputOffset - 'A');
 							break;
+						}
+
+						inputOffset ++;
 					}
 
-					inputOffset ++;
-				}
 
-
-				if (iSur == 0)
-				{
-					if((sur[iSur] & 0xfc00) == 0xd800)
+					if (iSur == 0)
 					{
-						// First of a surrogate pair, continue parsing
-						iSur ++;
-						break;
-					} 
-					u32chr = sur[iSur];
-					iSur = 0;
-				}
-				else
-				{
-					// Decode pair
-					if ((sur[1] & 0xfc00) != 0xdc00)
-					{
-						return SetError (ds, -1, "Unpaired high surrogate when decoding 'string'");
+						if((sur[iSur] & 0xfc00) == 0xd800)
+						{
+							// First of a surrogate pair, continue parsing
+							iSur ++;
+							break;
+						} 
+						(*escOffset++) = (wchar_t) sur[iSur];
+						iSur = 0;
 					}
+					else
+					{
+						// Decode pair
+						if ((sur[1] & 0xfc00) != 0xdc00)
+						{
+							return SetError (ds, -1, "Unpaired high surrogate when decoding 'string'");
+						}
 
-					u32chr = 0x10000 + (((sur[0] - 0xd800) << 10) | (sur[1] - 0xdc00));
-					iSur = 0;
+#if WCHAR_MAX == 0xffff
+						(*escOffset++) = (wchar_t) sur[0];
+						(*escOffset++) = (wchar_t) sur[1];
+#else
+						(*escOffset++) = (wchar_t) 0x10000 + (((sur[0] - 0xd800) << 10) | (sur[1] - 0xdc00));
+#endif
+						iSur = 0;
+					}
+					break;
 				}
 
-				if (u32chr < 0x80)
-				{
-					*(escOffset++) = (char) u32chr;
-				}
-				else
-				if (u32chr < 0x0800)
-				{
-					(*escOffset++) = 0xC0 | ((u32chr >> 6) & 0x1F);
-					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
-				}
-				else
-				if (u32chr < 0x10000)
-				{
-					(*escOffset++) = 0xE0 | ((u32chr >> 12) & 0x0F);
-					(*escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
-					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
-				}
-				else
-				if (u32chr < 0x200000)
-				{
-					(*escOffset++) = 0xF0 | ((u32chr >> 18) & 0x07);
-					(*escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
-					(*escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
-					(*escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
-				}
-				/* Removed for now!
-				else 
-				//FIXME: Does it even make sense supporting 4+ bytes UTF-8 sequences?
-				if(u32chr < 0x4000000)
-				{
-					*(escOffset++) = 0xF8 | ((u32chr >> 24) & 0x03);
-					*(escOffset++) = 0x80 | ((u32chr >> 18) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 0) & 0x3F);
-				}
-				else
-				if(u32chr < 0x8000000)
-				{
-					*(escOffset++) = 0xFC | ((u32chr >> 30) & 0x01);
-					*(escOffset++) = 0x80 | ((u32chr >> 24) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 18) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 12) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 6) & 0x3F);
-					*(escOffset++) = 0x80 | ((u32chr >> 0)& 0x3F);
-				}
-				*/
-				else
-				{
-						return SetError (ds, -1, "Unicode code point of out bounds when decoding 'string'");
-				}
-				
-
-				break;
-			}
-
-
-			case '\0': 
-				return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
-
-			default:
-				return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
+			case '\0': return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
+			default: return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
 			}
 			break;
 
 		default:
-			*(escOffset++) = chr;
+			{
+				JSUTF32 ucs = 0;
+
+				// Get leading byte right
+				switch (utfLen)
+				{
+				case 1:
+					*(escOffset++) = (wchar_t) (*inputOffset++); 
+					continue;
+
+				case 2:
+					ucs |= (*inputOffset++) & 0x1f;
+					break;
+
+				case 3:
+					ucs |= (*inputOffset++) & 0x0f;
+					break;
+
+				case 4:
+					ucs |= (*inputOffset++) & 0x07;
+					break;
+				}
+
+
+				utfLen --;
+
+				// Decode all bytes
+				switch (utfLen)
+				{
+				case 3:
+					ucs <<= 6;
+					if (((*inputOffset) & 0x80) != 0x80)
+					{
+						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+					}
+					ucs |= (*inputOffset++) & 0x3f;
+				case 2:
+					ucs <<= 6;
+					if (((*inputOffset) & 0x80) != 0x80)
+					{
+						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+					}
+					ucs |= (*inputOffset++) & 0x3f;
+				case 1:
+					ucs <<= 6;
+					if (((*inputOffset) & 0x80) != 0x80)
+					{
+						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+					}
+					ucs |= (*inputOffset++) & 0x3f;
+					break;
+				}
+
+				// Validate length
+				switch (utfLen)
+				{
+				case 1:
+					if (ucs < 0x80)	return SetError (ds, -1, "Overlong 2 byte UTF-8 sequence detected when decoding 'string'");
+					*(escOffset++) = (wchar_t) ucs;
+					break;
+
+				case 2:
+					if (ucs < 0x800) return SetError (ds, -1, "Overlong 3 byte UTF-8 sequence detected when encoding string");
+					*(escOffset++) = (wchar_t) ucs;
+					break;
+
+				case 3:
+					if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4 byte UTF-8 sequence detected when decoding 'string'");
+
+#if WCHAR_MAX == 0xffff
+					if (ucs >= 0x10000)
+					{
+						ucs -= 0x10000;
+						*(escOffset++) = (ucs >> 10) + 0xd800;
+						*(escOffset++) = (ucs & 0x3ff) + 0xdc00;
+					}
+					else
+					{
+						*(escOffset++) = (wchar_t) ucs;
+					}
+#else
+					*(escOffset++) = (wchar_t) ucs;
+#endif
+					break;
+				}
+				break;
+			}
 		}
 	}
-
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
@@ -734,14 +801,14 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	/*
 	FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time */
 	struct DecoderState ds;
-	char escBuffer[JSON_MAX_STACK_BUFFER_SIZE];
+	wchar_t escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t))];
 	JSOBJ ret;
 	
 	ds.start = (char *) buffer;
 	ds.end = ds.start + cbBuffer;
 
 	ds.escStart = escBuffer;
-	ds.escEnd = ds.escStart + sizeof(escBuffer);
+	ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t));
 	ds.escHeap = 0;
 	ds.dec = dec;
 	ds.dec->errorStr = NULL;

@@ -52,6 +52,7 @@ tree doesn't have cyclic references.
 #define __ULTRAJSON_H__
 
 #include <stdio.h>
+#include <wchar.h>
 
 //#define JSON_DECODE_NUMERIC_AS_DOUBLE
 
@@ -264,7 +265,7 @@ EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *
 
 typedef struct __JSONObjectDecoder
 {
-	JSOBJ (*newString)(char *start, char *end);
+	JSOBJ (*newString)(wchar_t *start, wchar_t *end);
 	void (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
 	void (*arrayAddItem)(JSOBJ obj, JSOBJ value);
 	JSOBJ (*newTrue)(void);

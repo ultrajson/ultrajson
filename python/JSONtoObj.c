@@ -1,5 +1,5 @@
 #include <Python.h>
-#include <ultrajson.h>
+#include "../ultrajson.h"
 
 
 
@@ -19,9 +19,9 @@ void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 	return;
 }
 
-JSOBJ Object_newString(char *start, char *end)
+JSOBJ Object_newString(wchar_t *start, wchar_t *end)
 {
-	return PyString_FromStringAndSize(start, (end - start));
+	return PyUnicode_FromWideChar (start, (end - start));
 }
 
 JSOBJ Object_newTrue(void)

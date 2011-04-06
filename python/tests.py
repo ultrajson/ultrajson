@@ -53,8 +53,8 @@ class UltraJSONTests(TestCase):
         input = "Räksmörgås اسامة بن محمد بن عوض بن لادن"
         enc = ujson.encode(input)
         dec = ujson.decode(enc)
-        self.assertEquals(input, dec)
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(dec, json.loads(enc))
         
     def test_encodeControlEscaping(self):
         input = "\x19"
@@ -68,25 +68,24 @@ class UltraJSONTests(TestCase):
         input = "\xe6\x97\xa5\xd1\x88"
         enc = ujson.encode(input)
         dec = ujson.decode(enc)
-        self.assertEquals(input, dec)
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(dec, json.loads(enc))
 
     def test_encodeUnicodeSurrogatePair(self):
         input = "\xf0\x90\x8d\x86"
         enc = ujson.encode(input)
         dec = ujson.decode(enc)
                 
-        self.assertEquals(input, dec)
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(dec, json.loads(enc))
 
     def test_encodeUnicode4BytesUTF8(self):
         input = "\xf0\x91\x80\xb0TRAILINGNORMAL"
         enc = ujson.encode(input)
-
         dec = ujson.decode(enc)
-                
-        self.assertEquals(input, dec)
+
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(dec, json.loads(enc))
             
     def test_encodeUnicode4BytesUTF8Highest(self):
         input = "\xf3\xbf\xbf\xbfTRAILINGNORMAL"
@@ -94,9 +93,10 @@ class UltraJSONTests(TestCase):
 
         dec = ujson.decode(enc)
                 
-        self.assertEquals(input, dec)
         self.assertEquals(enc, json.dumps(input, encoding="utf-8"))				
+        self.assertEquals(dec, json.loads(enc))
 
+        
     def test_encodeArrayInArray(self):
         input = [[[[]]]]
         output = ujson.encode(input)
@@ -478,7 +478,16 @@ class UltraJSONTests(TestCase):
         output = ujson.decode(input)
         self.assertEquals(output, json.loads(input))
         
-      
+    def test_encodeBigEscape(self):
+        for x in xrange(10):
+            input = "\xc3\xa5" * 1024 * 1024 * 10
+            output = ujson.encode(input)
+    
+    def test_decodeBigEscape(self):
+        for x in xrange(10):
+            input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
+            output = ujson.decode(input)
+    
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

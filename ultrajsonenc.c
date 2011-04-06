@@ -285,7 +285,7 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 
 		/*
 		If the character is a UTF8 sequence of length > 1 we end up here */
-		if (ucs > 0x10000)
+		if (ucs >= 0x10000)
 		{
 			ucs -= 0x10000;
 			*(of++) = '\\';

@@ -535,6 +535,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 			}
 			break;
 
+		case 1:
+			*(escOffset++) = (wchar_t) (*inputOffset++); 
+			break;
+
 		default:
 			{
 				JSUTF32 ucs = 0;
@@ -542,10 +546,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 				// Get leading byte right
 				switch (utfLen)
 				{
-				case 1:
-					*(escOffset++) = (wchar_t) (*inputOffset++); 
-					continue;
-
 				case 2:
 					ucs |= (*inputOffset++) & 0x1f;
 					break;

@@ -30,67 +30,67 @@ Processor: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
 Total Physical Memory: 4096 MB
 
 Array with 256 utf-8 strings:
-ujson encode      : 2874.54652 calls/sec
-simplejson encode : 1539.47999 calls/sec
-cjson encode      : 132.33571 calls/sec
+ujson encode      : 2714.66499 calls/sec
+simplejson encode : 1542.63718 calls/sec
+cjson encode      : 132.23604 calls/sec
 
-ujson decode      : 2072.09417 calls/sec
-cjson decode      : 991.20903 calls/sec
-simplejson decode : 310.75309 calls/sec
+ujson decode      : 2079.17287 calls/sec
+cjson decode      : 992.21602 calls/sec
+simplejson decode : 278.92061 calls/sec
 
 Medium complex object:
-ujson encode      : 19001.01929 calls/sec
-simplejson encode : 3512.29205 calls/sec
-cjson encode      : 3063.69959 calls/sec
+ujson encode      : 17849.80356 calls/sec
+simplejson encode : 3524.32372 calls/sec
+cjson encode      : 2967.34656 calls/sec
 
-ujson decode      : 12791.80993 calls/sec
-cjson decode      : 8288.32916 calls/sec
-simplejson decode : 6640.22169 calls/sec
+ujson decode      : 11685.87610 calls/sec
+cjson decode      : 8206.67906 calls/sec
+simplejson decode : 6549.99750 calls/sec
 
 Array with 256 strings:
-ujson encode      : 40161.78453 calls/sec
-simplejson encode : 19301.40779 calls/sec
-cjson encode      : 12337.13166 calls/sec
+ujson encode      : 38543.50303 calls/sec
+simplejson encode : 19436.45772 calls/sec
+cjson encode      : 12392.55614 calls/sec
 
-ujson decode      : 36944.81317 calls/sec
-cjson decode      : 30187.40167 calls/sec
-simplejson decode : 25105.56562 calls/sec
+ujson decode      : 27207.33157 calls/sec
+cjson decode      : 30237.60827 calls/sec
+simplejson decode : 25271.93073 calls/sec
 
 Array with 256 doubles:
-ujson encode      : 6054.71950 calls/sec
-simplejson encode : 2912.44353 calls/sec
-cjson encode      : 3539.51228 calls/sec
+ujson encode      : 6027.45931 calls/sec
+simplejson encode : 2915.54871 calls/sec
+cjson encode      : 3546.88804 calls/sec
 
-ujson decode      : 27794.29735 calls/sec
-cjson decode      : 14892.38775 calls/sec
-simplejson decode : 14879.00070 calls/sec
+ujson decode      : 28045.13375 calls/sec
+cjson decode      : 15066.73209 calls/sec
+simplejson decode : 15604.98222 calls/sec
 
 Array with 256 True values:
-ujson encode      : 168086.95325 calls/sec
-simplejson encode : 49348.93309 calls/sec
-cjson encode      : 67392.90623 calls/sec
+ujson encode      : 187342.39634 calls/sec
+simplejson encode : 48972.93887 calls/sec
+cjson encode      : 67274.93082 calls/sec
 
-ujson decode      : 139359.25968 calls/sec
-cjson decode      : 82552.26652 calls/sec
-simplejson decode : 114998.51396 calls/sec
+ujson decode      : 158103.79663 calls/sec
+cjson decode      : 83237.88990 calls/sec
+simplejson decode : 115645.98241 calls/sec
 
 Array with 256 dict{string, int} pairs:
-ujson encode      : 24125.68837 calls/sec
-simplejson encode : 5751.74871 calls/sec
-cjson encode      : 4735.65147 calls/sec
+ujson encode      : 25301.85690 calls/sec
+simplejson encode : 5734.29472 calls/sec
+cjson encode      : 4447.73411 calls/sec
 
-ujson decode      : 17176.70493 calls/sec
-cjson decode      : 13420.93963 calls/sec
-simplejson decode : 9854.27352 calls/sec
+ujson decode      : 16290.72288 calls/sec
+cjson decode      : 12528.56060 calls/sec
+simplejson decode : 10394.23358 calls/sec
 
 Dict with 256 arrays with 256 dict{string, int} pairs:
-ujson encode      : 86.52449 calls/sec
-simplejson encode : 17.46117 calls/sec
-cjson encode      : 18.31323 calls/sec
+ujson encode      : 87.40865 calls/sec
+simplejson encode : 17.07889 calls/sec
+cjson encode      : 17.25164 calls/sec
 
-ujson decode      : 49.54660 calls/sec
-cjson decode      : 38.34094 calls/sec
-simplejson decode : 28.18035 calls/sec
+ujson decode      : 45.94026 calls/sec
+cjson decode      : 34.60225 calls/sec
+simplejson decode : 26.92238 calls/sec
 
 32-bit benchmarks Windows
 Python 2.6.6 (r266:84297, Aug 24 2010, 18:46:32) [MSC v.1500 32 bit (Intel)]

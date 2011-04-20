@@ -433,7 +433,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 		case DS_ISQUOTE:
 			ds->lastType = JT_UTF8;
 			inputOffset ++;
-			ds->start += (inputOffset - ds->start);
+			ds->start += ( (char *) inputOffset - (ds->start));
 			RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
 
 		case DS_UTFLENERROR:

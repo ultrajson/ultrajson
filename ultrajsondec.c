@@ -391,10 +391,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
 	JSUTF16 sur[2] = { 0 };
 	int iSur = 0;
+	int index;
 	wchar_t *escOffset;
 	size_t escLen = (ds->escEnd - ds->escStart);
-	char *inputOffset;
-	JSUINT8 utfLen;
+	JSUINT8 *inputOffset;
+	JSUINT8 oct;
+	JSUTF32 ucs;
 	ds->lastType = JT_INVALID;
 	ds->start ++;
 
@@ -423,9 +425,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
 	while(1)
 	{
-		utfLen = g_decoderLookup[(JSUINT8)(*inputOffset)];
-
-		switch (utfLen)
+		switch (g_decoderLookup[(JSUINT8)(*inputOffset)])
 		{
 		case DS_ISNULL:
 			return SetError(ds, -1, "Unmatched ''\"' when when decoding 'string'");
@@ -539,90 +539,79 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 			*(escOffset++) = (wchar_t) (*inputOffset++); 
 			break;
 
-		default:
+		case 2:
+		{
+			ucs = (*inputOffset++) & 0x1f;
+			ucs <<= 6;
+			if (((*inputOffset) & 0x80) != 0x80)
 			{
-				JSUTF32 ucs = 0;
-
-				// Get leading byte right
-				switch (utfLen)
-				{
-				case 2:
-					ucs |= (*inputOffset++) & 0x1f;
-					break;
-
-				case 3:
-					ucs |= (*inputOffset++) & 0x0f;
-					break;
-
-				case 4:
-					ucs |= (*inputOffset++) & 0x07;
-					break;
-				}
-
-
-				utfLen --;
-
-				// Decode all bytes
-				switch (utfLen)
-				{
-				case 3:
-					ucs <<= 6;
-					if (((*inputOffset) & 0x80) != 0x80)
-					{
-						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
-					}
-					ucs |= (*inputOffset++) & 0x3f;
-				case 2:
-					ucs <<= 6;
-					if (((*inputOffset) & 0x80) != 0x80)
-					{
-						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
-					}
-					ucs |= (*inputOffset++) & 0x3f;
-				case 1:
-					ucs <<= 6;
-					if (((*inputOffset) & 0x80) != 0x80)
-					{
-						return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
-					}
-					ucs |= (*inputOffset++) & 0x3f;
-					break;
-				}
-
-				// Validate length
-				switch (utfLen)
-				{
-				case 1:
-					if (ucs < 0x80)	return SetError (ds, -1, "Overlong 2 byte UTF-8 sequence detected when decoding 'string'");
-					*(escOffset++) = (wchar_t) ucs;
-					break;
-
-				case 2:
-					if (ucs < 0x800) return SetError (ds, -1, "Overlong 3 byte UTF-8 sequence detected when encoding string");
-					*(escOffset++) = (wchar_t) ucs;
-					break;
-
-				case 3:
-					if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4 byte UTF-8 sequence detected when decoding 'string'");
-
-#if WCHAR_MAX == 0xffff
-					if (ucs >= 0x10000)
-					{
-						ucs -= 0x10000;
-						*(escOffset++) = (ucs >> 10) + 0xd800;
-						*(escOffset++) = (ucs & 0x3ff) + 0xdc00;
-					}
-					else
-					{
-						*(escOffset++) = (wchar_t) ucs;
-					}
-#else
-					*(escOffset++) = (wchar_t) ucs;
-#endif
-					break;
-				}
-				break;
+				return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
 			}
+			ucs |= (*inputOffset++) & 0x3f;
+			if (ucs < 0x80)	return SetError (ds, -1, "Overlong 2 byte UTF-8 sequence detected when decoding 'string'");
+			*(escOffset++) = (wchar_t) ucs;
+			break;
+		}
+
+		case 3:
+		{
+			JSUTF32 ucs = 0;
+			ucs |= (*inputOffset++) & 0x0f;
+
+			for (index = 0; index < 2; index ++)
+			{
+				ucs <<= 6;
+				oct = (*inputOffset++);
+
+				if ((oct & 0x80) != 0x80)
+				{
+					return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+				}
+
+				ucs |= oct & 0x3f;
+			}
+
+			if (ucs < 0x800) return SetError (ds, -1, "Overlong 3 byte UTF-8 sequence detected when encoding string");
+			*(escOffset++) = (wchar_t) ucs;
+			break;
+		}
+
+		case 4:
+		{
+			JSUTF32 ucs = 0;
+			ucs |= (*inputOffset++) & 0x07;
+
+			for (index = 0; index < 3; index ++)
+			{
+				ucs <<= 6;
+				oct = (*inputOffset++);
+
+				if ((oct & 0x80) != 0x80)
+				{
+					return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+				}
+
+				ucs |= oct & 0x3f;
+			}
+
+			if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4 byte UTF-8 sequence detected when decoding 'string'");
+
+			#if WCHAR_MAX == 0xffff
+			if (ucs >= 0x10000)
+			{
+				ucs -= 0x10000;
+				*(escOffset++) = (ucs >> 10) + 0xd800;
+				*(escOffset++) = (ucs & 0x3ff) + 0xdc00;
+			}
+			else
+			{
+				*(escOffset++) = (wchar_t) ucs;
+			}
+			#else
+			*(escOffset++) = (wchar_t) ucs;
+			#endif
+			break;
+		}
 		}
 	}
 }
@@ -701,7 +690,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 		if (itemName == NULL)
 		{
 			ds->dec->releaseObject(newObj);
-			return newObj;
+			return NULL;
 		}
 
 		if (ds->lastType != JT_UTF8)
@@ -728,7 +717,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 		{
 			ds->dec->releaseObject(newObj);
 			ds->dec->releaseObject(itemName);
-			return newObj;
+			return NULL;
 		}
 
 		ds->dec->objectAddKey (newObj, itemName, itemValue);

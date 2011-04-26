@@ -1,5 +1,5 @@
 #include <Python.h>
-#include "../ultrajson.h"
+#include <ultrajson.h>
 
 
 

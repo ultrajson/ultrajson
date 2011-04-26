@@ -476,6 +476,11 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
 		// add decimal
 		*wstr++ = '.';
 	}
+	else
+	{
+		*wstr++ = '0';
+		*wstr++ = '.';
+	}
 
 	// do whole part
 	// Take care of sign

@@ -16,6 +16,11 @@ class UltraJSONTests(TestCase):
         self.assertEquals(round(input, 5), round(json.loads(output), 5))
         self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
         pass
+        
+    def test_encodeWithDecimal(self):
+        input = 1.0
+        output = ujson.encode(input)
+        self.assertEquals(output, "1.0")
 
     def test_encodeDoubleNegConversion(self):
         input = -math.pi

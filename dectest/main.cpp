@@ -18,6 +18,7 @@ extern "C"
 //char indata[] = "R├ñksm├Ârg├Ñs ÏºÏ│Ïº┘àÏ® Ï¿┘å ┘àÏ¡┘àÏ» Ï¿┘å Ï╣┘êÏÂ Ï¿┘å ┘äÏºÏ»┘å";
 //char indata[] = "\"اسامة بن محمد بن عوض بن لادن,\"";
 char indata[] = "\"\xe6\x97\xa5\xd1\x88\"";
+//char indata[] = 
 //char indata[] = "\x19";
 /*
 \xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e*/
@@ -571,25 +572,11 @@ int main (int argc, char **argv)
 	decoder.realloc = realloc;
 	decoder.releaseObject = Object_releaseObject;
 
+	obj = new DoubleObject(1.0);
+
 	char buffer[65536];
-	#define N 10000
+	JSON_EncodeObject(obj, &encoder, buffer, sizeof(buffer));
 
-	char *input = (char *) malloc((2 * 1024 * 1024 * 10) + 3);
-
-	input[0] = '"';
-
-	for (int index = 1; index < (1024 * 1024 * 10) - 1; index += 2)
-	{
-		input[index + 0] = '\xc3';
-		input[index + 1] = '\xa5';
-	}
-
-	input[(1024 * 1024 * 10)] = '"';
-	input[(1024 * 1024 * 10)+ 1] = '\0';
-
-
-
-	BaseObject *obj2 = (BaseObject *) JSON_DecodeObject(&decoder, input, strlen(input));
 
 	/*
 

@@ -362,11 +362,24 @@ int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 		PRINTMARK();
 		return 0;
 	}
-	if (!PyString_Check(GET_TC(tc)->itemName))
-		GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
+
+	if (PyUnicode_Check(GET_TC(tc)->itemName))
+	{
+		GET_TC(tc)->itemName = PyUnicode_EncodeUTF8 (
+			PyUnicode_AS_UNICODE(GET_TC(tc)->itemName),
+			PyUnicode_GET_SIZE(GET_TC(tc)->itemName),
+			NULL
+		);
+	}
 	else
+	if (!PyString_Check(GET_TC(tc)->itemName))
+	{
+		GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
+	}
+	else 
+	{
 		Py_INCREF(GET_TC(tc)->itemName);
-	
+	}
 	PRINTMARK();
 	return 1;
 }

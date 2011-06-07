@@ -8,6 +8,12 @@ static PyObject* mod_calendar;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
+
+#if (PY_VERSION_HEX < 0x02050000)
+typedef ssize_t Py_ssize_t;
+#endif
+
+
 typedef struct __TypeContext
 {
 	JSPFN_ITERBEGIN iterBegin;

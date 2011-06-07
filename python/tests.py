@@ -3,7 +3,10 @@ import unittest
 from unittest import TestCase
 
 import ujson
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 import math
 import time
 import datetime

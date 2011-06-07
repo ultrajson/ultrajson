@@ -1,7 +1,11 @@
 ﻿# coding=UTF-8
 import simplejson
 import ujson
-import json
+import sys
+try:
+    import json
+except ImportError:
+    json = simplejson
 import cjson
 from time import time as gettime
 import time
@@ -51,9 +55,28 @@ def cjsonDec():
 
 """=========================================================================="""
 
+def timeit_compat_fix(timeit):
+    if sys.version_info[:2] >=  (2,6):
+        return
+    default_number = 1000000
+    default_repeat = 3
+    if sys.platform == "win32":
+        # On Windows, the best timer is time.clock()
+        default_timer = time.clock
+    else:
+        # On most other platforms the best timer is time.time()
+        default_timer = time.time
+    def repeat(stmt="pass", setup="pass", timer=default_timer,
+       repeat=default_repeat, number=default_number):
+        """Convenience function to create Timer object and call repeat method."""
+        return timeit.Timer(stmt, setup, timer).repeat(repeat, number)
+    timeit.repeat = repeat
+
 
 if __name__ == "__main__":
     import timeit
+    timeit_compat_fix(timeit)
+
 
 print "Ready? Configure affinity and priority, starting in 20..."
 time.sleep(20)

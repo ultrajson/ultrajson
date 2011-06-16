@@ -1,4 +1,4 @@
-﻿# coding=UTF-8
+﻿
 import unittest
 from unittest import TestCase
 
@@ -13,6 +13,16 @@ import datetime
 import calendar
 
 class UltraJSONTests(TestCase):
+
+    def test_encodeDictWithUnicodeKeys(self):
+        input = { u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1" }
+        output = ujson.encode(input)
+
+        input = { u"بن": u"value1", u"بن": u"value1", u"بن": u"value1", u"بن": u"value1", u"بن": u"value1", u"بن": u"value1", u"بن": u"value1" }
+        output = ujson.encode(input)
+
+        pass
+
     def test_encodeDoubleConversion(self):
         input = math.pi
         output = ujson.encode(input)

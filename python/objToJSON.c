@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <stdio.h>
 #include <datetime.h>
 #include <ultrajson.h>
 
@@ -711,3 +712,57 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 
 	return newobj;
 }
+
+PyObject* objToJSONFile(PyObject* self, PyObject *args)
+{
+	PyObject *data;
+	PyObject *file;
+	PyObject *string;
+	PyObject *write;
+	PyObject *argtuple;
+
+	if (!PyArg_ParseTuple (args, "OO", &data, &file)) {
+		return NULL;
+	}
+
+	if (!PyObject_HasAttrString (file, "write"))
+	{
+		PyErr_Format (PyExc_TypeError, "expected file");
+		return NULL;
+	}
+
+	write = PyObject_GetAttrString (file, "write");
+
+	if (!PyCallable_Check (write)) {
+		Py_XDECREF(write);
+		PyErr_Format (PyExc_TypeError, "expected file");
+		return NULL;
+	}
+
+	string = objToJSON (self, data);
+
+	if (string == NULL)
+	{
+		Py_XDECREF(write);
+		return NULL;
+	}
+
+	argtuple = PyTuple_Pack (1, string);
+	if (argtuple == NULL)
+	{
+		Py_XDECREF(write);
+		return NULL;
+	}
+	if (PyObject_CallObject (write, argtuple) == NULL)
+	{
+		Py_XDECREF(write);
+		Py_XDECREF(argtuple);
+		return NULL;
+	}
+
+	Py_XDECREF(write);
+	Py_XDECREF(argtuple);
+	Py_XDECREF(string);
+	Py_RETURN_NONE;
+}
+

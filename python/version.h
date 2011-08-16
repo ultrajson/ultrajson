@@ -1,1 +1,1 @@
-#define UJSON_VERSION "1.4"
+#define UJSON_VERSION "1.5"

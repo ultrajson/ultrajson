@@ -11,6 +11,7 @@ import math
 import time
 import datetime
 import calendar
+import StringIO
 
 class UltraJSONTests(TestCase):
 
@@ -505,6 +506,52 @@ class UltraJSONTests(TestCase):
         for x in xrange(10):
             input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
             output = ujson.decode(input)
+
+    def test_dumpToFile(self):
+        f = StringIO.StringIO()
+        ujson.dump([1, 2, 3], f)
+        self.assertEquals("[1,2,3]", f.getvalue())
+
+    def test_dumpToFileLikeObject(self):
+        class filelike:
+            def __init__(self):
+                self.bytes = ''
+            def write(self, bytes):
+                self.bytes += bytes
+        f = filelike()
+        ujson.dump([1, 2, 3], f)
+        self.assertEquals("[1,2,3]", f.bytes)
+
+    def test_dumpFileArgsError(self):
+        try:
+            ujson.dump([], '')
+        except TypeError:
+            pass
+        else:
+            assert False, 'expected TypeError'
+
+    def test_loadFile(self):
+        f = StringIO.StringIO("[1,2,3,4]")
+        self.assertEquals([1, 2, 3, 4], ujson.load(f))
+
+    def test_loadFileLikeObject(self):
+        class filelike:
+            def read(self):
+                try:
+                    self.end
+                except AttributeError:
+                    self.end = True
+                    return "[1,2,3,4]"
+        f = filelike()
+        self.assertEquals([1, 2, 3, 4], ujson.load(f))
+
+    def test_loadFileArgsError(self):
+        try:
+            ujson.load("[]")
+        except TypeError:
+            pass
+        else:
+            assert False, "expected TypeError"
     
 """
 def test_decodeNumericIntFrcOverflow(self):

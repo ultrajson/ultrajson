@@ -715,15 +715,15 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 
 PyObject* objToJSONFile(PyObject* self, PyObject *args)
 {
-    PyObject *data;
-    PyObject *file;
+	PyObject *data;
+	PyObject *file;
 	PyObject *string;
 	PyObject *write;
 	PyObject *argtuple;
 
-    if (!PyArg_ParseTuple (args, "OO", &data, &file)) {
-        return NULL;
-    }
+	if (!PyArg_ParseTuple (args, "OO", &data, &file)) {
+		return NULL;
+	}
 
 	if (!PyObject_HasAttrString (file, "write"))
 	{

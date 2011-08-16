@@ -142,21 +142,21 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *file)
 		return NULL;
 	}
 
-    string = PyObject_CallObject (read, NULL);
-    Py_XDECREF(read);
+	string = PyObject_CallObject (read, NULL);
+	Py_XDECREF(read);
 
 	if (string == NULL)
 	{
 		return NULL;
 	}
 
-    result = JSONToObj (self, string);
-    Py_XDECREF(string);
+	result = JSONToObj (self, string);
+	Py_XDECREF(string);
 
-    if (result == NULL) {
-        return NULL;
-    }
+	if (result == NULL) {
+		return NULL;
+	}
 
-    return result;
+	return result;
 }
 

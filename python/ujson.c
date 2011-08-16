@@ -21,7 +21,7 @@ static PyMethodDef ujsonMethods[] = {
 	{"loads", JSONToObj, METH_O,  "Converts JSON as string to dict object structure"},
 	{"dump", objToJSONFile, METH_VARARGS, "Converts arbitrary object recursively into JSON file"},
 	{"load", JSONFileToObj, METH_O, "Converts JSON as file to dict object structure"},
-    {NULL, NULL, 0, NULL}        /* Sentinel */
+	{NULL, NULL, 0, NULL}		/* Sentinel */
 };
 
 
@@ -30,6 +30,6 @@ PyMODINIT_FUNC
 initujson(void)
 {
 	initObjToJSON();
-    Py_InitModule("ujson", ujsonMethods);
+	Py_InitModule("ujson", ujsonMethods);
 
 }

@@ -6,15 +6,11 @@ http://pypi.python.org/pypi/ujson/
 
 Installation instructions:
 
-1. Build the ultrajson library
-In root directory of ultrajson.
-Type: make
-
-2. Build and install ujson Python extension (requires root)
+1. Build and install ujson Python extension (requires root)
 Go to <root>/python
 Type: python setup.py build install  
 
-3. Run tests (as needed)
+2. Run tests (as needed)
 Type: python tests.py
 
 Same instructions applies for Windows except that step 1) isn't necessary since

@@ -1,4 +1,5 @@
 #include <Python.h>
+#include "version.h"
 
 /* objToJSON */
 PyObject* objToJSON(PyObject* self, PyObject *arg);
@@ -29,7 +30,12 @@ static PyMethodDef ujsonMethods[] = {
 PyMODINIT_FUNC
 initujson(void)
 {
-	initObjToJSON();
-	Py_InitModule("ujson", ujsonMethods);
+	PyObject *module;
+	PyObject *version_string;
 
+	initObjToJSON();
+	module = Py_InitModule("ujson", ujsonMethods);
+
+	version_string = PyString_FromString (UJSON_VERSION);
+	PyModule_AddObject (module, "__version__", version_string);
 }

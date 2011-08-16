@@ -371,6 +371,7 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
 	double tmp;
 	uint32_t frac;
 	int neg;
+	double pow10;
 
 	if (value == HUGE_VAL || value == -HUGE_VAL)
 	{
@@ -393,9 +394,10 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
 		value = -value;
 	}
 
-	//FIXME: Two lookups of same value in g_pow10 
+	pow10 = g_pow10[enc->doublePrecision];
+
 	whole = (int) value;
-	tmp = (value - whole) * g_pow10[enc->doublePrecision];
+	tmp = (value - whole) * pow10;
 	frac = (uint32_t)(tmp);
 	diff = tmp - frac;
 
@@ -403,7 +405,7 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
 	{
 		++frac;
 		/* handle rollover, e.g.  case 0.99 with prec 1 is 1.0  */
-		if (frac >= g_pow10[enc->doublePrecision]) 
+		if (frac >= pow10) 
 		{
 			frac = 0;
 			++whole;

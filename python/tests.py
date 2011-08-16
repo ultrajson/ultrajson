@@ -12,6 +12,7 @@ import time
 import datetime
 import calendar
 import StringIO
+import re
 
 class UltraJSONTests(TestCase):
 
@@ -552,6 +553,10 @@ class UltraJSONTests(TestCase):
             pass
         else:
             assert False, "expected TypeError"
+
+    def test_version(self):
+        assert re.match(r'^\d+\.\d+(\.\d+)?$', ujson.__version__), \
+               "ujson.__version__ must be a string like '1.4.0'"
     
 """
 def test_decodeNumericIntFrcOverflow(self):

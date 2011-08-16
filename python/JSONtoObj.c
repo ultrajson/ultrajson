@@ -121,3 +121,42 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 	
 	return ret;
 }
+
+PyObject* JSONFileToObj(PyObject* self, PyObject *file)
+{
+	PyObject *read;
+	PyObject *string;
+	PyObject *result;
+
+	if (!PyObject_HasAttrString (file, "read"))
+	{
+		PyErr_Format (PyExc_TypeError, "expected file");
+		return NULL;
+	}
+
+	read = PyObject_GetAttrString (file, "read");
+
+	if (!PyCallable_Check (read)) {
+		Py_XDECREF(read);
+		PyErr_Format (PyExc_TypeError, "expected file");
+		return NULL;
+	}
+
+	string = PyObject_CallObject (read, NULL);
+	Py_XDECREF(read);
+
+	if (string == NULL)
+	{
+		return NULL;
+	}
+
+	result = JSONToObj (self, string);
+	Py_XDECREF(string);
+
+	if (result == NULL) {
+		return NULL;
+	}
+
+	return result;
+}
+

@@ -10,7 +10,7 @@ except(OSError):
 	pass
 
 module1 = Extension('ujson',
-                    sources = ['ujson.c', 'objToJSON.c', 'JSONtoObj.c', '../ultrajsonenc.c', '../ultrajsondec.c'],
+                    sources = ['ujson.c', 'objToJSON.c', 'JSONtoObj.c', 'ultrajsonenc.c', 'ultrajsondec.c'],
                     headers = ['version.h'],
                     include_dirs = ['../'])
 

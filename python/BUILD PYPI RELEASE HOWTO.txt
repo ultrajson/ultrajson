@@ -1,0 +1,3 @@
+Instructions for putting packaging UltraJSON as ujson for distutils distribution:
+
+Copy ultrajson.h, ultrajsondec.c and ultrajsonenc.c from this directories parent directory (root) into this directory (root/python).

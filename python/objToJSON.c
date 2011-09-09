@@ -664,7 +664,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-	static char *kwlist[] = { "ensure_ascii", NULL};
+	static char *kwlist[] = { "obj", "ensure_ascii", NULL};
 
 	char buffer[65536];
 	char *ret;
@@ -698,7 +698,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist, &oinput, &oensureAscii))
 	{
-		return PyErr_Format(PyExc_TypeError, "Expected object, **kw ensure_ascii true/false");
+		return NULL;
 	}
 
 	if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))

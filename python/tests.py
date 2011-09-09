@@ -217,9 +217,9 @@ class UltraJSONTests(TestCase):
         
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"
-        enc = ujson.encode(input, ensure_ascii=false)
+        enc = ujson.encode(input, ensure_ascii=False)
         dec = ujson.decode(enc)
-        self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(enc, json.dumps(input, encoding="utf-8", ensure_ascii=False))
         self.assertEquals(dec, json.loads(enc))
         
 

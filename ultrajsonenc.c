@@ -52,17 +52,20 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 static const char g_hexChars[] = "0123456789abcdef";
-static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\";
+static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 
 
 /*
 FIXME: While this is fine dandy and working it's a magic value mess which probably only the author understands.
 Needs a cleanup and more documentation */
-static const JSUINT8 g_utf8LengthLookup[256] = 
+
+/*
+Table for pure ascii output escaping all characters above 127 to \u00XXX */
+static const JSUINT8 g_asciiOutputTable[256] = 
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 
 /* 0x10 */ 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 24, 
 /* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 /* 0x40 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
 /* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 22, 1, 1, 1,
@@ -77,6 +80,7 @@ static const JSUINT8 g_utf8LengthLookup[256] =
 /* 0xe0 */ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 
 /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1
 };
+
 
 static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
 {
@@ -121,6 +125,71 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (c
 	*(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
 }
 
+int Buffer_EscapeStringUnvalidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
+{
+	char *of = (char *) enc->offset;
+
+	while (1)
+	{
+		switch (*io)
+		{
+		case 0x00:
+			enc->offset += (of - enc->offset); 
+			return TRUE;
+
+		case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
+		case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
+		//case '/':  (*of++) = '\\'; (*of++) = '/'; break;
+		case '\b': (*of++) = '\\'; (*of++) = 'b'; break;
+		case '\f': (*of++) = '\\'; (*of++) = 'f'; break;
+		case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
+		case '\r': (*of++) = '\\'; (*of++) = 'r'; break;
+		case '\t': (*of++) = '\\'; (*of++) = 't'; break;
+
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+		case 0x0b:
+		case 0x0e:
+		case 0x0f:
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			*(of++) = '\\';
+			*(of++) = 'u';
+			*(of++) = '0';
+			*(of++) = '0';
+			*(of++) = g_hexChars[ (unsigned char) (((*io) & 0xf0) >> 4)];
+			*(of++) = g_hexChars[ (unsigned char) ((*io) & 0x0f)];
+			break;
+
+		default: (*of++) = (*io); break;
+		}
+
+		*io++;
+	}
+
+	return FALSE;
+}
+
+
 /*
 FIXME:
 This code only works with Little and Big Endian
@@ -128,24 +197,17 @@ This code only works with Little and Big Endian
 FIXME: The JSON spec says escape "/" but non of the others do and we don't 
 want to be left alone doing it so we don't :)
 
-FIXME: It should be faster to do SHIFT and then AND instead of AND and SHIFT.
-Example:
-(x & 0x3f00) >> 8) => Longer/more opcodes than below
-(x >> 8) & 0x3f)   => Probably faster/smaller
-Seems that atleast MSVC9 does this optimization by itself from time to time. Not sure really
-
 */
-
-int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
+int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
 	JSUTF32 ucs;
 	char *of = (char *) enc->offset;
-	
+
 	while (1)
 	{
 
 		//JSUINT8 chr = (unsigned char) *io;
-		JSUINT8 utflen = g_utf8LengthLookup[(unsigned char) *io];
+		JSUINT8 utflen = g_asciiOutputTable[(unsigned char) *io];
 
 		switch (utflen)
 		{
@@ -277,6 +339,7 @@ int Buffer_EscapeString (JSOBJ obj, JSONObjectEncoder *enc, const char *io, cons
 			case 18:
 			case 20:
 			case 22:
+			//case 24: (enable for / escaping)
 				*(of++) = *( (char *) (g_escapeChars + utflen + 0));
 				*(of++) = *( (char *) (g_escapeChars + utflen + 1));
 				io ++;
@@ -539,7 +602,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 	if (name)
 	{
 		Buffer_AppendCharUnchecked(enc, '\"');
-		if (!Buffer_EscapeString(obj, enc, name, name + cbName))
+		if (!enc->EscapeString(obj, enc, name, name + cbName))
 		{
 			return;
 		}
@@ -680,7 +743,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 			Buffer_Reserve(enc, ((szlen / 4) + 1) * 12);
 			Buffer_AppendCharUnchecked (enc, '\"');
 
-			if (!Buffer_EscapeString(obj, enc, value, value + szlen))
+			if (!enc->EscapeString(obj, enc, value, value + szlen))
 			{
 				enc->endTypeContext(obj, &tc);
 				enc->level --;
@@ -716,6 +779,16 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 	{
 		enc->doublePrecision = JSON_DOUBLE_MAX_DECIMALS;
 	}
+
+	if (enc->forceASCII)
+	{
+		enc->EscapeString = Buffer_EscapeStringValidated;
+	}
+	else
+	{
+		enc->EscapeString = Buffer_EscapeStringUnvalidated;
+	}
+
 
 	if (_buffer == NULL)
 	{

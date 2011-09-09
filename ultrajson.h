@@ -165,6 +165,10 @@ typedef	void *(*JSPFN_MALLOC)(size_t size);
 typedef void (*JSPFN_FREE)(void *pptr);
 typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
+
+
+typedef int (*JSPFN_ESCAPESTRING)(JSOBJ obj, void *enc, const char *io, const char *end);
+
 typedef struct __JSONObjectEncoder
 {
 	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
@@ -224,6 +228,10 @@ typedef struct __JSONObjectEncoder
 	Configuration for max decimals of double floating poiunt numbers to encode (0-9) */
 	int doublePrecision;
 
+	/*
+	If true output will be ASCII with all characters above 127 encoded as \uXXXX. If false output will be UTF-8 or what ever charset strings are brought as */
+	int forceASCII;
+
 
 	/*
 	Set to an error message if error occured */
@@ -236,6 +244,8 @@ typedef struct __JSONObjectEncoder
 	char *end;
 	int heap;
 	int level;
+
+	JSPFN_ESCAPESTRING EscapeString;
 
 } JSONObjectEncoder;
 

@@ -214,6 +214,14 @@ class UltraJSONTests(TestCase):
         self.assertEquals(int(expected), json.loads(output))
         self.assertEquals(int(expected), ujson.decode(output))
         pass
+        
+    def test_encodeToUTF8(self):
+        input = "\xe6\x97\xa5\xd1\x88"
+        enc = ujson.encode(input, ensure_ascii=false)
+        dec = ujson.decode(enc)
+        self.assertEquals(enc, json.dumps(input, encoding="utf-8"))
+        self.assertEquals(dec, json.loads(enc))
+        
 
     def test_encodeRecursionMax(self):
         # 8 is the max recursion depth

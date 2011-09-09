@@ -662,11 +662,15 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-PyObject* objToJSON(PyObject* self, PyObject *arg)
+PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
+	static char *kwlist[] = { "ensure_ascii", NULL};
+
 	char buffer[65536];
 	char *ret;
 	PyObject *newobj;
+	PyObject *oinput = NULL;
+	PyObject *oensureAscii = NULL;
 
 	JSONObjectEncoder encoder = 
 	{
@@ -687,9 +691,24 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 		PyObject_Free, //JSPFN_FREE free;
 		-1, //recursionMax
 		5, //default decimal precision
+		1, //forceAscii
 	};
+	
+	PRINTMARK();
 
-	ret = JSON_EncodeObject (arg, &encoder, buffer, sizeof (buffer));
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist, &oinput, &oensureAscii))
+	{
+		return PyErr_Format(PyExc_TypeError, "Expected object, **kw ensure_ascii true/false");
+	}
+
+	if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
+	{
+		encoder.forceASCII = 0;
+	}
+
+	PRINTMARK();
+	ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
+	PRINTMARK();
 
 
 	if (encoder.errorMsg)
@@ -710,16 +729,20 @@ PyObject* objToJSON(PyObject* self, PyObject *arg)
 		encoder.free (ret);
 	}
 
+	PRINTMARK();
+
 	return newobj;
 }
 
-PyObject* objToJSONFile(PyObject* self, PyObject *args)
+PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
 {
 	PyObject *data;
 	PyObject *file;
 	PyObject *string;
 	PyObject *write;
 	PyObject *argtuple;
+
+	PRINTMARK();
 
 	if (!PyArg_ParseTuple (args, "OO", &data, &file)) {
 		return NULL;
@@ -739,11 +762,14 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args)
 		return NULL;
 	}
 
-	string = objToJSON (self, data);
+	argtuple = PyTuple_Pack(1, data);
+
+	string = objToJSON (self, argtuple, kwargs);
 
 	if (string == NULL)
 	{
 		Py_XDECREF(write);
+		Py_XDECREF(argtuple);
 		return NULL;
 	}
 
@@ -763,6 +789,11 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args)
 	Py_XDECREF(write);
 	Py_XDECREF(argtuple);
 	Py_XDECREF(string);
+
+	PRINTMARK();
+
 	Py_RETURN_NONE;
+	
+
 }
 

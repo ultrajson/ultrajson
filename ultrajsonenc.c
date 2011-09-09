@@ -602,10 +602,23 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 	if (name)
 	{
 		Buffer_AppendCharUnchecked(enc, '\"');
-		if (!enc->EscapeString(obj, enc, name, name + cbName))
+
+		if (enc->forceASCII)
 		{
-			return;
+			if (!Buffer_EscapeStringValidated(obj, enc, name, name + cbName))
+			{
+				return;
+			}
 		}
+		else
+		{
+			if (!Buffer_EscapeStringUnvalidated(obj, enc, name, name + cbName))
+			{
+				return;
+			}
+		}
+
+
 		Buffer_AppendCharUnchecked(enc, '\"');
 
 		Buffer_AppendCharUnchecked (enc, ':');
@@ -743,11 +756,24 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 			Buffer_Reserve(enc, ((szlen / 4) + 1) * 12);
 			Buffer_AppendCharUnchecked (enc, '\"');
 
-			if (!enc->EscapeString(obj, enc, value, value + szlen))
+
+			if (enc->forceASCII)
 			{
-				enc->endTypeContext(obj, &tc);
-				enc->level --;
-				return;
+				if (!Buffer_EscapeStringValidated(obj, enc, value, value + szlen))
+				{
+					enc->endTypeContext(obj, &tc);
+					enc->level --;
+					return;
+				}
+			}
+			else
+			{
+				if (!Buffer_EscapeStringUnvalidated(obj, enc, value, value + szlen))
+				{
+					enc->endTypeContext(obj, &tc);
+					enc->level --;
+					return;
+				}
 			}
 
 			Buffer_AppendCharUnchecked (enc, '\"');
@@ -779,16 +805,6 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 	{
 		enc->doublePrecision = JSON_DOUBLE_MAX_DECIMALS;
 	}
-
-	if (enc->forceASCII)
-	{
-		enc->EscapeString = Buffer_EscapeStringValidated;
-	}
-	else
-	{
-		enc->EscapeString = Buffer_EscapeStringUnvalidated;
-	}
-
 
 	if (_buffer == NULL)
 	{

@@ -165,10 +165,6 @@ typedef	void *(*JSPFN_MALLOC)(size_t size);
 typedef void (*JSPFN_FREE)(void *pptr);
 typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
-
-
-typedef int (*JSPFN_ESCAPESTRING)(JSOBJ obj, void *enc, const char *io, const char *end);
-
 typedef struct __JSONObjectEncoder
 {
 	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
@@ -244,8 +240,6 @@ typedef struct __JSONObjectEncoder
 	char *end;
 	int heap;
 	int level;
-
-	JSPFN_ESCAPESTRING EscapeString;
 
 } JSONObjectEncoder;
 

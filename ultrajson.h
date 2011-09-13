@@ -35,7 +35,7 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 */
 
 /*
-Ultra fast JSON encoder
+Ultra fast JSON encoder and decoder
 Developed by Jonas Tarnstrom (jonas@esn.me).
 
 Encoder notes:
@@ -56,17 +56,18 @@ tree doesn't have cyclic references.
 
 //#define JSON_DECODE_NUMERIC_AS_DOUBLE
 
-// Don't decode any extra whitespaces
+// Don't output any extra whitespaces when encoding
 #define JSON_NO_EXTRA_WHITESPACE
 
+// Max decimals to encode double floating point numbers with
 #ifndef JSON_DOUBLE_MAX_DECIMALS
 #define JSON_DOUBLE_MAX_DECIMALS 9
 #endif
 
+// Max recursion depth, default for encoder
 #ifndef JSON_MAX_RECURSION_DEPTH
 #define JSON_MAX_RECURSION_DEPTH 256
 #endif
-
 
 /*
 Dictates and limits how much stack space for buffers UltraJSON will use before resorting to provided heap functions */
@@ -249,7 +250,7 @@ Encode an object structure into JSON.
 
 Arguments:
 obj - An anonymous type representing the object
-def - Function definitions for querying JSOBJ type
+enc - Function definitions for querying JSOBJ type
 buffer - Preallocated buffer to store result in. If NULL function allocates own buffer
 cbBuffer - Length of buffer (ignored if buffer is NULL)
 

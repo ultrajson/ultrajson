@@ -60,7 +60,7 @@ FIXME: While this is fine dandy and working it's a magic value mess which probab
 Needs a cleanup and more documentation */
 
 /*
-Table for pure ascii output escaping all characters above 127 to \u00XXX */
+Table for pure ascii output escaping all characters above 127 to \uXXXX */
 static const JSUINT8 g_asciiOutputTable[256] = 
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 

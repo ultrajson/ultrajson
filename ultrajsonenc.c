@@ -632,7 +632,6 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 	switch (tc.type)
 	{
 		case JT_INVALID:
-			SetError(obj, enc, "Could not encode object");
 			return;
 
 		case JT_ARRAY:

@@ -30,6 +30,9 @@ typedef struct __TypeContext
 	PyObject *itemValue;
 	PyObject *itemName;
 	PyObject *attrList;
+
+	JSINT64 longValue;
+
 } TypeContext;
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
@@ -97,7 +100,7 @@ static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
-	*((JSINT64 *) outValue) = PyLong_AsLongLong (obj);
+	*((JSINT64 *) outValue) = GET_TC(tc)->longValue;
 	return NULL;
 }
 
@@ -460,8 +463,22 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	else 
 	if (PyLong_Check(obj))
 	{
+		PyObject *exc;
+
 		PRINTMARK();
-		pc->PyTypeToJSON = PyLongToINT64; tc->type = JT_LONG;
+		pc->PyTypeToJSON = PyLongToINT64; 
+		tc->type = JT_LONG;
+		GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+
+		exc = PyErr_Occurred();
+
+		if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
+		{
+			PRINTMARK();
+			tc->type = JT_INVALID;
+			return;
+		}
+
 		return;
 	}
 	else
@@ -611,6 +628,7 @@ JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
 	JSINT64 ret;
 	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+
 	return ret;
 }
 
@@ -710,6 +728,10 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 	ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
 	PRINTMARK();
 
+	if (PyErr_Occurred())
+	{
+		return NULL;
+	}
 
 	if (encoder.errorMsg)
 	{

@@ -565,29 +565,34 @@ class UltraJSONTests(TestCase):
     def test_version(self):
         assert re.match(r'^\d+\.\d+(\.\d+)?$', ujson.__version__), \
                "ujson.__version__ must be a string like '1.4.0'"
-    
+
+    def test_encodeNumericOverflow(self):
+        try:
+            ujson.encode(12839128391289382193812939)
+        except OverflowError:
+            pass
+        else:
+            assert False, "expected OverflowError"
+
+    def test_encodeNumericOverflowNested(self):
+        for n in xrange(0, 100):
+            class Nested:
+                x = 12839128391289382193812939
+        
+            nested = Nested()
+        
+            try:
+                ujson.encode(nested)
+            except OverflowError:
+                pass
+            else:
+                assert False, "expected OverflowError"
+               
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
 raise NotImplementedError("Implement this test!")
 
-def test_decodeNumericIntPosOverflow(self):
-input = "9223372036854775807322"
-try:
-    ujson.decode(input)
-    assert False, "Expected exception!"
-except(ValueError):
-    return
-assert False, "Wrong exception"
-
-def test_decodeNumericIntNegOverflow(self):
-input = "-9223372036854775807322"
-try:
-    ujson.decode(input)
-    assert False, "Expected exception!"
-except(ValueError):
-    return
-assert False, "Wrong exception"
 
 def test_decodeStringUnicodeEscape(self):
 input = "\u3131"

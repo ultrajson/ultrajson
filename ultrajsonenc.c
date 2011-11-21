@@ -65,7 +65,7 @@ static const JSUINT8 g_asciiOutputTable[256] =
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 
 /* 0x10 */ 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1/*24*/, 
+/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 24, 
 /* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 /* 0x40 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
 /* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 22, 1, 1, 1,
@@ -139,7 +139,7 @@ int Buffer_EscapeStringUnvalidated (JSOBJ obj, JSONObjectEncoder *enc, const cha
 
 		case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
 		case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
-		//case '/':  (*of++) = '\\'; (*of++) = '/'; break;
+		case '/':  (*of++) = '\\'; (*of++) = '/'; break;
 		case '\b': (*of++) = '\\'; (*of++) = 'b'; break;
 		case '\f': (*of++) = '\\'; (*of++) = 'f'; break;
 		case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
@@ -339,7 +339,7 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
 			case 18:
 			case 20:
 			case 22:
-			//case 24: (enable for / escaping)
+			case 24:
 				*(of++) = *( (char *) (g_escapeChars + utflen + 0));
 				*(of++) = *( (char *) (g_escapeChars + utflen + 1));
 				io ++;

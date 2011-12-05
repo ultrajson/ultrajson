@@ -159,7 +159,7 @@ BREAK_INT_LOOP:
 #ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
 	if (intValue > (double) INT_MAX || intValue < (double) INT_MIN)
 #else
-	if ( (intValue >> 32))
+	if ( (intValue >> 31))
 #endif
 	{	
 		RETURN_JSOBJ_NULLCHECK(ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg)));

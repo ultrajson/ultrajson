@@ -587,6 +587,12 @@ class UltraJSONTests(TestCase):
                 pass
             else:
                 assert False, "expected OverflowError"
+
+    def test_decodeNumberWith32bitSignBit(self):
+        """Test that numbers that fit within 32 bits but would have the
+        sign bit set (2**31 < x < 2**32) are decoded properly."""
+        doc = '{"id": 3590016419}'
+        self.assertEqual(ujson.decode(doc)['id'], 3590016419)
                
 """
 def test_decodeNumericIntFrcOverflow(self):

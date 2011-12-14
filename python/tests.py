@@ -59,10 +59,10 @@ class UltraJSONTests(TestCase):
         self.assertEquals(input, ujson.decode(output))
 
     def test_encodeStringConversion(self):
-        input = "A string \\ \/ \b \f \n \r \t"
+        input = "A string \\ / \b \f \n \r \t"
         output = ujson.encode(input)
         self.assertEquals(input, json.loads(output))
-        self.assertEquals(output, json.dumps(input))
+        self.assertEquals(output, '"A string \\\\ \\/ \\b \\f \\n \\r \\t"')
         self.assertEquals(input, ujson.decode(output))
         pass
 

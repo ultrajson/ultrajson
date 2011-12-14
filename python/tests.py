@@ -456,6 +456,21 @@ class UltraJSONTests(TestCase):
         except OverflowError:
             pass
             
+    def test_encodeNullCharacter(self):
+        input = "31337 \x00 1337"
+        output = ujson.encode(input)
+
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(output, json.dumps(input))
+        self.assertEquals(input, ujson.decode(output))
+        self.assertEquals('"  \\u0000\\r\\n "', ujson.dumps(u"  \u0000\r\n "))
+        pass
+        
+    def test_decodeNullCharacter(self):
+        input = "\"31337 \\u0000 31337\""
+        self.assertEquals(ujson.decode(input), json.loads(input))
+        
+            
     def test_encodeListLongConversion(self):
         input = [9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807, 9223372036854775807 ]
         output = ujson.encode(input)

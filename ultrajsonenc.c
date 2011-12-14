@@ -134,8 +134,21 @@ int Buffer_EscapeStringUnvalidated (JSOBJ obj, JSONObjectEncoder *enc, const cha
 		switch (*io)
 		{
 		case 0x00:
-			enc->offset += (of - enc->offset); 
-			return TRUE;
+			if (io < end)
+			{
+				*(of++) = '\\';
+				*(of++) = 'u';
+				*(of++) = '0';
+				*(of++) = '0';
+				*(of++) = '0';
+				*(of++) = '0';
+				break;
+			}
+			else
+			{
+				enc->offset += (of - enc->offset); 
+				return TRUE;
+			}
 
 		case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
 		case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
@@ -213,8 +226,22 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
 		{
 			case 0: 
 			{
-				enc->offset += (of - enc->offset); 
-				return TRUE;
+				if (io < end)
+				{
+					*(of++) = '\\';
+					*(of++) = 'u';
+					*(of++) = '0';
+					*(of++) = '0';
+					*(of++) = '0';
+					*(of++) = '0';
+					io ++;
+					continue;
+				}
+				else
+				{
+					enc->offset += (of - enc->offset); 
+					return TRUE;
+				}
 			}
 
 			case 1:

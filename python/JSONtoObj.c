@@ -74,6 +74,7 @@ static void Object_releaseObject(JSOBJ obj)
 PyObject* JSONToObj(PyObject* self, PyObject *arg)
 {
 	PyObject *ret;
+	PyObject *sarg;
 	JSONObjectDecoder decoder = 
 	{
 		Object_newString,
@@ -93,16 +94,35 @@ PyObject* JSONToObj(PyObject* self, PyObject *arg)
 		PyObject_Realloc
 	};
 
-	if (!PyString_Check(arg))
+	if (PyString_Check(arg))
 	{
-		PyErr_Format(PyExc_TypeError, "Expected string");
+		sarg = arg;
+	}
+	else
+	if (PyUnicode_Check(arg))
+	{
+		sarg = PyUnicode_AsUTF8String(arg);
+		if (sarg == NULL)
+		{
+			//Exception raised above us by codec according to docs
+			return NULL;
+		}
+	}
+	else
+	{
+		PyErr_Format(PyExc_TypeError, "Expected String or Unicode");
 		return NULL;
 	}
 
 	decoder.errorStr = NULL;
 	decoder.errorOffset = NULL;
 	
-	ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(arg), PyString_GET_SIZE(arg)); 
+	ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(sarg), PyString_GET_SIZE(sarg)); 
+
+	if (sarg != arg)
+	{
+		Py_DECREF(sarg);
+	}
 
 	if (decoder.errorStr)
 	{

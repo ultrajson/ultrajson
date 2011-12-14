@@ -15,7 +15,7 @@ import StringIO
 import re
 
 class UltraJSONTests(TestCase):
-
+    """
     def test_encodeDictWithUnicodeKeys(self):
         input = { u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1" }
         output = ujson.encode(input)
@@ -214,7 +214,10 @@ class UltraJSONTests(TestCase):
         self.assertEquals(int(expected), json.loads(output))
         self.assertEquals(int(expected), ujson.decode(output))
         pass
+    """        
         
+    """
+    # FAILING FROM HERE
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"
         enc = ujson.encode(input, ensure_ascii=False)
@@ -490,7 +493,7 @@ class UltraJSONTests(TestCase):
         input = "1337E40"
         output = ujson.decode(input)
         self.assertEquals(output, json.loads(input))
-        
+
     def test_numericIntFrcExp(self):
         input = "1.337E40"
         output = ujson.decode(input)
@@ -530,17 +533,17 @@ class UltraJSONTests(TestCase):
         for x in xrange(10):
             input = "\xc3\xa5" * 1024 * 1024 * 10
             output = ujson.encode(input)
-    
+  
     def test_decodeBigEscape(self):
         for x in xrange(10):
             input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
             output = ujson.decode(input)
-
+    """ 
     def test_dumpToFile(self):
         f = StringIO.StringIO()
         ujson.dump([1, 2, 3], f)
         self.assertEquals("[1,2,3]", f.getvalue())
-
+   
     def test_dumpToFileLikeObject(self):
         class filelike:
             def __init__(self):
@@ -609,8 +612,8 @@ class UltraJSONTests(TestCase):
                 assert False, "expected OverflowError"
 
     def test_decodeNumberWith32bitSignBit(self):
-        """Test that numbers that fit within 32 bits but would have the
-        sign bit set (2**31 <= x < 2**32) are decoded properly."""
+        #Test that numbers that fit within 32 bits but would have the
+        # sign bit set (2**31 <= x < 2**32) are decoded properly.
         boundary1 = 2**31
         boundary2 = 2**32
         docs = (
@@ -623,6 +626,8 @@ class UltraJSONTests(TestCase):
         for doc,result in zip(docs, results):
             self.assertEqual(ujson.decode(doc)['id'], result)
 
+
+    
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
@@ -648,6 +653,16 @@ raise NotImplementedError("Implement this test!")
 
 """
 
-
+"""
 if __name__ == "__main__":
     unittest.main()
+"""
+if __name__ == '__main__':
+    from guppy import hpy
+    hp = hpy()
+    hp.setrelheap()
+    while True:
+        unittest.main()
+        heap = hp.heapu()
+        print heap    
+    

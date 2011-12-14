@@ -15,7 +15,7 @@ import StringIO
 import re
 
 class UltraJSONTests(TestCase):
-    """
+
     def test_encodeDictWithUnicodeKeys(self):
         input = { u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1" }
         output = ujson.encode(input)
@@ -214,10 +214,7 @@ class UltraJSONTests(TestCase):
         self.assertEquals(int(expected), json.loads(output))
         self.assertEquals(int(expected), ujson.decode(output))
         pass
-    """        
-        
-    """
-    # FAILING FROM HERE
+
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"
         enc = ujson.encode(input, ensure_ascii=False)
@@ -468,7 +465,7 @@ class UltraJSONTests(TestCase):
         self.assertEquals(input, ujson.decode(output))
         self.assertEquals('"  \\u0000\\r\\n "', ujson.dumps(u"  \u0000\r\n "))
         pass
-        
+    
     def test_decodeNullCharacter(self):
         input = "\"31337 \\u0000 31337\""
         self.assertEquals(ujson.decode(input), json.loads(input))
@@ -528,22 +525,12 @@ class UltraJSONTests(TestCase):
         input = "1.337e-4"
         output = ujson.decode(input)
         self.assertEquals(output, json.loads(input))
-        
-    def test_encodeBigEscape(self):
-        for x in xrange(10):
-            input = "\xc3\xa5" * 1024 * 1024 * 10
-            output = ujson.encode(input)
   
-    def test_decodeBigEscape(self):
-        for x in xrange(10):
-            input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
-            output = ujson.decode(input)
-    """ 
     def test_dumpToFile(self):
         f = StringIO.StringIO()
         ujson.dump([1, 2, 3], f)
         self.assertEquals("[1,2,3]", f.getvalue())
-   
+
     def test_dumpToFileLikeObject(self):
         class filelike:
             def __init__(self):
@@ -561,7 +548,7 @@ class UltraJSONTests(TestCase):
             pass
         else:
             assert False, 'expected TypeError'
-
+ 
     def test_loadFile(self):
         f = StringIO.StringIO("[1,2,3,4]")
         self.assertEquals([1, 2, 3, 4], ujson.load(f))
@@ -626,8 +613,16 @@ class UltraJSONTests(TestCase):
         for doc,result in zip(docs, results):
             self.assertEqual(ujson.decode(doc)['id'], result)
 
+    def test_encodeBigEscape(self):
+        for x in xrange(10):
+            input = "\xc3\xa5" * 1024 * 1024 * 10
+            output = ujson.encode(input)
 
-    
+    def test_decodeBigEscape(self):
+        for x in xrange(10):
+            input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
+            output = ujson.decode(input)
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

@@ -795,6 +795,8 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
+	Py_XDECREF(argtuple);
+
 	argtuple = PyTuple_Pack (1, string);
 	if (argtuple == NULL)
 	{
@@ -809,7 +811,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
 	}
 
 	Py_XDECREF(write);
-	Py_XDECREF(argtuple);
+	Py_DECREF(argtuple);
 	Py_XDECREF(string);
 
 	PRINTMARK();

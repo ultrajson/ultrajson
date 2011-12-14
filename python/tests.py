@@ -648,7 +648,6 @@ raise NotImplementedError("Implement this test!")
 
 """
 
-"""
 if __name__ == "__main__":
     unittest.main()
 """
@@ -660,4 +659,5 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap    
+"""
     

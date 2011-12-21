@@ -633,7 +633,6 @@ class UltraJSONTests(TestCase):
     
         class DictTest:
             def toDict(self):
-                print "toDict called"
                 return d
 
         o = DictTest()

@@ -15,7 +15,6 @@ import StringIO
 import re
 
 class UltraJSONTests(TestCase):
-
     def test_encodeDictWithUnicodeKeys(self):
         input = { u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1" }
         output = ujson.encode(input)
@@ -459,10 +458,16 @@ class UltraJSONTests(TestCase):
     def test_encodeNullCharacter(self):
         input = "31337 \x00 1337"
         output = ujson.encode(input)
-
         self.assertEquals(input, json.loads(output))
         self.assertEquals(output, json.dumps(input))
         self.assertEquals(input, ujson.decode(output))
+
+        input = "\x00"
+        output = ujson.encode(input)
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(output, json.dumps(input))
+        self.assertEquals(input, ujson.decode(output))
+        
         self.assertEquals('"  \\u0000\\r\\n "', ujson.dumps(u"  \u0000\r\n "))
         pass
     
@@ -623,6 +628,19 @@ class UltraJSONTests(TestCase):
             input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
             output = ujson.decode(input)
 
+    def test_toDict(self):
+        d = {u"key": 31337}
+    
+        class DictTest:
+            def toDict(self):
+                print "toDict called"
+                return d
+
+        o = DictTest()
+        output = ujson.encode(o)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, d)
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
@@ -646,11 +664,11 @@ input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
 
-"""
 
+"""
 if __name__ == "__main__":
     unittest.main()
-"""
+
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -659,5 +677,4 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap    
-"""
     

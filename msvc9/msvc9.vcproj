@@ -474,6 +474,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\python\ujson.c"
+				>
+			</File>
+			<File
 				RelativePath="..\ultrajsondec.c"
 				>
 			</File>
@@ -489,6 +493,10 @@
 			>
 			<File
 				RelativePath="..\ultrajson.h"
+				>
+			</File>
+			<File
+				RelativePath="..\python\version.h"
 				>
 			</File>
 		</Filter>

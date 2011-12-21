@@ -6,7 +6,6 @@
 static PyObject* meth_timegm;
 static PyObject* mod_calendar;
 
-
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
 
@@ -367,7 +366,7 @@ int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 	}
 
 
-	if (!PyDict_Next ( (PyObject *)obj, &GET_TC(tc)->index, &GET_TC(tc)->itemName, &GET_TC(tc)->itemValue))
+	if (!PyDict_Next ( (PyObject *)GET_TC(tc)->dictObj, &GET_TC(tc)->index, &GET_TC(tc)->itemName, &GET_TC(tc)->itemValue))
 	{
 		PRINTMARK();
 		return 0;

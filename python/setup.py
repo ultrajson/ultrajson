@@ -10,9 +10,9 @@ except(OSError):
 	pass
 
 module1 = Extension('ujson',
-                    sources = ['ujson.c', 'objToJSON.c', 'JSONtoObj.c', 'ultrajsonenc.c', 'ultrajsondec.c'],
+                    sources = ['ujson.c', 'objToJSON.c', 'JSONtoObj.c', '../ultrajsonenc.c', '../ultrajsondec.c'],
                     headers = ['version.h'],
-                    include_dirs = ['./'])
+                    include_dirs = ['.', '..'])
 
 def get_version():
 	filename = os.path.join(os.path.dirname(__file__), 'version.h')

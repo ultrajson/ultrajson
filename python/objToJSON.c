@@ -416,10 +416,10 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
+void Object_beginTypeContext (PyObject **obj, JSONTypeContext *tc)
 {
 	TypeContext *pc = (TypeContext *) tc->prv;
-	PyObject *toDictFunc;
+	PyObject *jsonDefaultFunc;
 
 	tc->prv[0] = 0;
 	tc->prv[1] = 0;
@@ -437,19 +437,19 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 	tc->prv[13] = 0;
 	tc->prv[14] = 0;
 	
-	if (PyIter_Check(obj))
+	if (PyIter_Check(*obj))
 	{
 		goto ISITERABLE;
 	}
 
-	if (PyBool_Check(obj))
+	if (PyBool_Check(*obj))
 	{
 		PRINTMARK();
-		tc->type = (obj == Py_True) ? JT_TRUE : JT_FALSE;
+		tc->type = (*obj == Py_True) ? JT_TRUE : JT_FALSE;
 		return;
 	}
 	else
-	if (PyInt_Check(obj))
+	if (PyInt_Check(*obj))
 	{
 		PRINTMARK();
 #ifdef _LP64
@@ -460,14 +460,14 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 		return;
 	}
 	else 
-	if (PyLong_Check(obj))
+	if (PyLong_Check(*obj))
 	{
 		PyObject *exc;
 
 		PRINTMARK();
 		pc->PyTypeToJSON = PyLongToINT64; 
 		tc->type = JT_LONG;
-		GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+		GET_TC(tc)->longValue = PyLong_AsLongLong(*obj);
 
 		exc = PyErr_Occurred();
 
@@ -481,42 +481,42 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 		return;
 	}
 	else
-	if (PyString_Check(obj))
+	if (PyString_Check(*obj))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
 		return;
 	}
 	else
-	if (PyUnicode_Check(obj))
+	if (PyUnicode_Check(*obj))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyUnicodeToUTF8; tc->type = JT_UTF8;
 		return;
 	}
 	else
-	if (PyFloat_Check(obj))
+	if (PyFloat_Check(*obj))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
 		return;
 	}
 	else 
-	if (PyDateTime_Check(obj))
+	if (PyDateTime_Check(*obj))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
 		return;
 	}
 	else 
-	if (PyDate_Check(obj))
+	if (PyDate_Check(*obj))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
 		return;
 	}
 	else
-	if (obj == Py_None)
+	if (*obj == Py_None)
 	{
 		PRINTMARK();
 		tc->type = JT_NULL;
@@ -526,7 +526,7 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 
 ISITERABLE:
 
-	if (PyDict_Check(obj))
+	if (PyDict_Check(*obj))
 	{
 		PRINTMARK();
 		tc->type = JT_OBJECT;
@@ -535,13 +535,13 @@ ISITERABLE:
 		pc->iterNext = Dict_iterNext;
 		pc->iterGetValue = Dict_iterGetValue;
 		pc->iterGetName = Dict_iterGetName;
-		pc->dictObj = obj;
-		Py_INCREF(obj);
+		pc->dictObj = *obj;
+		Py_INCREF(*obj);
 
 		return;
 	}
 	else
-	if (PyList_Check(obj))
+	if (PyList_Check(*obj))
 	{
 		PRINTMARK();
 		tc->type = JT_ARRAY;
@@ -553,7 +553,7 @@ ISITERABLE:
 		return;
 	}
 	else
-	if (PyTuple_Check(obj))
+	if (PyTuple_Check(*obj))
 	{
 		PRINTMARK();
 		tc->type = JT_ARRAY;
@@ -566,37 +566,25 @@ ISITERABLE:
 	}
 
 
-	toDictFunc = PyObject_GetAttrString(obj, "toDict");
+	jsonDefaultFunc = PyObject_GetAttrString(*obj, "json_default");
 
-	if (toDictFunc)
+	if (jsonDefaultFunc)
 	{
 		PyObject* tuple = PyTuple_New(0);
-		PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
+		PyObject* jsonDefaultResult = PyObject_Call(jsonDefaultFunc, tuple, NULL);
 		Py_DECREF(tuple);
-		Py_DECREF(toDictFunc);
+		Py_DECREF(jsonDefaultFunc);
 
-		if (toDictResult == NULL)
+		if (jsonDefaultResult == NULL)
 		{
 			PyErr_Clear();
 			tc->type = JT_NULL;
 			return;
 		}
 
-		if (!PyDict_Check(toDictResult))
-		{
-			Py_DECREF(toDictResult);
-			tc->type = JT_NULL;
-			return;
-		}
-
-		PRINTMARK();
-		tc->type = JT_OBJECT;
-		pc->iterBegin = Dict_iterBegin;
-		pc->iterEnd = Dict_iterEnd;
-		pc->iterNext = Dict_iterNext;
-		pc->iterGetValue = Dict_iterGetValue;
-		pc->iterGetName = Dict_iterGetName;
-		pc->dictObj = toDictResult;
+		// NOTE: recursive call
+		*obj = jsonDefaultResult;
+		Object_beginTypeContext(obj, tc);
 		return;
 	}
 

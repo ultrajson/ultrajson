@@ -628,17 +628,22 @@ class UltraJSONTests(TestCase):
             input = "\"" + ("\xc3\xa5" * 1024 * 1024 * 10) + "\""
             output = ujson.decode(input)
 
-    def test_toDict(self):
-        d = {u"key": 31337}
-    
-        class DictTest:
-            def toDict(self):
-                return d
-
-        o = DictTest()
+    def test_custom_class_without_json_default(self):
+        class RandomClass:
+            pass
+        o = RandomClass()
         output = ujson.encode(o)
+        self.assertEquals(output, "{}")
+
+    def test_custom_class_with_json_default(self):
+        class RandomClass:
+            def json_default(self):
+                return "abcdefg"
+        o = RandomClass()
+        output = ujson.encode(o)
+        self.assertEquals(output, '"abcdefg"')
         dec = ujson.decode(output)
-        self.assertEquals(dec, d)
+        self.assertEquals(dec, "abcdefg")
 
 """
 def test_decodeNumericIntFrcOverflow(self):

@@ -168,7 +168,7 @@ typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
 typedef struct __JSONObjectEncoder
 {
-	void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
+	void (*beginTypeContext)(JSOBJ* obj, JSONTypeContext *tc);
 	void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
 	const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
 	JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);

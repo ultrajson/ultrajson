@@ -675,6 +675,25 @@ class UltraJSONTests(TestCase):
         dec = ujson.decode(output)
         self.assertEquals(dec, "abcdefg")
 
+    def test_custom_class_with_json_default_nested(self):
+        class N3Class:
+            def json_default(self):
+                return {"key": 31337}
+
+        class N2Class:
+            def json_default(self):
+                return N3Class()
+
+        class N1Class:
+            def json_default(self):
+                return N2Class()
+
+        o = N1Class()
+        output = ujson.encode(o)
+        dec = ujson.decode(output)
+        self.assertEquals(dec["key"], 31337)
+
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

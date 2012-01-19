@@ -582,9 +582,11 @@ ISITERABLE:
 			return;
 		}
 
-		// NOTE: recursive call
+		// NOTE: recursive call to Object_beginTypeContext
+		Py_DECREF(*obj);
 		*obj = jsonDefaultResult;
 		Object_beginTypeContext(obj, tc);
+
 		return;
 	}
 

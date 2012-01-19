@@ -29,7 +29,6 @@ class UltraJSONTests(TestCase):
         output = ujson.encode(input)
         self.assertEquals(round(input, 5), round(json.loads(output), 5))
         self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
-        pass
         
     def test_encodeWithDecimal(self):
         input = 1.0
@@ -41,7 +40,6 @@ class UltraJSONTests(TestCase):
         output = ujson.encode(input)
         self.assertEquals(round(input, 5), round(json.loads(output), 5))
         self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
-        pass
 
     def test_encodeArrayOfNestedArrays(self):
         input = [[[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]] ]
@@ -56,6 +54,38 @@ class UltraJSONTests(TestCase):
         self.assertEquals(input, json.loads(output))
         #self.assertEquals(output, json.dumps(input))
         self.assertEquals(input, ujson.decode(output))
+
+    def test_doublePrecisionTest(self):
+        input = 30.012345678
+        output = ujson.encode(input, double_precision = 9)
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(input, ujson.decode(output))
+
+        output = ujson.encode(input, double_precision = 3)
+        self.assertEquals(round(input, 3), json.loads(output))
+        self.assertEquals(round(input, 3), ujson.decode(output))
+
+        output = ujson.encode(input)
+        self.assertEquals(round(input, 5), json.loads(output))
+        self.assertEquals(round(input, 5), ujson.decode(output))
+
+    def test_invalidDoublePrecision(self):
+        input = 30.12345678901234567890
+        output = ujson.encode(input, double_precision = 20)
+        # should snap to the max, which is 9
+        self.assertEquals(round(input, 9), json.loads(output))
+        self.assertEquals(round(input, 9), ujson.decode(output))
+
+        output = ujson.encode(input, double_precision = -1)
+        # also should snap to the max, which is 9
+        self.assertEquals(round(input, 9), json.loads(output))
+        self.assertEquals(round(input, 9), ujson.decode(output))
+
+        # will throw typeError
+        self.assertRaises(TypeError, ujson.encode, input, double_precision = '9')
+        # will throw typeError
+        self.assertRaises(TypeError, ujson.encode, input, double_precision = None)
+
 
     def test_encodeStringConversion(self):
         input = "A string \\ / \b \f \n \r \t"
@@ -681,4 +711,3 @@ if __name__ == '__main__':
         unittest.main()
         heap = hp.heapu()
         print heap    
-    

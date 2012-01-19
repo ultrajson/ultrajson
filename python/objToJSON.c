@@ -678,15 +678,8 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 	PyObject *newobj;
 	PyObject *oinput = NULL;
 	PyObject *oensureAscii = NULL;
-	int idoublePrecision = 5; // default double precision setting
-
-	PRINTMARK();
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist, &oinput, &oensureAscii, &idoublePrecision))
-	{
-		return NULL;
-	}
-
+	const int DEFAULT_DOUBLE_PRECISION = 5;
+	int idoublePrecision = DEFAULT_DOUBLE_PRECISION; 
 	JSONObjectEncoder encoder = 
 	{
 		Object_beginTypeContext,	//void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
@@ -708,6 +701,16 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 		idoublePrecision,
 		1, //forceAscii
 	};
+
+	PRINTMARK();
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist, &oinput, &oensureAscii, &idoublePrecision))
+	{
+		return NULL;
+	}
+
+	// iDoublePrecision may have changed if user passed it as a keyword arg
+	encoder.doublePrecision = idoublePrecision;
 	
 	if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
 	{

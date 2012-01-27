@@ -13,7 +13,7 @@ Type: python setup.py build install
 2. Run tests (as needed)
 Type: python tests.py
 
-Preliminary benchmarks:
+Benchmarks:
 
 64-bit benchmarks Linux
 Python 2.7.1+ (r271:86832, Apr 11 2011, 18:13:53)
@@ -234,5 +234,4 @@ simplejson decode : 15.05690 calls/sec
 
 See (python/benchmark.py) for further information.
 
-NOTE: These benchmarks are preliminary! 
 

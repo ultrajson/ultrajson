@@ -654,7 +654,9 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #endif
 	}
 
-	enc->beginTypeContext(obj, &tc);
+	// NOTE: the object pointed to by obj can be changed by beginTypeContext if the 
+	// object can't be natively serialized but it does expose a json_default method
+	enc->beginTypeContext(&obj, &tc);
 
 	switch (tc.type)
 	{

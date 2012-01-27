@@ -66,7 +66,7 @@ tree doesn't have cyclic references.
 
 // Max recursion depth, default for encoder
 #ifndef JSON_MAX_RECURSION_DEPTH
-#define JSON_MAX_RECURSION_DEPTH 256
+#define JSON_MAX_RECURSION_DEPTH 1024
 #endif
 
 /*

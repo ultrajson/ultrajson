@@ -13,80 +13,104 @@ Type: python setup.py build install
 2. Run tests (as needed)
 Type: python tests.py
 
-Same instructions applies for Windows except that step 1) isn't necessary since
-a prebuilt static library is included.
-
-Preliminary benchmarks:
+Benchmarks:
 
 64-bit benchmarks Linux
-Python 2.6.6 (r266:84292, Sep 15 2010, 16:22:56)
-OS Version: Ubuntu 10.10
+Python 2.7.1+ (r271:86832, Apr 11 2011, 18:13:53)
+OS Version: Ubuntu 11.04
 System Type: x64-based PC
 Processor: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
 Total Physical Memory: 4096 MB
 
-Array with 256 utf-8 strings:
-ujson encode      : 2714.66499 calls/sec
-simplejson encode : 1542.63718 calls/sec
-cjson encode      : 132.23604 calls/sec
+py-yajl 0.3.5 => http://rtyler.github.com/py-yajl
+simplejson 2.1.2 => http://simplejson.readthedocs.org/en/latest/index.html
+cjson 1.0.5 => http://pypi.python.org/pypi/python-cjson
 
-ujson decode      : 2079.17287 calls/sec
-cjson decode      : 992.21602 calls/sec
-simplejson decode : 278.92061 calls/sec
+Note: Some of the string benchmarks are unfair as much of the final performance depends on to what extent the individual JSON encoders/decoders implement the JSON specification and Unicode standard.
+At the time of writing py-yayl and cjson did not fully comply to the JSON specification and Unicode standard.
+
+Array with 256 utf-8 strings:
+*yajl  encode      : 5132.81010 calls/sec
+ujson encode      : 2793.22602 calls/sec
+simplejson encode : 1609.20858 calls/sec
+cjson encode      : 139.65933 calls/sec
+*) Output not ASCII but UTF-8 (default escaping behaviour not implemented)
+
+ujson decode      : 1404.18567 calls/sec
+cjson decode      : 814.54848 calls/sec
+yajl decode       : 594.28917 calls/sec
+simplejson decode : 347.25104 calls/sec
+
 
 Medium complex object:
-ujson encode      : 17849.80356 calls/sec
-simplejson encode : 3524.32372 calls/sec
-cjson encode      : 2967.34656 calls/sec
+ujson encode      : 18757.01101 calls/sec
+yajl  encode      : 6315.14030 calls/sec
+simplejson encode : 5542.03928 calls/sec
+cjson encode      : 4651.59072 calls/sec
 
-ujson decode      : 11685.87610 calls/sec
-cjson decode      : 8206.67906 calls/sec
-simplejson decode : 6549.99750 calls/sec
+ujson decode      : 10759.69649 calls/sec
+simplejson decode : 8148.35221 calls/sec
+cjson decode      : 7931.04387 calls/sec
+yajl decode       : 5887.38201 calls/sec
 
 Array with 256 strings:
-ujson encode      : 38543.50303 calls/sec
-simplejson encode : 19436.45772 calls/sec
-cjson encode      : 12392.55614 calls/sec
+ujson encode      : 40427.72790 calls/sec
+yajl  encode      : 23158.54336 calls/sec
+simplejson encode : 22544.31270 calls/sec
+cjson encode      : 12726.16278 calls/sec
 
-ujson decode      : 27207.33157 calls/sec
-cjson decode      : 30237.60827 calls/sec
-simplejson decode : 25271.93073 calls/sec
+*simplejson decode : 28077.25572 calls/sec
+ujson decode      : 26161.35785 calls/sec
+cjson decode      : 25661.96211 calls/sec
+yajl decode       : 13565.59414 calls/sec
+
+*) Specific decoder advantage from 8-bit strings (character encoding not preserved)
 
 Array with 256 doubles:
-ujson encode      : 6027.45931 calls/sec
-simplejson encode : 2915.54871 calls/sec
-cjson encode      : 3546.88804 calls/sec
+cjson encode      : 10890.30488 calls/sec
+yajl  encode      : 6335.60567 calls/sec
+ujson encode      : 6035.47694 calls/sec
+simplejson encode : 4153.79495 calls/sec
 
-ujson decode      : 28045.13375 calls/sec
-cjson decode      : 15066.73209 calls/sec
-simplejson decode : 15604.98222 calls/sec
+ujson decode      : 27824.38869 calls/sec
+simplejson decode : 12599.16997 calls/sec
+yajl decode       : 11014.36990 calls/sec
+cjson decode      : 8082.23784 calls/sec
 
 Array with 256 True values:
-ujson encode      : 187342.39634 calls/sec
-simplejson encode : 48972.93887 calls/sec
-cjson encode      : 67274.93082 calls/sec
+ujson encode      : 189406.12793 calls/sec
+yajl  encode      : 97727.04396 calls/sec
+cjson encode      : 73106.77801 calls/sec
+simplejson encode : 50481.90233 calls/sec
 
-ujson decode      : 158103.79663 calls/sec
-cjson decode      : 83237.88990 calls/sec
-simplejson decode : 115645.98241 calls/sec
+ujson decode      : 148107.72025 calls/sec
+simplejson decode : 125620.84065 calls/sec
+cjson decode      : 76946.51962 calls/sec
+yajl decode       : 73256.86109 calls/sec
 
 Array with 256 dict{string, int} pairs:
-ujson encode      : 25301.85690 calls/sec
-simplejson encode : 5734.29472 calls/sec
-cjson encode      : 4447.73411 calls/sec
+ujson encode      : 26391.91864 calls/sec
+yajl  encode      : 12496.90579 calls/sec
+simplejson encode : 6294.72548 calls/sec
+cjson encode      : 5044.07534 calls/sec
 
-ujson decode      : 16290.72288 calls/sec
-cjson decode      : 12528.56060 calls/sec
-simplejson decode : 10394.23358 calls/sec
+ujson decode      : 16069.25600 calls/sec
+cjson decode      : 13145.57687 calls/sec
+simplejson decode : 10464.16719 calls/sec
+yajl decode       : 8713.18458 calls/sec
 
 Dict with 256 arrays with 256 dict{string, int} pairs:
-ujson encode      : 87.40865 calls/sec
-simplejson encode : 17.07889 calls/sec
-cjson encode      : 17.25164 calls/sec
+ujson encode      : 93.33057 calls/sec
+yajl  encode      : 47.37864 calls/sec
+cjson encode      : 19.17972 calls/sec
+simplejson encode : 18.89625 calls/sec
 
-ujson decode      : 45.94026 calls/sec
-cjson decode      : 34.60225 calls/sec
-simplejson decode : 26.92238 calls/sec
+ujson decode      : 42.76765 calls/sec
+cjson decode      : 33.52049 calls/sec
+simplejson decode : 25.83548 calls/sec
+yajl decode       : 24.70140 calls/sec
+
+
 
 32-bit benchmarks Windows
 Python 2.6.6 (r266:84297, Aug 24 2010, 18:46:32) [MSC v.1500 32 bit (Intel)]
@@ -217,5 +241,4 @@ simplejson decode : 15.05690 calls/sec
 
 See (python/benchmark.py) for further information.
 
-NOTE: These benchmarks are preliminary! 
 

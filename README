@@ -22,6 +22,10 @@ System Type: x64-based PC
 Processor: Intel(R) Core(TM) i5-2300 CPU @ 2.80GHz
 Total Physical Memory: 4096 MB
 
+py-yajl 0.3.5 => http://rtyler.github.com/py-yajl
+simplejson 2.1.2 => http://simplejson.readthedocs.org/en/latest/index.html
+cjson 1.0.5 => http://pypi.python.org/pypi/python-cjson
+
 Array with 256 utf-8 strings:
 yajl  encode      : 5132.81010 calls/sec
 ujson encode      : 2793.22602 calls/sec

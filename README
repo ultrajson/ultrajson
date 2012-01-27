@@ -26,14 +26,15 @@ py-yajl 0.3.5 => http://rtyler.github.com/py-yajl
 simplejson 2.1.2 => http://simplejson.readthedocs.org/en/latest/index.html
 cjson 1.0.5 => http://pypi.python.org/pypi/python-cjson
 
-Note: Some of the string benchmarks are unfair as much of the final performance depends on to what extent the JSON specification and Unicode standard.
+Note: Some of the string benchmarks are unfair as much of the final performance depends on to what extent the individual JSON encoders/decoders implement the JSON specification and Unicode standard.
 At the time of writing py-yayl and cjson did not fully comply to the JSON specification and Unicode standard.
 
 Array with 256 utf-8 strings:
-yajl  encode      : 5132.81010 calls/sec
+*yajl  encode      : 5132.81010 calls/sec
 ujson encode      : 2793.22602 calls/sec
 simplejson encode : 1609.20858 calls/sec
 cjson encode      : 139.65933 calls/sec
+*) Output not ASCII but UTF-8 (default escaping behaviour not implemented)
 
 ujson decode      : 1404.18567 calls/sec
 cjson decode      : 814.54848 calls/sec
@@ -58,10 +59,12 @@ yajl  encode      : 23158.54336 calls/sec
 simplejson encode : 22544.31270 calls/sec
 cjson encode      : 12726.16278 calls/sec
 
-simplejson decode : 28077.25572 calls/sec
+*simplejson decode : 28077.25572 calls/sec
 ujson decode      : 26161.35785 calls/sec
 cjson decode      : 25661.96211 calls/sec
 yajl decode       : 13565.59414 calls/sec
+
+*) Specific decoder advantage from 8-bit strings (character encoding not preserved)
 
 Array with 256 doubles:
 cjson encode      : 10890.30488 calls/sec

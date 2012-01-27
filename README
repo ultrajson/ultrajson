@@ -26,6 +26,9 @@ py-yajl 0.3.5 => http://rtyler.github.com/py-yajl
 simplejson 2.1.2 => http://simplejson.readthedocs.org/en/latest/index.html
 cjson 1.0.5 => http://pypi.python.org/pypi/python-cjson
 
+Note: Some of the string benchmarks are unfair as much of the final performance depends on to what extent the JSON specification and Unicode standard.
+At the time of writing py-yayl and cjson did not fully comply to the JSON specification and Unicode standard.
+
 Array with 256 utf-8 strings:
 yajl  encode      : 5132.81010 calls/sec
 ujson encode      : 2793.22602 calls/sec
@@ -36,6 +39,7 @@ ujson decode      : 1404.18567 calls/sec
 cjson decode      : 814.54848 calls/sec
 yajl decode       : 594.28917 calls/sec
 simplejson decode : 347.25104 calls/sec
+
 
 Medium complex object:
 ujson encode      : 18757.01101 calls/sec

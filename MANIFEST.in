@@ -1,0 +1,8 @@
+include README
+include setup.y
+include tests/*.py
+include tests/*.json
+include lib/*.c
+include lib/*.h
+include python/*.c
+include python/*.h

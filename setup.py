@@ -22,11 +22,11 @@ except(OSError):
 	pass
 
 module1 = Extension('ujson',
-                    sources = ['ujson.c', 'objToJSON.c', 'JSONtoObj.c', 'ultrajsonenc.c', 'ultrajsondec.c'],
-                    include_dirs = ['./'])
+                    sources = ['./python/ujson.c', './python/objToJSON.c', './python/JSONtoObj.c', './lib/ultrajsonenc.c', './lib/ultrajsondec.c'],
+                    include_dirs = ['./python', './lib'])
 
 def get_version():
-	filename = os.path.join(os.path.dirname(__file__), 'version.h')
+	filename = os.path.join(os.path.dirname(__file__), './python/version.h')
 	file = None
 	try:
 		file = open(filename)

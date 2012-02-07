@@ -4,6 +4,18 @@ import shutil
 import os.path
 import re
 
+CLASSIFIERS = filter(None, map(str.strip,
+"""
+Development Status :: 5 - Production/Stable
+Intended Audience :: Developers
+License :: OSI Approved :: BSD License
+Programming Language :: C
+Programming Language :: Python :: 2.4
+Programming Language :: Python :: 2.5
+Programming Language :: Python :: 2.6
+Programming Language :: Python :: 2.7
+""".splitlines()))
+
 try:
 	shutil.rmtree("./build")
 except(OSError):
@@ -28,12 +40,15 @@ def get_version():
 	return m.group(1)
 
 setup (name = 'ujson',
-		version = get_version(),
-		description = 'Ultra fast JSON encoder and decoder for Python',
-		ext_modules = [module1],
-		author = "Jonas Tarnstrom",
-		author_email = "jonas.tarnstrom@esn.me",
-		maintainer = "Jonas Tarnstrom",
-		maintainer_email = "jonas.tarnstrom@esn.me",
-		license = "BSD")
-
+       version = get_version(),
+       description = "Ultra fast JSON encoder and decoder for Python",
+       ext_modules = [module1],
+       author="Jonas Tarnstrom",
+       author_email="jonas.tarnstrom@esn.me",
+       download_url="http://github.com/esnme/ultrajson",
+       license="BSD License",
+       packages=['ujson'],
+       platforms=['any'],	   
+	   url="http://www.esn.me",
+       classifiers=CLASSIFIERS,
+	   )

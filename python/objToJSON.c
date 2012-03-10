@@ -5,6 +5,7 @@
 
 static PyObject* meth_timegm;
 static PyObject* mod_calendar;
+static PyObject* type_decimal;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
@@ -69,6 +70,11 @@ struct PyDictIterState
 
 void initObjToJSON()
 {
+	PyObject* mod_decimal = PyImport_ImportModule("decimal");
+	type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
+	Py_INCREF(type_decimal);
+	Py_DECREF(mod_decimal);
+
 	//FIXME: DECREF on these?
 	PyDateTime_IMPORT;
 
@@ -106,7 +112,7 @@ static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
 static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
 	PyObject *obj = (PyObject *) _obj;
-	*((double *) outValue) = PyFloat_AS_DOUBLE (obj);
+	*((double *) outValue) = PyFloat_AsDouble(obj);
 	return NULL;
 }
 
@@ -495,7 +501,7 @@ void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
 		return;
 	}
 	else
-	if (PyFloat_Check(obj))
+	if (PyFloat_Check(obj) || PyObject_IsInstance(obj, type_decimal))
 	{
 		PRINTMARK();
 		pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;

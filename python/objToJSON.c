@@ -681,7 +681,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-	static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", NULL};
+	static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "default", NULL};
 
 	char buffer[65536];
 	char *ret;
@@ -689,6 +689,9 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 	PyObject *oinput = NULL;
 	PyObject *oensureAscii = NULL;
 	int idoublePrecision = 5; // default double precision setting
+	PyObject *odefaultDecoder = NULL;
+	PyObject *arglist = NULL;
+	PyObject *decoded = NULL;
 
   JSONObjectEncoder encoder = 
 	{
@@ -715,7 +718,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
 	PRINTMARK();
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist, &oinput, &oensureAscii, &idoublePrecision))
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &odefaultDecoder))
 	{
 		return NULL;
 	}
@@ -726,11 +729,35 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 		encoder.forceASCII = 0;
 	}
 
+	// Decode the object to serializable format using the provided function
+	if (odefaultDecoder != NULL)
+	{
+		if (!PyCallable_Check(odefaultDecoder))
+		{
+			PyErr_Format(PyExc_TypeError, "'%s' object is not callable",
+				odefaultDecoder->ob_type->tp_name);
+			return NULL;
+		}
+
+		arglist = Py_BuildValue("(O)", oinput);
+		decoded = PyObject_CallObject(odefaultDecoder, arglist);
+		Py_DECREF(arglist);
+		if (decoded == NULL)
+		{
+			return NULL;
+		}
+	}
+
   encoder.doublePrecision = idoublePrecision;
 
 	PRINTMARK();
-	ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
+	ret = JSON_EncodeObject (decoded ? decoded : oinput, &encoder, buffer, sizeof (buffer));
 	PRINTMARK();
+
+	if (decoded)
+	{
+		Py_DECREF(decoded);
+	}
 
 	if (PyErr_Occurred())
 	{

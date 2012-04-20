@@ -670,6 +670,27 @@ class UltraJSONTests(TestCase):
         dec = ujson.decode(output)
         self.assertEquals(dec, d)
 
+    def test_defaultDecoder(self):
+        class SimpleObj:
+            def __init__(self, s=None, i=None):
+                if s:
+                    self.s = s
+                if i:
+                    self.i = i
+
+            def __eq__(self, other):
+                return self.s == other.s and self.i == other.i
+
+            def toDict(self, obj):
+                return obj.__dict__
+
+        o = SimpleObj({"oscar": "grouch"}, 123)
+        output = ujson.dumps(o, default=o.toDict)
+        dec = ujson.loads(output)
+        n = SimpleObj()
+        n.__dict__ = dec
+        self.assertEquals(n, o)
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

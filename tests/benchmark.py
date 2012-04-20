@@ -65,6 +65,28 @@ def yajlDec():
 
 """=========================================================================="""
 
+def ujsonEncDefault(default):
+    x = ujson.encode(testObject, ensure_ascii=False, default=default)
+    #print "ujsonEnc", x
+
+def simplejsonEncDefault(default):
+    x = simplejson.dumps(testObject, default=default)
+    #print "simplejsonEnc", x
+
+def jsonEncDefault(default):
+    x = json.dumps(testObject, default=default)
+    #print "jsonEnc", x
+
+def cjsonEncDefault(default):
+    x = cjson.encode(testObject, default=default)
+    #print "cjsonEnc", x
+
+def yajlEncDefault():
+    x = yajl.dumps(testObject, default=default)
+    #print "cjsonEnc", x
+
+"""=========================================================================="""
+
 def timeit_compat_fix(timeit):
     if sys.version_info[:2] >=  (2,6):
         return
@@ -235,3 +257,26 @@ print "cjson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonD
 print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", gettime,10, COUNT)), )
 print "yajl decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlDec()", "from __main__ import yajlDec", gettime,10, COUNT)), )
 
+
+print "Simple object using 'default' serializer:"
+def dictify(obj):
+    try:
+        return obj.__dict__
+    except:
+        pass
+    return obj
+
+class TestOb(object):
+    rickroll = []
+    def __init__(self):
+        for x in xrange(0, 1000):
+            self.rickroll.append("never gonna give you up")
+
+testObject = TestOb()
+
+COUNT = 100000
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEncDefault(dictify)", "from __main__ import ujsonEncDefault, dictify", gettime,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEncDefault(dictify)", "from __main__ import simplejsonEncDefault, dictify", gettime,10, COUNT)), )
+#print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEncDefault(dictify)", "from __main__ import cjsonEncDefault, dictify", gettime, 10, COUNT)), )
+#print "yajl  encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlEncDefault(dictify)", "from __main__ import yajlEncDefault, dictify", gettime, 10, COUNT)), )

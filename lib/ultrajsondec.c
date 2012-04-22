@@ -86,10 +86,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 	int decimalCount = 0;
 	double frcValue = 0.0;
 	double expValue;
+	char *offset = ds->start;
 
-	if (*(ds->start) == '-')
+	if (*(offset) == '-')
 	{
-		ds->start ++;
+		offset ++;
 		intNeg = -1;
 	}
 
@@ -98,7 +99,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 
 	while (1)
 	{
-		chr = (int) (unsigned char) *(ds->start);
+		chr = (int) (unsigned char) *(offset);
 
 		switch (chr)
 		{
@@ -119,17 +120,17 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 #else
 			intValue = intValue * 10LL + (JSLONG) (chr - 48);
 #endif
-			ds->start ++;
+			offset ++;
 			break;
 
 		case '.':
-			ds->start ++;
+			offset ++;
 			goto DECODE_FRACTION;
 			break;
 
 		case 'e':
 		case 'E':
-			ds->start ++;
+			offset ++;
 			goto DECODE_EXPONENT;
 			break;
 
@@ -142,6 +143,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 BREAK_INT_LOOP:
 
 	ds->lastType = JT_INT;
+	ds->start = offset;
 
 	//If input string is LONGLONG_MIN here the value is already negative so we should not flip it
 
@@ -177,7 +179,7 @@ DECODE_FRACTION:
 	frcValue = 0.0;
 	while (1)
 	{
-		chr = (int) (unsigned char) *(ds->start);
+		chr = (int) (unsigned char) *(offset);
 
 		switch (chr)
 		{
@@ -196,12 +198,12 @@ DECODE_FRACTION:
 				frcValue = frcValue * 10.0 + (double) (chr - 48);
 				decimalCount ++;
 			}
-			ds->start ++;
+			offset ++;
 			break;
 
 		case 'e':
 		case 'E':
-			ds->start ++;
+			offset ++;
 			goto DECODE_EXPONENT;
 			break;
 
@@ -219,28 +221,29 @@ BREAK_FRC_LOOP:
 
 	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;
+	ds->start = offset;
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount)));
 
 DECODE_EXPONENT:
 	expNeg = 1.0;
 
-	if (*(ds->start) == '-')
+	if (*(offset) == '-')
 	{
 		expNeg = -1.0;
-		ds->start ++;
+		offset ++;
 	}
 	else
-	if (*(ds->start) == '+')
+	if (*(offset) == '+')
 	{
 		expNeg = +1.0;
-		ds->start ++;
+		offset ++;
 	}
 
 	expValue = 0.0;
 
 	while (1)
 	{
-		chr = (int) (unsigned char) *(ds->start);
+		chr = (int) (unsigned char) *(offset);
 
 		switch (chr)
 		{
@@ -255,7 +258,7 @@ DECODE_EXPONENT:
 		case '8':
 		case '9':
 			expValue = expValue * 10.0 + (double) (chr - 48);
-			ds->start ++;
+			offset ++;
 			break;
 
 		default:
@@ -276,21 +279,24 @@ BREAK_EXP_LOOP:
 	
 	//FIXME: Check for arithemtic overflow here
 	ds->lastType = JT_DOUBLE;
+	ds->start = offset;
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg)));
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 
 {
-	ds->start ++;
+	char *offset = ds->start;
+	offset ++;
 
-	if (*(ds->start++) != 'r')
+	if (*(offset++) != 'r')
 		goto SETERROR;
-	if (*(ds->start++) != 'u')
+	if (*(offset++) != 'u')
 		goto SETERROR;
-	if (*(ds->start++) != 'e')
+	if (*(offset++) != 'e')
 		goto SETERROR;
 
 	ds->lastType = JT_TRUE;
+	ds->start = offset;
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newTrue());
 
 SETERROR:
@@ -299,18 +305,20 @@ SETERROR:
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds) 
 {
-	ds->start ++;
+	char *offset = ds->start;
+	offset ++;
 
-	if (*(ds->start++) != 'a')
+	if (*(offset++) != 'a')
 		goto SETERROR;
-	if (*(ds->start++) != 'l')
+	if (*(offset++) != 'l')
 		goto SETERROR;
-	if (*(ds->start++) != 's')
+	if (*(offset++) != 's')
 		goto SETERROR;
-	if (*(ds->start++) != 'e')
+	if (*(offset++) != 'e')
 		goto SETERROR;
 
 	ds->lastType = JT_FALSE;
+	ds->start = offset;
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newFalse());
 
 SETERROR:
@@ -321,16 +329,18 @@ SETERROR:
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds) 
 {
-	ds->start ++;
+	char *offset = ds->start;
+	offset ++;
 
-	if (*(ds->start++) != 'u')
+	if (*(offset++) != 'u')
 		goto SETERROR;
-	if (*(ds->start++) != 'l')
+	if (*(offset++) != 'l')
 		goto SETERROR;
-	if (*(ds->start++) != 'l')
+	if (*(offset++) != 'l')
 		goto SETERROR;
 
 	ds->lastType = JT_NULL;
+	ds->start = offset;
 	RETURN_JSOBJ_NULLCHECK(ds->dec->newNull());
 
 SETERROR:
@@ -339,18 +349,21 @@ SETERROR:
 
 FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds) 
 {
+	char *offset = ds->start;
+
 	while (1)
 	{
-		switch (*ds->start)
+		switch (*offset)
 		{
 		case ' ':
 		case '\t':
 		case '\r':
 		case '\n':
-			ds->start ++;
+			offset ++;
 			break;
 
 		default:
+			ds->start = offset;
 			return;
 		}
 	}
@@ -420,7 +433,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 	}
 
 	escOffset = ds->escStart;
-
 	inputOffset = ds->start;
 
 	while(1)

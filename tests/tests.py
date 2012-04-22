@@ -7,12 +7,18 @@ try:
     import json
 except ImportError:
     import simplejson as json
+from decimal import Decimal
 import math
 import time
 import datetime
 import calendar
 import StringIO
 import re
+
+def iter_with_decimals(*numbers):
+    for number in numbers:
+        yield number
+        yield Decimal(str(number))
 
 class UltraJSONTests(TestCase):
     def test_encodeDictWithUnicodeKeys(self):
@@ -25,21 +31,21 @@ class UltraJSONTests(TestCase):
         pass
 
     def test_encodeDoubleConversion(self):
-        input = math.pi
-        output = ujson.encode(input)
-        self.assertEquals(round(input, 5), round(json.loads(output), 5))
-        self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
-        
+        for input in iter_with_decimals(math.pi):
+            output = ujson.encode(input)
+            self.assertEquals(round(input, 5), round(json.loads(output), 5))
+            self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
+            
     def test_encodeWithDecimal(self):
-        input = 1.0
-        output = ujson.encode(input)
-        self.assertEquals(output, "1.0")
+        for input in iter_with_decimals(1.0):
+            output = ujson.encode(input)
+            self.assertEquals(output, "1.0")
 
     def test_encodeDoubleNegConversion(self):
-        input = -math.pi
-        output = ujson.encode(input)
-        self.assertEquals(round(input, 5), round(json.loads(output), 5))
-        self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
+        for input in iter_with_decimals(-math.pi):
+            output = ujson.encode(input)
+            self.assertEquals(round(input, 5), round(json.loads(output), 5))
+            self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
 
     def test_encodeArrayOfNestedArrays(self):
         input = [[[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]], [[[]]] ]
@@ -50,41 +56,40 @@ class UltraJSONTests(TestCase):
 
     def test_encodeArrayOfDoubles(self):
         input = [ 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337, 31337.31337 ]
+        input.extend(iter_with_decimals(*input))
         output = ujson.encode(input)
-        self.assertEquals(input, json.loads(output))
+        round5 = lambda x: round(x, 5)
+        self.assertEquals(map(round5, input), json.loads(output))
         #self.assertEquals(output, json.dumps(input))
-        self.assertEquals(input, ujson.decode(output))
+        self.assertEquals(map(round5, input), ujson.decode(output))
 
     def test_doublePrecisionTest(self):
-        input = 30.012345678
-        output = ujson.encode(input, double_precision = 9)
-        self.assertEquals(input, json.loads(output))
-        self.assertEquals(input, ujson.decode(output))
-
-        output = ujson.encode(input, double_precision = 3)
-        self.assertEquals(round(input, 3), json.loads(output))
-        self.assertEquals(round(input, 3), ujson.decode(output))
-
-        output = ujson.encode(input)
-        self.assertEquals(round(input, 5), json.loads(output))
-        self.assertEquals(round(input, 5), ujson.decode(output))
-
+        for input in iter_with_decimals(30.012345678):
+            output = ujson.encode(input)
+            self.assertEquals(round(input, 5), json.loads(output))
+            self.assertEquals(round(input, 5), ujson.decode(output))
+            
+            for dp in range(11):
+                output = ujson.encode(input, double_precision=dp)
+                self.assertEquals(round(input, dp), json.loads(output))
+                self.assertEquals(round(input, dp), ujson.decode(output))
+            
     def test_invalidDoublePrecision(self):
-        input = 30.12345678901234567890
-        output = ujson.encode(input, double_precision = 20)
-        # should snap to the max, which is 9
-        self.assertEquals(round(input, 9), json.loads(output))
-        self.assertEquals(round(input, 9), ujson.decode(output))
-
-        output = ujson.encode(input, double_precision = -1)
-        # also should snap to the max, which is 9
-        self.assertEquals(round(input, 9), json.loads(output))
-        self.assertEquals(round(input, 9), ujson.decode(output))
-
-        # will throw typeError
-        self.assertRaises(TypeError, ujson.encode, input, double_precision = '9')
-        # will throw typeError
-        self.assertRaises(TypeError, ujson.encode, input, double_precision = None)
+        for input in iter_with_decimals(30.12345678901234567890):
+            output = ujson.encode(input, double_precision = 20)
+            # should snap to the max, which is 9
+            self.assertEquals(round(input, 9), json.loads(output))
+            self.assertEquals(round(input, 9), ujson.decode(output))
+    
+            output = ujson.encode(input, double_precision = -1)
+            # also should snap to the max, which is 9
+            self.assertEquals(round(input, 9), json.loads(output))
+            self.assertEquals(round(input, 9), ujson.decode(output))
+    
+            # will throw typeError
+            self.assertRaises(TypeError, ujson.encode, input, double_precision = '9')
+            # will throw typeError
+            self.assertRaises(TypeError, ujson.encode, input, double_precision = None)
 
 
     def test_encodeStringConversion(self):
@@ -279,33 +284,32 @@ class UltraJSONTests(TestCase):
             pass
 
     def test_encodeDoubleNan(self):
-        input = float('nan')
-        try:
-            ujson.encode(input)
-            assert False, "Expected exception!"
-        except(OverflowError):
-            return
-        assert False, "Wrong exception"
+        for input in iter_with_decimals(float('nan')):
+            try:
+                ujson.encode(input)
+                assert False, "Expected exception!"
+            except(OverflowError):
+                return
+            assert False, "Wrong exception"
         
     def test_encodeDoubleInf(self):
-        input = float('inf')
-        try:
-            ujson.encode(input)
-            assert False, "Expected exception!"
-        except(OverflowError):
-            return
-        assert False, "Wrong exception"
+        for input in iter_with_decimals(float('inf')):
+            try:
+                ujson.encode(input)
+                assert False, "Expected exception!"
+            except(OverflowError):
+                return
+            assert False, "Wrong exception"
             
     def test_encodeDoubleNegInf(self):
-        input = -float('inf')
-        try:
-            ujson.encode(input)
-            assert False, "Expected exception!"
-        except(OverflowError):
-            return
-        assert False, "Wrong exception"
-            
-
+        for input in iter_with_decimals(-float('inf')):
+            try:
+                ujson.encode(input)
+                assert False, "Expected exception!"
+            except(OverflowError):
+                return
+            assert False, "Wrong exception"
+                
     def test_decodeJibberish(self):
         input = "fdsa sda v9sa fdsa"
         try:

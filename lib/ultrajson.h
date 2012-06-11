@@ -149,7 +149,7 @@ typedef void * JSITER;
 typedef struct __JSONTypeContext
 {
     int type;
-    void *prv[32];
+    void *prv;
 } JSONTypeContext;
 
 /*

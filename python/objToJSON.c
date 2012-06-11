@@ -409,25 +409,32 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 {
-    PyObject *exc, *toDictFunc;
-    PyObject* obj = (PyObject*) _obj;
-    TypeContext *pc = (TypeContext *) tc->prv;
+    PyObject *obj, *exc, *toDictFunc;
+    TypeContext *pc;
+    PRINTMARK();
+    if (!_obj) {
+        tc->type = JT_INVALID;
+        return;
+    }
 
-    tc->prv[0] = 0;
-    tc->prv[1] = 0;
-    tc->prv[2] = 0;
-    tc->prv[3] = 0;
-    tc->prv[4] = 0;
-    tc->prv[5] = 0;
-    tc->prv[6] = 0;
-    tc->prv[7] = 0;
-    tc->prv[8] = 0;
-    tc->prv[9] = 0;
-    tc->prv[10] = 0;
-    tc->prv[11] = 0;
-    tc->prv[12] = 0;
-    tc->prv[13] = 0;
-    tc->prv[14] = 0;
+    obj = (PyObject*) _obj;
+
+    tc->prv = PyObject_Malloc(sizeof(TypeContext));
+    pc = (TypeContext *) tc->prv;
+    if (!pc)
+    {
+        tc->type = JT_INVALID;
+        PyErr_NoMemory();
+        return;
+    }
+    pc->newObj = NULL;
+    pc->dictObj = NULL;
+    pc->itemValue = NULL;
+    pc->itemName = NULL;
+    pc->attrList = NULL;
+    pc->index = 0;
+    pc->size = 0;
+    pc->longValue = 0;
     
     if (PyIter_Check(obj))
     {
@@ -453,8 +460,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
         if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
         {
             PRINTMARK();
-            tc->type = JT_INVALID;
-            return;
+            goto INVALID;
         }
 
         return;
@@ -600,12 +606,21 @@ ISITERABLE:
     pc->iterGetName = Dir_iterGetName;
 
     return;
+
+INVALID:
+    tc->type = JT_INVALID;
+    PyObject_Free(tc->prv);
+    tc->prv = NULL;
+    return;
 }
 
 
 void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
     Py_XDECREF(GET_TC(tc)->newObj);
+
+    PyObject_Free(tc->prv);
+    tc->prv = NULL;
 }
 
 const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)

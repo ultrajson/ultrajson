@@ -58,7 +58,7 @@ typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 
 double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
 {
-    static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+    static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000};
 
     return (intValue + (frcValue / g_pow10[frcDecimalCount])) * intNeg;
 }

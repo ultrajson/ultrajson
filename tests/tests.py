@@ -56,10 +56,14 @@ class UltraJSONTests(TestCase):
         self.assertEquals(input, ujson.decode(output))
 
     def test_doublePrecisionTest(self):
-        input = 30.012345678
-        output = ujson.encode(input, double_precision = 9)
+        input = 30.012345678901234
+        output = ujson.encode(input, double_precision = 15)
         self.assertEquals(input, json.loads(output))
         self.assertEquals(input, ujson.decode(output))
+
+        output = ujson.encode(input, double_precision = 9)
+        self.assertEquals(round(input, 9), json.loads(output))
+        self.assertEquals(round(input, 9), ujson.decode(output))
 
         output = ujson.encode(input, double_precision = 3)
         self.assertEquals(round(input, 3), json.loads(output))
@@ -72,14 +76,14 @@ class UltraJSONTests(TestCase):
     def test_invalidDoublePrecision(self):
         input = 30.12345678901234567890
         output = ujson.encode(input, double_precision = 20)
-        # should snap to the max, which is 9
-        self.assertEquals(round(input, 9), json.loads(output))
-        self.assertEquals(round(input, 9), ujson.decode(output))
+        # should snap to the max, which is 15
+        self.assertEquals(round(input, 15), json.loads(output))
+        self.assertEquals(round(input, 15), ujson.decode(output))
 
         output = ujson.encode(input, double_precision = -1)
-        # also should snap to the max, which is 9
-        self.assertEquals(round(input, 9), json.loads(output))
-        self.assertEquals(round(input, 9), ujson.decode(output))
+        # also should snap to the max, which is 15
+        self.assertEquals(round(input, 15), json.loads(output))
+        self.assertEquals(round(input, 15), ujson.decode(output))
 
         # will throw typeError
         self.assertRaises(TypeError, ujson.encode, input, double_precision = '9')

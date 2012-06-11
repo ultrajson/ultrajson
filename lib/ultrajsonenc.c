@@ -50,7 +50,7 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #define FALSE 0
 #endif
 
-static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000};
 static const char g_hexChars[] = "0123456789abcdef";
 static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 
@@ -452,14 +452,14 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
 {
     /* if input is larger than thres_max, revert to exponential */
-    const double thres_max = (double)(0x7FFFFFFF);
+    const double thres_max = (double) 1e16 - 1;
     int count;
     double diff = 0.0;
     char* str = enc->offset;
     char* wstr = str;
-    int whole;
+    unsigned long long whole;
     double tmp;
-    uint32_t frac;
+    unsigned long long frac;
     int neg;
     double pow10;
 
@@ -486,9 +486,9 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
 
     pow10 = g_pow10[enc->doublePrecision];
 
-    whole = (int) value;
+    whole = (unsigned long long) value;
     tmp = (value - whole) * pow10;
-    frac = (uint32_t)(tmp);
+    frac = (unsigned long long)(tmp);
     diff = tmp - frac;
 
     if (diff > 0.5) 
@@ -517,7 +517,7 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
     */
     if (value > thres_max) 
     {
-        enc->offset += sprintf(str, "%e", neg ? -value : value);
+        enc->offset += sprintf(str, "%.15e", neg ? -value : value);
         return TRUE;
     }
 

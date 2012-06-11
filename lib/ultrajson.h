@@ -61,7 +61,7 @@ tree doesn't have cyclic references.
 
 // Max decimals to encode double floating point numbers with
 #ifndef JSON_DOUBLE_MAX_DECIMALS
-#define JSON_DOUBLE_MAX_DECIMALS 9
+#define JSON_DOUBLE_MAX_DECIMALS 15
 #endif
 
 // Max recursion depth, default for encoder

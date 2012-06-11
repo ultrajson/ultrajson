@@ -36,26 +36,6 @@ typedef struct __TypeContext
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
 
-
-enum PRIVATE
-{
-    PRV_CONV_FUNC,                  // Function pointer to converter function
-    PRV_CONV_NEWOBJ,                // Any new PyObject created by converter function that should be released by releaseValue
-    PRV_ITER_BEGIN_FUNC,        // Function pointer to iterBegin for specific type
-    PRV_ITER_END_FUNC,          // Function pointer to iterEnd for specific type
-    PRV_ITER_NEXT_FUNC,         // Function pointer to iterNext for specific type
-    PRV_ITER_GETVALUE_FUNC,
-    PRV_ITER_GETNAME_FUNC,
-    PRV_ITER_INDEX,                 // Index in the iteration list
-    PRV_ITER_SIZE,                  // Size of the iteration list
-    PRV_ITER_ITEM,                  // Current iter item
-    PRV_ITER_ITEM_NAME,         // Name of iter item
-    PRV_ITER_ITEM_VALUE,        // Value of iteritem
-    PRV_ITER_DICTITEMS,
-    PRV_ITER_DICTOBJ,
-    PRV_ITER_ATTRLIST,
-};
-
 struct PyDictIterState
 {
     PyObject *keys;
@@ -67,7 +47,7 @@ struct PyDictIterState
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)     
 #define PRINTMARK()         
 
-void initObjToJSON()
+void initObjToJSON(void)
 {
     //FIXME: DECREF on these?
     PyDateTime_IMPORT;
@@ -98,7 +78,6 @@ static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_
 
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-    PyObject *obj = (PyObject *) _obj;
     *((JSINT64 *) outValue) = GET_TC(tc)->longValue;
     return NULL;
 }
@@ -416,8 +395,9 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc)
+void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 {
+    PyObject* obj = (PyObject*) _obj;
     TypeContext *pc = (TypeContext *) tc->prv;
     PyObject *toDictFunc;
 
@@ -646,7 +626,7 @@ double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
     return ret;
 }
 
-static void Object_releaseObject(JSOBJ *_obj)
+static void Object_releaseObject(JSOBJ _obj)
 {
     Py_DECREF( (PyObject *) _obj);
 }

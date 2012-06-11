@@ -196,7 +196,7 @@ int Buffer_EscapeStringUnvalidated (JSOBJ obj, JSONObjectEncoder *enc, const cha
         default: (*of++) = (*io); break;
         }
 
-        *io++;
+        io++;
     }
 
     return FALSE;

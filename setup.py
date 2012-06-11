@@ -3,6 +3,7 @@ import distutils.sysconfig
 import shutil
 import os.path
 import re
+import sys
 
 CLASSIFIERS = filter(None, map(str.strip,
 """
@@ -22,7 +23,11 @@ except(OSError):
     pass
 
 module1 = Extension('ujson',
-                    sources = ['./python/ujson.c', './python/objToJSON.c', './python/JSONtoObj.c', './lib/ultrajsonenc.c', './lib/ultrajsondec.c'],
+                    sources = ['./python/ujson.c', 
+                               './python/objToJSON.c', 
+                               './python/JSONtoObj.c', 
+                               './lib/ultrajsonenc.c', 
+                               './lib/ultrajsondec.c'],
                     include_dirs = ['./python', './lib'])
 
 def get_version():
@@ -50,3 +55,10 @@ setup (name = 'ujson',
        url="http://www.esn.me",
        classifiers=CLASSIFIERS,
        )
+
+if sys.version_info[0] >= 3:
+    print( "*" * 100)
+    print("If you want to run the tests be sure to run 2to3 on them first, "
+          "e.g. `2to3 -w tests/tests.py`.")
+    print("*" * 100)
+

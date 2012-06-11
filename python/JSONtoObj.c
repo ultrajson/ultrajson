@@ -1,4 +1,4 @@
-#include <Python.h>
+#include "py_defines.h"
 #include <ultrajson.h>
 
 

@@ -3,8 +3,7 @@
 #include <datetime.h>
 #include <ultrajson.h>
 
-static PyObject* meth_timegm;
-static PyObject* mod_calendar;
+#define EPOCH_ORD 719163
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
@@ -49,17 +48,7 @@ struct PyDictIterState
 
 void initObjToJSON(void)
 {
-    //FIXME: DECREF on these?
     PyDateTime_IMPORT;
-
-    /*
-    FIXME: Find the direct function pointer here instead and use it when time conversion is performed */
-
-    meth_timegm = PyString_FromString("timegm");
-    mod_calendar = PyImport_ImportModule("calendar");
-
-    Py_INCREF(mod_calendar);
-
 }
 
 static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -110,38 +99,32 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
+    int y, m, d, h, mn, s, days;
 
-    PyObject* timetuple = PyObject_CallMethod(obj, "utctimetuple", NULL);
-    PyObject* unixTimestamp = PyObject_CallMethodObjArgs(mod_calendar, meth_timegm, timetuple, NULL);
-    
-    *( (JSINT64 *) outValue) = PyLong_AsLongLong (unixTimestamp);
-    Py_DECREF(timetuple);
-    Py_DECREF(unixTimestamp);
+    y = PyDateTime_GET_YEAR(obj);
+    m = PyDateTime_GET_MONTH(obj);
+    d = PyDateTime_GET_DAY(obj);
+    h = PyDateTime_DATE_GET_HOUR(obj);
+    mn = PyDateTime_DATE_GET_MINUTE(obj);
+    s = PyDateTime_DATE_GET_SECOND(obj);
+
+    days = PyInt_AS_LONG(PyObject_CallMethod(PyDate_FromDate(y, m, 1), "toordinal", NULL)) - EPOCH_ORD + d - 1;
+    *( (JSINT64 *) outValue) = (((JSINT64) ((days * 24 + h) * 60 + mn)) * 60 + s);
     return NULL;
 }
 
 static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
+    int y, m, d, days;
 
-    PyObject* timetuple = PyTuple_New(6);
-    PyObject* year = PyObject_GetAttrString(obj, "year");
-    PyObject* month = PyObject_GetAttrString(obj, "month");
-    PyObject* day = PyObject_GetAttrString(obj, "day");
-    PyObject* unixTimestamp;
+    y = PyDateTime_GET_YEAR(obj);
+    m = PyDateTime_GET_MONTH(obj);
+    d = PyDateTime_GET_DAY(obj);
 
-    PyTuple_SET_ITEM(timetuple, 0, year);
-    PyTuple_SET_ITEM(timetuple, 1, month);
-    PyTuple_SET_ITEM(timetuple, 2, day);
-    PyTuple_SET_ITEM(timetuple, 3, PyInt_FromLong(0));
-    PyTuple_SET_ITEM(timetuple, 4, PyInt_FromLong(0));
-    PyTuple_SET_ITEM(timetuple, 5, PyInt_FromLong(0));
+    days = PyInt_AS_LONG(PyObject_CallMethod(PyDate_FromDate(y, m, 1), "toordinal", NULL)) - EPOCH_ORD + d - 1;
+    *( (JSINT64 *) outValue) = ((JSINT64) days * 86400);
 
-    unixTimestamp = PyObject_CallMethodObjArgs(mod_calendar, meth_timegm, timetuple, NULL);
-
-    *( (JSINT64 *) outValue) = PyLong_AsLongLong (unixTimestamp);
-    Py_DECREF(timetuple);
-    Py_DECREF(unixTimestamp);
     return NULL;
 }
 

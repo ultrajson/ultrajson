@@ -266,7 +266,7 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
             {
                 JSUTF32 in;
 
-                if (io + 1 > end)
+                if (end - io < 1)
                 {
                     enc->offset += (of - enc->offset);
                     SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
@@ -296,7 +296,7 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
             {
                 JSUTF32 in;
 
-                if (io + 2 > end)
+                if (end - io < 2)
                 {
                     enc->offset += (of - enc->offset);
                     SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
@@ -328,7 +328,7 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
             {
                 JSUTF32 in;
                 
-                if (io + 3 > end)
+                if (end - io < 3)
                 {
                     enc->offset += (of - enc->offset);
                     SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
@@ -413,7 +413,7 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
 }
 
 #define Buffer_Reserve(__enc, __len) \
-    if ((__enc)->offset + (__len) > (__enc)->end)   \
+    if ((__enc)->end - (__enc)->offset < (__len))  \
     {   \
         Buffer_Realloc((__enc), (__len));\
     }   \

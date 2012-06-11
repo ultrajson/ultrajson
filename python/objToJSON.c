@@ -199,6 +199,8 @@ int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
     PyObject *obj = (PyObject *) _obj;
     PyObject *itemValue = GET_TC(tc)->itemValue;
     PyObject *itemName = NULL;
+    PyObject* attr;
+    char* attrStr;
 
 
     if (itemValue)
@@ -209,8 +211,8 @@ int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
 
     for (; GET_TC(tc)->index  < GET_TC(tc)->size; GET_TC(tc)->index ++)
     {
-        PyObject* attr = PyList_GET_ITEM(GET_TC(tc)->attrList, GET_TC(tc)->index);
-        char* attrStr = PyString_AS_STRING(attr);
+        attr = PyList_GET_ITEM(GET_TC(tc)->attrList, GET_TC(tc)->index);
+        attrStr = PyString_AS_STRING(attr);
 
         if (attrStr[0] == '_')
         {

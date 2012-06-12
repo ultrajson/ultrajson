@@ -99,6 +99,7 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
+    PyObject *date, *ord;
     int y, m, d, h, mn, s, days;
 
     y = PyDateTime_GET_YEAR(obj);
@@ -108,7 +109,11 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
     mn = PyDateTime_DATE_GET_MINUTE(obj);
     s = PyDateTime_DATE_GET_SECOND(obj);
 
-    days = PyInt_AS_LONG(PyObject_CallMethod(PyDate_FromDate(y, m, 1), "toordinal", NULL)) - EPOCH_ORD + d - 1;
+    date = PyDate_FromDate(y, m, 1);
+    ord = PyObject_CallMethod(date, "toordinal", NULL);
+    days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
+    Py_DECREF(date);
+    Py_DECREF(ord);
     *( (JSINT64 *) outValue) = (((JSINT64) ((days * 24 + h) * 60 + mn)) * 60 + s);
     return NULL;
 }
@@ -116,13 +121,18 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
 static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
+    PyObject *date, *ord;
     int y, m, d, days;
 
     y = PyDateTime_GET_YEAR(obj);
     m = PyDateTime_GET_MONTH(obj);
     d = PyDateTime_GET_DAY(obj);
 
-    days = PyInt_AS_LONG(PyObject_CallMethod(PyDate_FromDate(y, m, 1), "toordinal", NULL)) - EPOCH_ORD + d - 1;
+    date = PyDate_FromDate(y, m, 1);
+    ord = PyObject_CallMethod(date, "toordinal", NULL);
+    days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
+    Py_DECREF(date);
+    Py_DECREF(ord);
     *( (JSINT64 *) outValue) = ((JSINT64) days * 86400);
 
     return NULL;

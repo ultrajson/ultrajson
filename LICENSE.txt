@@ -1,4 +1,3 @@
-/*
 Copyright (c) 2011-2012, ESN Social Software AB and Jonas Tarnstrom
 All rights reserved.
 
@@ -28,7 +27,3 @@ Portions of code from:
 MODP_ASCII - Ascii transformations (upper/lower, etc)
 http://code.google.com/p/stringencoders/
 Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights reserved.
-
-*/
-
-#define UJSON_VERSION "1.19"

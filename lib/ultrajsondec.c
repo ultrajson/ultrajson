@@ -67,6 +67,11 @@ static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
     return NULL;
 }
 
+static void ClearError( struct DecoderState *ds)
+{
+    ds->dec->errorOffset = 0;
+    ds->dec->errorStr = NULL;
+}
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 {
@@ -637,24 +642,38 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 {
     JSOBJ itemValue;
     JSOBJ newObj = ds->dec->newArray();
+    int len = 0;
 
     ds->lastType = JT_INVALID;
     ds->start ++;
+    
 
     while (1)//(*ds->start) != '\0')
     {
         SkipWhitespace(ds);
 
-        if ((*ds->start) == ']')
-        {
-            ds->start++;
-            return newObj;
-        }
-
         itemValue = decode_any(ds);
 
         if (itemValue == NULL)
         {
+            switch (*(ds->start++))
+            {
+                case ']':
+                    if (len > 0)
+                    {
+                        ds->dec->releaseObject(newObj);
+                        return SetError(ds, -1, "Unexpected trailing comma in array");
+                    }
+                    // We end up here when decoding empty lists "[]"
+                    ClearError(ds);
+                    return newObj;
+
+                default:
+                    ds->dec->releaseObject(newObj);
+                    return SetError(ds, -1, "Unexpected character in found when decoding array value");
+            }
+        
+        
             ds->dec->releaseObject(newObj);
             return NULL;
         }
@@ -675,6 +694,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
                 ds->dec->releaseObject(newObj);
                 return SetError(ds, -1, "Unexpected character in found when decoding array value");
         }
+        
+        len ++;
     }
 
     ds->dec->releaseObject(newObj);
@@ -793,7 +814,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
                 // White space
                 ds->start ++;
                 break;
-
+                
             default:
                 return SetError(ds, -1, "Expected object or value");
         }
@@ -828,5 +849,12 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
     {
         dec->free(ds.escStart);
     }
+
+    if (ds.start != ds.end && ret)
+    {
+        dec->releaseObject(ret);    
+        return SetError(&ds, -1, "Trailing data");
+    }
+
     return ret;
 }

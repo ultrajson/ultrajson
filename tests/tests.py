@@ -496,7 +496,7 @@ class UltraJSONTests(TestCase):
         input = "-31337"
         self.assertEquals (-31337, ujson.decode(input))
 
-    @unittest.skipIf(_python_ver(3), "No exception in Python 3")
+    #@unittest.skipIf(_python_ver(3), "No exception in Python 3")
     def test_encodeUnicode4BytesUTF8Fail(self):
         input = "\xfd\xbf\xbf\xbf\xbf\xbf"
         try:
@@ -701,6 +701,51 @@ class UltraJSONTests(TestCase):
         dec = ujson.decode(output)
         self.assertEquals(dec, d)
 
+    def test_decodeArrayTrailingCommaFail(self):
+        input = "[31337,]"
+        try:
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+
+    def test_decodeArrayLeadingCommaFail(self):
+        input = "[,31337]"
+        try:
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+
+    def test_decodeArrayOnlyCommaFail(self):
+        input = "[,]"
+        try:
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+            
+    def test_decodeArrayUnmatchedBracketFail(self):
+        input = "[]]"
+        try:
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+
+    def test_decodeArrayEmpty(self):
+        input = "[]"
+        ujson.decode(input)
+
+    def test_decodeArrayOneItem(self):
+        input = "[31337]"
+        ujson.decode(input)
+
+        
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
@@ -723,17 +768,21 @@ def test_decodeStringUTF8(self):
 input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
-
-
 """
 if __name__ == "__main__":
     unittest.main()
 
+"""
+# Use this to look for memory leaks
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
     hp.setrelheap()
     while True:
-        unittest.main()
+        try:
+            unittest.main()
+        except SystemExit:
+            pass
         heap = hp.heapu()
-        print heap    
+        print heap
+"""        

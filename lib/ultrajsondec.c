@@ -80,7 +80,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
     double intValue;
 #else
     int intNeg = 1;
-    JSLONG intValue;
+    JSUINT64 intValue;
 #endif
 
     double expNeg;
@@ -90,10 +90,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
     double expValue;
     char *offset = ds->start;
 
+	JSUINT64 overflowLimit = LLONG_MAX;
+
     if (*(offset) == '-')
     {
         offset ++;
         intNeg = -1;
+		overflowLimit = LLONG_MIN;
     }
 
     // Scan integer part
@@ -120,8 +123,14 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 #ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
             intValue = intValue * 10.0 + (double) (chr - 48);
 #else
-            intValue = intValue * 10LL + (JSLONG) (chr - 48);
+            intValue = intValue * 10ULL + (JSLONG) (chr - 48);
+
+			if (intValue > overflowLimit)
+			{
+				return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big" : "Value is too small");
+			}
 #endif
+
             offset ++;
             break;
 

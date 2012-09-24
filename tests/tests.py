@@ -745,6 +745,49 @@ class UltraJSONTests(TestCase):
         input = "[31337]"
         ujson.decode(input)
 
+    def test_decodeBigValue(self):
+        input = "9223372036854775807"
+        ujson.decode(input)
+
+    def test_decodeSmallValue(self):
+        input = "-9223372036854775808"
+        ujson.decode(input)
+
+    def test_decodeTooBigValue(self):
+        try:
+            input = "9223372036854775808"
+            ujson.decode(input)
+        except ValueError, e:
+            pass
+        else:
+            assert False, "expected ValueError"        
+
+    def test_decodeTooSmallValue(self):
+        try:
+            input = "-90223372036854775809"
+            ujson.decode(input)
+        except ValueError,e:
+            pass
+        else:
+            assert False, "expected ValueError"
+
+    def test_decodeVeryTooBigValue(self):
+        try:
+            input = "9223372036854775808"
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"        
+
+    def test_decodeVeryTooSmallValue(self):
+        try:
+            input = "-90223372036854775809"
+            ujson.decode(input)   
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"       
         
 """
 def test_decodeNumericIntFrcOverflow(self):

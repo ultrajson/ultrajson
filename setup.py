@@ -45,9 +45,16 @@ def get_version():
     assert m, "version.h must contain UJSON_VERSION macro"
     return m.group(1)
 
+f = open('README.rst')
+try:
+    README = f.read()
+finally:
+    f.close()    
+    
 setup (name = 'ujson',
        version = get_version(),
        description = "Ultra fast JSON encoder and decoder for Python",
+       long_description = README,
        ext_modules = [module1],
        author="Jonas Tarnstrom",
        author_email="jonas.tarnstrom@esn.me",

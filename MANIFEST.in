@@ -1,4 +1,4 @@
-include README
+include README.rst
 include MANIFEST.in
 include setup.y
 include tests/*.py

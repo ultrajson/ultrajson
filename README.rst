@@ -7,9 +7,25 @@ To install it just run Pip as usual::
     $ pip install ujson
 
 
+============
 Benchmarks
----------------
+============
 *UltraJSON* calls/sec compared to three other popular JSON parsers with performance gain specified below each.
+
+~~~~~~~~~~~~~
+Test machine:
+~~~~~~~~~~~~~
+Linux version 2.6.32-131.0.15.el6.x86_64
+
+~~~~~~~~~
+Versions:
+~~~~~~~~~
+
+- ujson: 1.21
+- simplejson: 2.6.2
+- cjson: 1.05
+- yajl: 0.3.5
+- Python: Python 2.6.6 (r266:84292, Jul 20 2011, 10:22:43)
 
 
 +-----------------------------------------+--------+------------+--------+---------+

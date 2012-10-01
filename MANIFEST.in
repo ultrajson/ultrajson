@@ -1,6 +1,6 @@
 include README.rst
 include MANIFEST.in
-include setup.y
+include setup.py
 include tests/*.py
 include tests/*.json
 include lib/*.c

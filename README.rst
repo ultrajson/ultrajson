@@ -6,7 +6,17 @@ To install it just run Pip as usual::
 
     $ pip install ujson
 
+============
+Usage
+============
+May be used as a drop in replacement for most other JSON parsers for Python::
 
+    >>> import ujson
+    >>> ujson.dumps([{"key": "value"}, 81, True])
+    '[{"key":"value"},81,true]'
+    >>> ujson.loads("""[{"key": "value"}, 81, true]""")
+    [{u'key': u'value'}, 81, True]
+    
 ============
 Benchmarks
 ============

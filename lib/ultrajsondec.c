@@ -810,7 +810,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
             case '-': 
                 return decode_numeric (ds);
 
-            case '[':   return decode_array (ds);
+            case '[': return decode_array (ds);
             case '{': return decode_object (ds);
             case 't': return decode_true (ds);
             case 'f': return decode_false (ds);
@@ -830,6 +830,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
     }
 }
 
+static void skip_whitespace_and_carriage_return(struct DecoderState *ds)
+{
+    while (ds->start != ds->end && (*ds->start == '\n' || *ds->start == ' '))
+        ds->start ++;
+}
 
 JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer)
 {
@@ -858,6 +863,8 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
     {
         dec->free(ds.escStart);
     }
+
+    skip_whitespace_and_carriage_return(&ds);
 
     if (ds.start != ds.end && ret)
     {

@@ -788,7 +788,20 @@ class UltraJSONTests(TestCase):
             pass
         else:
             assert False, "expected ValueError"       
-        
+
+    def test_decodeWithTrailingWhitespaces(self):
+        input = "{}\n\t "
+        ujson.decode(input)
+
+    def test_decodeWithTrailingNonWhitespaces(self):
+        try:
+            input = "{}\n\t a"
+            ujson.decode(input)
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

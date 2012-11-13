@@ -90,19 +90,19 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
     double expValue;
     char *offset = ds->start;
 
-	JSUINT64 overflowLimit = LLONG_MAX;
+	  JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
 
     if (*(offset) == '-')
     {
         offset ++;
         intNeg = -1;
-		overflowLimit = LLONG_MIN;
+		    overflowLimit = (JSUINT64) LLONG_MIN;
     }
 
     // Scan integer part
     intValue = 0;
 
-    while (1)
+    for (;;)
     {
         chr = (int) (unsigned char) *(offset);
 
@@ -125,10 +125,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
 #else
             intValue = intValue * 10ULL + (JSLONG) (chr - 48);
 
-			if (intValue > overflowLimit)
-			{
-				return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big" : "Value is too small");
-			}
+            if (intValue > overflowLimit)
+            {
+                return SetError(ds, -1, intNeg == -1 ? "Value is too small" : "Value is too big");
+            }
 #endif
 
             offset ++;
@@ -188,7 +188,7 @@ DECODE_FRACTION:
 
     // Scan fraction part
     frcValue = 0.0;
-    while (1)
+    for (;;)
     {
         chr = (int) (unsigned char) *(offset);
 
@@ -252,7 +252,7 @@ DECODE_EXPONENT:
 
     expValue = 0.0;
 
-    while (1)
+    for (;;)
     {
         chr = (int) (unsigned char) *(offset);
 
@@ -362,7 +362,7 @@ FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 {
     char *offset = ds->start;
 
-    while (1)
+    for (;;)
     {
         switch (*offset)
         {
@@ -424,7 +424,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
     ds->lastType = JT_INVALID;
     ds->start ++;
 
-    if ( (ds->end - ds->start) > escLen)
+    if ( (size_t) (ds->end - ds->start) > escLen)
     {
         size_t newSize = (ds->end - ds->start);
 
@@ -452,9 +452,9 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
     }
 
     escOffset = ds->escStart;
-    inputOffset = ds->start;
+    inputOffset = (JSUINT8 *) ds->start;
 
-    while(1)
+    for (;;)
     {
         switch (g_decoderLookup[(JSUINT8)(*inputOffset)])
         {
@@ -631,8 +631,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
             if (ucs >= 0x10000)
             {
                 ucs -= 0x10000;
-                *(escOffset++) = (ucs >> 10) + 0xd800;
-                *(escOffset++) = (ucs & 0x3ff) + 0xdc00;
+                *(escOffset++) = (wchar_t) (ucs >> 10) + 0xd800;
+                *(escOffset++) = (wchar_t) (ucs & 0x3ff) + 0xdc00;
             }
             else
             {
@@ -657,7 +657,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
     ds->start ++;
     
 
-    while (1)//(*ds->start) != '\0')
+    for (;;)
     {
         SkipWhitespace(ds);
 
@@ -680,11 +680,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
                 default:
                     ds->dec->releaseObject(newObj);
                     return SetError(ds, -1, "Unexpected character in found when decoding array value");
-            }
-        
-        
-            ds->dec->releaseObject(newObj);
-            return NULL;
+						}
         }
 
         ds->dec->arrayAddItem (newObj, itemValue);
@@ -706,9 +702,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
         
         len ++;
     }
-
-    ds->dec->releaseObject(newObj);
-    return SetError(ds, -1, "Unmatched ']' when decoding 'array'");
 }
 
 
@@ -721,7 +714,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     ds->start ++;
 
-    while (1)
+    for (;;)
     {
         SkipWhitespace(ds);
 
@@ -784,14 +777,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
                 return SetError(ds, -1, "Unexpected character in found when decoding object value");
         }
     }
-
-    ds->dec->releaseObject(newObj);
-    return SetError(ds, -1, "Unmatched '}' when decoding object");
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
 {
-    while (1)
+    for (;;)
     {
         switch (*ds->start)
         {

@@ -830,6 +830,25 @@ class UltraJSONTests(TestCase):
         self.assertEquals(1.7893, ujson.loads("1.7893"))
         self.assertEquals(1.893, ujson.loads("1.893"))
         self.assertEquals(1.3, ujson.loads("1.3"))
+        
+    def test_encodeBigSet(self):
+        s = set()
+        for x in xrange(0, 100000):
+            s.add(x)
+        ujson.encode(s)
+    
+    def test_encodeEmptySet(self):
+        s = set()
+        self.assertEquals("[]", ujson.encode(s))
+
+    def test_encodeSet(self):
+        s = set([1,2,3,4,5,6,7,8,9])
+        enc = ujson.encode(s)   
+        dec = ujson.decode(enc)
+        
+        for v in dec:
+            self.assertTrue(v in s)
+        
             
 """
 def test_decodeNumericIntFrcOverflow(self):
@@ -857,8 +876,9 @@ raise NotImplementedError("Implement this test!")
 if __name__ == "__main__":
     unittest.main()
 
-"""
+
 # Use this to look for memory leaks
+"""
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -870,4 +890,4 @@ if __name__ == '__main__':
             pass
         heap = hp.heapu()
         print heap
-"""        
+"""     

@@ -31,4 +31,4 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 
 */
 
-#define UJSON_VERSION "1.26"
+#define UJSON_VERSION "1.27"

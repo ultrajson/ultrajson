@@ -61,6 +61,7 @@ typedef struct __TypeContext
     PyObject *itemValue;
     PyObject *itemName;
     PyObject *attrList;
+    PyObject *iterator;
 
     JSINT64 longValue;
 
@@ -208,6 +209,62 @@ JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 }
 
 char *Tuple_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+{
+    return NULL;
+}
+
+//=============================================================================
+// Iterator iteration functions 
+// itemValue is borrowed reference, no ref counting
+//=============================================================================
+void Iter_iterBegin(JSOBJ obj, JSONTypeContext *tc)
+{
+    GET_TC(tc)->itemValue = NULL;
+    GET_TC(tc)->iterator = PyObject_GetIter(obj);
+}
+
+int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
+{
+    PyObject *item;
+    
+    if (GET_TC(tc)->itemValue)
+    {
+        Py_DECREF(GET_TC(tc)->itemValue);
+        GET_TC(tc)->itemValue = NULL;
+    }    
+
+    item = PyIter_Next(GET_TC(tc)->iterator);
+    
+    if (item == NULL)
+    {
+        return 0;
+    }
+    
+    GET_TC(tc)->itemValue = item;
+    return 1;
+}
+
+void Iter_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+{
+    if (GET_TC(tc)->itemValue)
+    {
+        Py_DECREF(GET_TC(tc)->itemValue);
+        GET_TC(tc)->itemValue = NULL;
+    }
+
+    if (GET_TC(tc)->iterator)
+    {
+        Py_DECREF(GET_TC(tc)->iterator);
+        GET_TC(tc)->iterator = NULL;
+    }    
+}
+
+JSOBJ Iter_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+{
+    return GET_TC(tc)->itemValue;
+}
+
+char *Iter_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
     return NULL;
 }
@@ -481,6 +538,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
     
     if (PyIter_Check(obj))
     {
+        PRINTMARK();    
         goto ISITERABLE;
     }
 
@@ -564,7 +622,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 
 
 ISITERABLE:
-
     if (PyDict_Check(obj))
     {
         PRINTMARK();
@@ -603,6 +660,19 @@ ISITERABLE:
         pc->iterGetName = Tuple_iterGetName;
         return;
     }
+    else
+    if (PyAnySet_Check(obj))
+    {
+        PRINTMARK();
+        tc->type = JT_ARRAY;
+        pc->iterBegin = Iter_iterBegin;
+        pc->iterEnd = Iter_iterEnd;
+        pc->iterNext = Iter_iterNext;
+        pc->iterGetValue = Iter_iterGetValue;
+        pc->iterGetName = Iter_iterGetName;
+        return;
+       
+    }
 
 
     toDictFunc = PyObject_GetAttrString(obj, "toDict");
@@ -640,7 +710,8 @@ ISITERABLE:
     }
 
     PyErr_Clear();
-
+    
+    PRINTMARK();    
     tc->type = JT_OBJECT;
     pc->iterBegin = Dir_iterBegin;
     pc->iterEnd = Dir_iterEnd;

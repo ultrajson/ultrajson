@@ -30,7 +30,7 @@ module1 = Extension('ujson',
                                './python/JSONtoObj.c', 
                                './lib/ultrajsonenc.c', 
                                './lib/ultrajsondec.c'],
-                    include_dirs = ['./python', './lib']
+                    include_dirs = ['./python', './lib'],
                     extra_compile_args=['-D_GNU_SOURCE'])
 
 def get_version():

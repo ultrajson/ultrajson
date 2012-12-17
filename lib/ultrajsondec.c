@@ -89,14 +89,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
     double frcValue = 0.0;
     double expValue;
     char *offset = ds->start;
-
-	  JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
+	JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
 
     if (*(offset) == '-')
     {
         offset ++;
         intNeg = -1;
-		    overflowLimit = (JSUINT64) LLONG_MIN;
+		overflowLimit = (JSUINT64) LLONG_MIN;
     }
 
     // Scan integer part
@@ -679,8 +678,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
                 default:
                     ds->dec->releaseObject(newObj);
-                    return SetError(ds, -1, "Unexpected character in found when decoding array value");
-						}
+                    if (!ds->dec->errorStr)
+                        SetError(ds, -1, "Unexpected character found when decoding array value (1)");
+                    return NULL;
+            }
         }
 
         ds->dec->arrayAddItem (newObj, itemValue);
@@ -697,7 +698,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
             default:
                 ds->dec->releaseObject(newObj);
-                return SetError(ds, -1, "Unexpected character in found when decoding array value");
+                return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
         }
         
         len ++;

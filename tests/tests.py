@@ -802,6 +802,14 @@ class UltraJSONTests(TestCase):
         else:
             assert False, "expected ValueError"
 
+    def test_decodeArrayWithBigInt(self):
+        try:
+            ujson.loads('[18446098363113800555]')
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+        
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

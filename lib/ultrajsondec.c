@@ -66,12 +66,6 @@ JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 #define RETURN_JSOBJ_NULLCHECK(_expr) return(_expr);
 
-double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
-{
-    static const double g_pow10[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001,0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001};
-									 
-    return (intValue + (frcValue * g_pow10[frcDecimalCount])) * intNeg;
-}
 
 static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 {
@@ -86,27 +80,25 @@ static void ClearError( struct DecoderState *ds)
     ds->dec->errorStr = NULL;
 }
 
-
-
-static int maxExponent = 511;	/* Largest possible base 10 exponent.  Any
-				 * exponent larger than this will already
-				 * produce underflow or overflow, so there's
-				 * no need to worry about additional digits.
-				 */
-static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
-    10.,			/* is 10^2^i.  Used to convert decimal */
-    100.,			/* exponents into floating-point numbers. */
-    1.0e4,
-    1.0e8,
-    1.0e16,
-    1.0e32,
-    1.0e64,
-    1.0e128,
-    1.0e256
-};
-
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
+	static int maxExponent = 511;	/* Largest possible base 10 exponent.  Any
+									* exponent larger than this will already
+									* produce underflow or overflow, so there's
+									* no need to worry about additional digits.
+									*/
+	static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
+		10.,			/* is 10^2^i.  Used to convert decimal */
+		100.,			/* exponents into floating-point numbers. */
+		1.0e4,
+		1.0e8,
+		1.0e16,
+		1.0e32,
+		1.0e64,
+		1.0e128,
+		1.0e256
+	};
+
 	int sign, expSign = FALSE;
 	double fraction, dblExp, *d;
 	register const char *p;

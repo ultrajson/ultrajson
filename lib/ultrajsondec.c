@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, ESN Social Software AB and Jonas Tarnstrom
+Copyright (c) 2011-2013, ESN Social Software AB and Jonas Tarnstrom
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Portions of code from:
-MODP_ASCII - Ascii transformations (upper/lower, etc)
+
+Portions of code from MODP_ASCII - Ascii transformations (upper/lower, etc)
 http://code.google.com/p/stringencoders/
 Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights reserved.
+
+Numeric decoder contains derivate code from TCL library
+http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
+ * Copyright (c) 1988-1993 The Regents of the University of California.
+ * Copyright (c) 1994 Sun Microsystems, Inc.
 
 */
 
@@ -122,7 +127,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 							* point. */
 	const char *pExp;		/* Temporarily holds location of exponent
 							* in string. */
-	JSINT64 frac;
+	JSUINT64 frac;
+	JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
 
 	/*
 	* Strip off leading blanks and check for a sign.
@@ -133,7 +139,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 	{
 		sign = TRUE;
 		p ++;
-		neg = -1;
+		neg = -1;	
+		overflowLimit = (JSUINT64) LLONG_MIN;	
 	} 
 	else
 	{
@@ -148,8 +155,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 	{
 		int chr = (int)(unsigned char) *p;
 
-		fprintf (stderr, "%s:%d CHR %c(%d)\n", __FUNCTION__, mantSize, chr);
-
 		switch (chr)
 		{
 		case '.':
@@ -160,7 +165,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 			continue;
 
 		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-			frac = 10ll*frac + (chr - '0');
+			frac = 10ULL*frac + (JSUINT64) (chr - '0');
+
+            if (frac > overflowLimit)
+            {
+                return SetError(ds, -1, neg == -1 ? "Value is too small" : "Value is too big");
+            }
 			p ++;
 			break;
 
@@ -169,35 +179,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 			break;
 		}
 	}
-
-
-	//FIMXE: Handle mantissa overflow
 	
-	END_MANTISSA_LOOP:
+END_MANTISSA_LOOP:
 
-	if (decPt == -1)
+	if ((*p == 'E') || (*p == 'e'))
 	{
-		ds->start = (char *) p;
-	
-		if (frac >> 31)
-		{
-			fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
-			return ds->dec->newLong( (JSINT64) frac * (JSINT64) neg);
-		}
-		else
-		{
-			fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
-			return ds->dec->newInt( (JSINT32) frac * (JSINT32) neg);
-		}
-	}
-
-	fraction = frac;
-	fracExp = decPt - mantSize;
-
-
-	if ( (*p == 'E') || (*p == 'e')) 
-	{
-		p += 1;
+		p ++;
 		if (*p == '-') 
 		{
 		    expSign = TRUE;
@@ -214,8 +201,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 		{
 			int chr = (int)(unsigned char) *p;
 
-			fprintf (stderr, "%s:%d CHR %c(%d)\n", __FUNCTION__, mantSize, chr);
-
 			switch (chr)
 			{
 			case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
@@ -229,17 +214,40 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 			}
 		}
 	}
+	else
+	{
+		if (decPt == -1) 
+		{
+			ds->start = (char *) p;
+
+			if (frac >> 31)
+			{
+				return ds->dec->newLong( (JSINT64) frac * (JSINT64) neg);
+			}
+			else
+			{
+				return ds->dec->newInt( (JSINT32) frac * (JSINT32) neg);
+			}
+		}
+	}
 
 END_EXPONENT_LOOP:
 	
+	fraction = frac;
+
+	if (decPt == -1)
+	{
+		decPt = mantSize;
+	}
+
+	fracExp = decPt - mantSize;
+
 	if (expSign) 
 	{
-		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
 		exp = fracExp - exp;
     }
 	else 
 	{
-		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
 		exp = fracExp + exp;
     }
 
@@ -252,7 +260,6 @@ END_EXPONENT_LOOP:
     
     if (exp < 0) 
 	{
-		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
 		expSign = TRUE;
 		exp = -exp;
     } 
@@ -286,8 +293,6 @@ END_EXPONENT_LOOP:
     }
 
 done:
-	fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
-
 	ds->start = (char *) p;
 	return ds->dec->newDouble(fraction * (double) neg);
 }

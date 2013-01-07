@@ -30,6 +30,13 @@ json_unicode = (json.dumps if sys.version_info[0] >= 3
                 else partial(json.dumps, encoding="utf-8"))
 
 class UltraJSONTests(TestCase):
+
+    def test_ujson(self):
+        sut = {u'a': 4.56}
+        encoded = ujson.encode(sut)
+        decoded = ujson.decode(encoded)
+        self.assertEqual(sut, decoded)
+        
     def test_encodeDictWithUnicodeKeys(self):
         input = { u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1", u"key1": u"value1" }
         output = ujson.encode(input)

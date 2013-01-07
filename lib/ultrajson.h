@@ -51,8 +51,6 @@ tree doesn't have cyclic references.
 #include <stdio.h>
 #include <wchar.h>
 
-//#define JSON_DECODE_NUMERIC_AS_DOUBLE
-
 // Don't output any extra whitespaces when encoding
 #define JSON_NO_EXTRA_WHITESPACE
 

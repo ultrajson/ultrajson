@@ -38,6 +38,14 @@ Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights rese
 #include <limits.h>
 #include <wchar.h>
 
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+#ifndef NULL
+#define NULL 0
+#endif
+
 struct DecoderState
 {
     char *start;
@@ -73,224 +81,215 @@ static void ClearError( struct DecoderState *ds)
     ds->dec->errorStr = NULL;
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
+
+
+static int maxExponent = 511;	/* Largest possible base 10 exponent.  Any
+				 * exponent larger than this will already
+				 * produce underflow or overflow, so there's
+				 * no need to worry about additional digits.
+				 */
+static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
+    10.,			/* is 10^2^i.  Used to convert decimal */
+    100.,			/* exponents into floating-point numbers. */
+    1.0e4,
+    1.0e8,
+    1.0e16,
+    1.0e32,
+    1.0e64,
+    1.0e128,
+    1.0e256
+};
+
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-    double intNeg = 1;
-    double intValue;
-#else
-    int intNeg = 1;
-    JSUINT64 intValue;
-#endif
+	int sign, expSign = FALSE;
+	double fraction, dblExp, *d;
+	register const char *p;
+	register int c;
+	int neg = 1;
+	int exp = 0;			/* Exponent read from "EX" field. */
+	int fracExp = 0;		/* Exponent that derives from the fractional
+							* part.  Under normal circumstatnces, it is
+							* the negative of the number of digits in F.
+							* However, if I is very long, the last digits
+							* of I get dropped (otherwise a long I with a
+							* large negative exponent could cause an
+							* unnecessary overflow on I alone).  In this
+							* case, fracExp is incremented one for each
+							* dropped digit. */
+	int mantSize;			/* Number of digits in mantissa. */
+	int decPt = -1;			/* Number of mantissa digits BEFORE decimal
+							* point. */
+	const char *pExp;		/* Temporarily holds location of exponent
+							* in string. */
+	JSINT64 frac;
 
-    double expNeg;
-    int chr;
-    int decimalCount = 0;
-    double frcValue = 0.0;
-    double expValue;
-    char *offset = ds->start;
-	JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
+	/*
+	* Strip off leading blanks and check for a sign.
+	*/
 
-    if (*(offset) == '-')
-    {
-        offset ++;
-        intNeg = -1;
-		overflowLimit = (JSUINT64) LLONG_MIN;
+	p = ds->start;
+	if (*p == '-') 
+	{
+		sign = TRUE;
+		p ++;
+		neg = -1;
+	} 
+	else
+	{
+		if (*p == '+')
+			p ++;
+		sign = FALSE;
+
+	}
+	
+	frac = 0;
+	for (mantSize = 0; ; mantSize ++)
+	{
+		int chr = (int)(unsigned char) *p;
+
+		fprintf (stderr, "%s:%d CHR %c(%d)\n", __FUNCTION__, mantSize, chr);
+
+		switch (chr)
+		{
+		case '.':
+			//FIXME: Test for more than one decimal point here
+			decPt = mantSize;
+			mantSize --;
+			p ++;
+			continue;
+
+		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+			frac = 10ll*frac + (chr - '0');
+			p ++;
+			break;
+
+		default:
+			goto END_MANTISSA_LOOP;
+			break;
+		}
+	}
+
+
+	//FIMXE: Handle mantissa overflow
+	
+	END_MANTISSA_LOOP:
+
+	if (decPt == -1)
+	{
+		ds->start = (char *) p;
+	
+		if (frac >> 31)
+		{
+			fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+			return ds->dec->newLong( (JSINT64) frac * (JSINT64) neg);
+		}
+		else
+		{
+			fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+			return ds->dec->newInt( (JSINT32) frac * (JSINT32) neg);
+		}
+	}
+
+	fraction = frac;
+	fracExp = decPt - mantSize;
+
+
+	if ( (*p == 'E') || (*p == 'e')) 
+	{
+		p += 1;
+		if (*p == '-') 
+		{
+		    expSign = TRUE;
+		    p ++;
+		} 
+		else 
+		{
+		    if (*p == '+') 
+				p ++;
+		    expSign = FALSE;
+	    }
+
+		for (;;)
+		{
+			int chr = (int)(unsigned char) *p;
+
+			fprintf (stderr, "%s:%d CHR %c(%d)\n", __FUNCTION__, mantSize, chr);
+
+			switch (chr)
+			{
+			case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+				exp = 10 * exp + (chr - '0');
+				p ++;
+				break;
+
+			default:
+				goto END_EXPONENT_LOOP;
+				break;
+			}
+		}
+	}
+
+END_EXPONENT_LOOP:
+	
+	if (expSign) 
+	{
+		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+		exp = fracExp - exp;
+    }
+	else 
+	{
+		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+		exp = fracExp + exp;
     }
 
-    // Scan integer part
-    intValue = 0;
-
-    for (;;)
-    {
-        chr = (int) (unsigned char) *(offset);
-
-        switch (chr)
-        {
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            //FIXME: Check for arithemtic overflow here
-            //PERF: Don't do 64-bit arithmetic here unless we know we have to
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-            intValue = intValue * 10.0 + (double) (chr - 48);
-#else
-            intValue = intValue * 10ULL + (JSLONG) (chr - 48);
-
-            if (intValue > overflowLimit)
-            {
-                return SetError(ds, -1, intNeg == -1 ? "Value is too small" : "Value is too big");
-            }
-#endif
-
-            offset ++;
-            break;
-
-        case '.':
-            offset ++;
-            goto DECODE_FRACTION;
-            break;
-
-        case 'e':
-        case 'E':
-            offset ++;
-            goto DECODE_EXPONENT;
-            break;
-
-        default:
-            goto BREAK_INT_LOOP;
-            break;
-        }
-    }
-
-BREAK_INT_LOOP:
-
-    ds->lastType = JT_INT;
-    ds->start = offset;
-
-    //If input string is LONGLONG_MIN here the value is already negative so we should not flip it
-
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-#else
-    if (intValue < 0)
-    {
-        intNeg = 1;
-    }
-#endif
-
-    //dbg1 = (intValue * intNeg);
-    //dbg2 = (JSLONG) dbg1;
-
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-    if (intValue > (double) INT_MAX || intValue < (double) INT_MIN)
-#else
-    if ( (intValue >> 31))
-#endif
-    {   
-        RETURN_JSOBJ_NULLCHECK(ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg)));
-    }
-    else
-    {
-        RETURN_JSOBJ_NULLCHECK(ds->dec->newInt( (JSINT32) (intValue * intNeg)));
-    }
-
-
-
-DECODE_FRACTION:
-
-    // Scan fraction part
-    frcValue = 0.0;
-    for (;;)
-    {
-        chr = (int) (unsigned char) *(offset);
-
-        switch (chr)
-        {
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            if (decimalCount < JSON_DOUBLE_MAX_DECIMALS)
-            {
-                frcValue = frcValue * 10.0 + (double) (chr - 48);
-                decimalCount ++;
-            }
-            offset ++;
-            break;
-
-        case 'e':
-        case 'E':
-            offset ++;
-            goto DECODE_EXPONENT;
-            break;
-
-        default:
-            goto BREAK_FRC_LOOP;
-        }
-    }
-
-BREAK_FRC_LOOP:
-
-    if (intValue < 0)
-    {
-        intNeg = 1;
-    }
-
-    //FIXME: Check for arithemtic overflow here
-    ds->lastType = JT_DOUBLE;
-    ds->start = offset;
-    RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount)));
-
-DECODE_EXPONENT:
-    expNeg = 1.0;
-
-    if (*(offset) == '-')
-    {
-        expNeg = -1.0;
-        offset ++;
-    }
-    else
-    if (*(offset) == '+')
-    {
-        expNeg = +1.0;
-        offset ++;
-    }
-
-    expValue = 0.0;
-
-    for (;;)
-    {
-        chr = (int) (unsigned char) *(offset);
-
-        switch (chr)
-        {
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            expValue = expValue * 10.0 + (double) (chr - 48);
-            offset ++;
-            break;
-
-        default:
-            goto BREAK_EXP_LOOP;
-
-        }
-    }
-
-BREAK_EXP_LOOP:
-
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-#else
-    if (intValue < 0)
-    {
-        intNeg = 1;
-    }
-#endif
+    /*
+     * Generate a floating-point number that represents the exponent.
+     * Do this by processing the exponent one bit at a time to combine
+     * many powers of 2 of 10. Then combine the exponent with the
+     * fraction.
+     */
     
-    //FIXME: Check for arithemtic overflow here
-    ds->lastType = JT_DOUBLE;
-    ds->start = offset;
-    RETURN_JSOBJ_NULLCHECK(ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg)));
+    if (exp < 0) 
+	{
+		fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+		expSign = TRUE;
+		exp = -exp;
+    } 
+	else 
+	{
+		expSign = FALSE;
+    }
+    if (exp > maxExponent) 
+	{
+		exp = maxExponent;
+		//FIXME: errno = ERANGE;
+    }
+    
+	dblExp = 1.0;
+    
+	for (d = powersOf10; exp != 0; exp >>= 1, d += 1) 
+	{
+		if (exp & 01) 
+		{
+		    dblExp *= *d;
+		}
+    }
+
+	if (expSign) 
+	{
+		fraction /= dblExp;
+    } 
+	else 
+	{
+		fraction *= dblExp;
+    }
+
+done:
+	fprintf (stderr, "%s: MARK(%d)\n", __FUNCTION__, __LINE__);
+
+	ds->start = (char *) p;
+	return ds->dec->newDouble(fraction * (double) neg);
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 

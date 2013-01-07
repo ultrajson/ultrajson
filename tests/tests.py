@@ -31,7 +31,7 @@ json_unicode = (json.dumps if sys.version_info[0] >= 3
 
 class UltraJSONTests(TestCase):
 
-    def test_ujson(self):
+    def test_decimalDecodeTest(self):
         sut = {u'a': 4.56}
         encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
@@ -560,7 +560,7 @@ class UltraJSONTests(TestCase):
         self.assertEquals(output, json.loads(input))
 
     def test_decodeNumericIntExpEPLUS(self):
-        input = "1337E+40"
+        input = "1337E+9"
         output = ujson.decode(input)
         self.assertEquals(output, json.loads(input))
 

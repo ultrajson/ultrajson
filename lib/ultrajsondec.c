@@ -29,7 +29,7 @@ Portions of code from MODP_ASCII - Ascii transformations (upper/lower, etc)
 http://code.google.com/p/stringencoders/
 Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights reserved.
 
-Numeric decoder contains derivate code from TCL library
+Numeric decoder derived from from TCL library
 http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
  * Copyright (c) 1988-1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
@@ -99,11 +99,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 		1.0e256
 	};
 
-	int sign, expSign = FALSE;
+	int sign = FALSE;
+	int expSign = FALSE;
 	double fraction, dblExp, *d;
-	register const char *p;
-	register int c;
-	int neg = 1;
+	const char *p;
+	int expNeg = 1;
+	int fracNeg = 1;
 	int exp = 0;			/* Exponent read from "EX" field. */
 	int fracExp = 0;		/* Exponent that derives from the fractional
 							* part.  Under normal circumstatnces, it is
@@ -117,8 +118,6 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 	int mantSize;			/* Number of digits in mantissa. */
 	int decPt = -1;			/* Number of mantissa digits BEFORE decimal
 							* point. */
-	const char *pExp;		/* Temporarily holds location of exponent
-							* in string. */
 	JSUINT64 frac;
 	JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
 
@@ -131,15 +130,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 	{
 		sign = TRUE;
 		p ++;
-		neg = -1;	
+		fracNeg = -1;	
 		overflowLimit = (JSUINT64) LLONG_MIN;	
 	} 
 	else
 	{
 		if (*p == '+')
 			p ++;
-		sign = FALSE;
-
 	}
 	
 	frac = 0;
@@ -161,7 +158,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 
             if (frac > overflowLimit)
             {
-                return SetError(ds, -1, neg == -1 ? "Value is too small" : "Value is too big");
+                return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
             }
 			p ++;
 			break;
@@ -180,13 +177,13 @@ END_MANTISSA_LOOP:
 		if (*p == '-') 
 		{
 		    expSign = TRUE;
-		    p ++;
+			expNeg = -1;
+			p ++;
 		} 
 		else 
 		{
 		    if (*p == '+') 
 				p ++;
-		    expSign = FALSE;
 	    }
 
 		for (;;)
@@ -214,18 +211,18 @@ END_MANTISSA_LOOP:
 
 			if (frac >> 31)
 			{
-				return ds->dec->newLong( (JSINT64) frac * (JSINT64) neg);
+				return ds->dec->newLong( (JSINT64) frac * (JSINT64) fracNeg);
 			}
 			else
 			{
-				return ds->dec->newInt( (JSINT32) frac * (JSINT32) neg);
+				return ds->dec->newInt( (JSINT32) frac * (JSINT32) fracNeg);
 			}
 		}
 	}
 
 END_EXPONENT_LOOP:
 	
-	fraction = frac;
+	fraction = (double) frac;
 
 	if (decPt == -1)
 	{
@@ -234,16 +231,9 @@ END_EXPONENT_LOOP:
 
 	fracExp = decPt - mantSize;
 
-	if (expSign) 
-	{
-		exp = fracExp - exp;
-    }
-	else 
-	{
-		exp = fracExp + exp;
-    }
+	exp = fracExp + (exp * expNeg);
 
-    /*
+	/*
      * Generate a floating-point number that represents the exponent.
      * Do this by processing the exponent one bit at a time to combine
      * many powers of 2 of 10. Then combine the exponent with the
@@ -284,9 +274,8 @@ END_EXPONENT_LOOP:
 		fraction *= dblExp;
     }
 
-done:
 	ds->start = (char *) p;
-	return ds->dec->newDouble(fraction * (double) neg);
+	return ds->dec->newDouble(fraction * (double) fracNeg);
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 

@@ -107,12 +107,16 @@ class UltraJSONTests(TestCase):
 
 
     def test_encodeStringConversion(self):
-        input = "A string \\ / \b \f \n \r \t"
-        output = ujson.encode(input)
-        self.assertEquals(input, json.loads(output))
-        self.assertEquals(output, '"A string \\\\ \\/ \\b \\f \\n \\r \\t"')
-        self.assertEquals(input, ujson.decode(output))
-        pass
+        input = "A string \\ / \b \f \n \r \t </script> &"
+
+        def helper(ensure_ascii):
+            output = ujson.encode(input, ensure_ascii=ensure_ascii)
+            self.assertEquals(input, json.loads(output))
+            self.assertEquals(output, '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"')
+            self.assertEquals(input, ujson.decode(output))
+
+        helper(True)
+        helper(False)
 
     def test_decodeUnicodeConversion(self):
         pass

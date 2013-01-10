@@ -107,12 +107,27 @@ class UltraJSONTests(TestCase):
 
 
     def test_encodeStringConversion(self):
-        input = "A string \\ / \b \f \n \r \t"
-        output = ujson.encode(input)
-        self.assertEquals(input, json.loads(output))
-        self.assertEquals(output, '"A string \\\\ \\/ \\b \\f \\n \\r \\t"')
-        self.assertEquals(input, ujson.decode(output))
-        pass
+        input = "A string \\ / \b \f \n \r \t </script> &"
+        not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
+        html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"'
+
+        def helper(expected_output, **encode_kwargs):
+            output = ujson.encode(input, **encode_kwargs)
+            self.assertEquals(input, json.loads(output))
+            self.assertEquals(output, expected_output)
+            self.assertEquals(input, ujson.decode(output))
+
+        # Default behavior assumes encode_html_chars=False.
+        helper(not_html_encoded, ensure_ascii=True)
+        helper(not_html_encoded, ensure_ascii=False)
+
+        # Make sure explicit encode_html_chars=False works.
+        helper(not_html_encoded, ensure_ascii=True, encode_html_chars=False)
+        helper(not_html_encoded, ensure_ascii=False, encode_html_chars=False)
+
+        # Make sure explicit encode_html_chars=True does the encoding.
+        helper(html_encoded, ensure_ascii=True, encode_html_chars=True)
+        helper(html_encoded, ensure_ascii=False, encode_html_chars=True)
 
     def test_decodeUnicodeConversion(self):
         pass

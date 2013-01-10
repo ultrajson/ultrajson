@@ -61,8 +61,8 @@ static const JSUINT8 g_asciiOutputTable[256] =
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30, 
 /* 0x10 */ 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-/* 0x20 */ 1, 1, 20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 24, 
-/* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+/* 0x20 */ 1, 1, 20, 1, 1, 1, 29, 1, 1, 1, 1, 1, 1, 1, 1, 24,
+/* 0x30 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 29, 1, 29, 1,
 /* 0x40 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
 /* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 22, 1, 1, 1,
 /* 0x60 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
@@ -164,6 +164,20 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
         case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
         case '\r': (*of++) = '\\'; (*of++) = 'r'; break;
         case '\t': (*of++) = '\\'; (*of++) = 't'; break;
+
+        case 0x26: // '/'
+        case 0x3c: // '<'
+        case 0x3e: // '>'
+            if (enc->encodeHTMLChars)
+            {
+                // Fall through to \u00XX case below.
+            }
+            else
+            {
+                // Same as default case below.
+                (*of++) = (*io);
+                break;
+            }
 
         case 0x01:
         case 0x02:
@@ -347,6 +361,18 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
                 enc->offset += (of - enc->offset);
                 SetError (obj, enc, "Unsupported UTF-8 sequence length when encoding string");
                 return FALSE;
+
+            case 29:
+                if (enc->encodeHTMLChars)
+                {
+                    // Fall through to \u00XX case 30 below.
+                }
+                else
+                {
+                    // Same as case 1 above.
+                    *(of++) = (*io++);
+                    continue;
+                }
 
             case 30:
                 // \uXXXX encode

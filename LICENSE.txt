@@ -1,4 +1,4 @@
-Copyright (c) 2011-2012, ESN Social Software AB and Jonas Tarnstrom
+Copyright (c) 2011-2013, ESN Social Software AB and Jonas Tarnstrom
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Portions of code from:
-MODP_ASCII - Ascii transformations (upper/lower, etc)
+
+Portions of code from MODP_ASCII - Ascii transformations (upper/lower, etc)
 http://code.google.com/p/stringencoders/
 Copyright (c) 2007  Nick Galbreath -- nickg [at] modp [dot] com. All rights reserved.
+
+Numeric decoder derived from from TCL library
+http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
+ * Copyright (c) 1988-1993 The Regents of the University of California.
+ * Copyright (c) 1994 Sun Microsystems, Inc.

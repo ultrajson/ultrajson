@@ -31,6 +31,11 @@ json_unicode = (json.dumps if sys.version_info[0] >= 3
 
 class UltraJSONTests(TestCase):
 
+    def test_encodeDecodeLongDecimal(self):
+        sut = {u'a': -528656961.4399388}
+        encoded = ujson.dumps(sut, double_precision=15)
+        ujson.decode(encoded)
+    
     def test_decimalDecodeTest(self):
         sut = {u'a': 4.56}
         encoded = ujson.encode(sut)
@@ -60,6 +65,7 @@ class UltraJSONTests(TestCase):
     def test_encodeDoubleNegConversion(self):
         input = -math.pi
         output = ujson.encode(input)
+        
         self.assertEquals(round(input, 5), round(json.loads(output), 5))
         self.assertEquals(round(input, 5), round(ujson.decode(output), 5))
 
@@ -90,10 +96,6 @@ class UltraJSONTests(TestCase):
         output = ujson.encode(input, double_precision = 3)
         self.assertEquals(round(input, 3), json.loads(output))
         self.assertEquals(round(input, 3), ujson.decode(output))
-
-        output = ujson.encode(input)
-        self.assertEquals(round(input, 5), json.loads(output))
-        self.assertEquals(round(input, 5), ujson.decode(output))
 
     def test_invalidDoublePrecision(self):
         input = 30.12345678901234567890
@@ -201,10 +203,10 @@ class UltraJSONTests(TestCase):
     def test_encodeLongNegConversion(self):
         input = -9223372036854775808
         output = ujson.encode(input)
-
+ 
         outputjson = json.loads(output)
         outputujson = ujson.decode(output)
-
+        
         self.assertEquals(input, json.loads(output))
         self.assertEquals(output, json.dumps(input))
         self.assertEquals(input, ujson.decode(output))
@@ -817,6 +819,15 @@ class UltraJSONTests(TestCase):
         else:
             assert False, "expected ValueError"
 
+    def test_decodeArrayFaultyUnicode(self):
+        try:
+            ujson.loads('[18446098363113800555]')
+        except ValueError:
+            pass
+        else:
+            assert False, "expected ValueError"
+            
+            
     def test_decodeFloatingPointAdditionalTests(self):
         self.assertEquals(-1.1234567893, ujson.loads("-1.1234567893"))
         self.assertEquals(-1.234567893, ujson.loads("-1.234567893"))

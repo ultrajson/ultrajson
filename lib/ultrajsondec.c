@@ -86,7 +86,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 									* produce underflow or overflow, so there's
 									* no need to worry about additional digits.
 									*/
-	static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
+	static const double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
 		10.,			/* is 10^2^i.  Used to convert decimal */
 		100.,			/* exponents into floating-point numbers. */
 		1.0e4,
@@ -98,9 +98,33 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 		1.0e256
 	};
 
+	static const JSINT64 decPowerOf10[] = {
+		1LL,
+		10LL,
+		100LL,
+		1000LL,
+		10000LL,
+		100000LL,
+		1000000LL,
+		10000000LL,
+		100000000LL,
+		1000000000LL,
+		10000000000LL,
+		100000000000LL,
+		1000000000000LL,
+		10000000000000LL,
+		100000000000000LL,
+		1000000000000000LL,
+		10000000000000000LL,
+		100000000000000000LL,
+		1000000000000000000LL,
+		10000000000000000000LL,
+	};
+
 	int sign = FALSE;
 	int expSign = FALSE;
-	double fraction, dblExp, *d;
+	double fraction, dblExp;
+	const double *d;
 	const char *p;
 	int expNeg = 1;
 	int fracNeg = 1;
@@ -117,8 +141,9 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 	int mantSize;			/* Number of digits in mantissa. */
 	int decPt = -1;			/* Number of mantissa digits BEFORE decimal
 							* point. */
-	JSUINT64 frac;
-	JSUINT64 overflowLimit = (JSUINT64) LLONG_MAX;
+	JSUINT32 frac1;
+	JSUINT64 frac2;
+	JSUINT64 overflowLimit = 6854775807;
 
 	/*
 	* Strip off leading blanks and check for a sign.
@@ -130,7 +155,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 		sign = TRUE;
 		p ++;
 		fracNeg = -1;	
-		overflowLimit = (JSUINT64) LLONG_MIN;	
+		overflowLimit = 6854775808;	
 	} 
 	else
 	{
@@ -138,8 +163,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 			p ++;
 	}
 
-	frac = 0;
-	for (mantSize = 0; ; mantSize ++)
+	//=========================================================================
+	// Fraction part 1 
+	//=========================================================================
+	frac1 = 0;
+	frac2 = 0;
+	mantSize = 0;
+	while (mantSize < 9)
 	{
 		int chr = (int)(unsigned char) *p;
 
@@ -148,25 +178,66 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 		case '.':
 			//FIXME: Test for more than one decimal point here
 			decPt = mantSize;
-			mantSize --;
 			p ++;
 			continue;
 
 		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-			frac = 10ULL*frac + (JSUINT64) (chr - '0');
-
-			if (frac > overflowLimit)
-			{
-				return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
-			}
+			frac1 = 10U *frac1 + (chr - '0');
 			p ++;
+			mantSize ++;
 			break;
 
-		default:
-			goto END_MANTISSA_LOOP;
-			break;
+		default: goto END_MANTISSA_LOOP; break;
 		}
 	}
+
+
+	//=========================================================================
+	// Fraction part 2 
+	//=========================================================================
+	frac2 = 0;
+	while (mantSize < 19)
+	{
+		int chr = (int)(unsigned char) *p;
+
+		switch (chr)
+		{
+		case '.':
+			//FIXME: Test for more than one decimal point here
+			decPt = mantSize;
+			p ++;
+			continue;
+
+		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+			frac2 = 10ULL * frac2 + (chr - '0');
+			p ++;
+			mantSize ++;
+			break;
+
+		default: goto END_MANTISSA_LOOP; break;
+		}
+	}
+
+	//=========================================================================
+	// Overlong fractions end up here, so we need to scan until the end of the 
+	// value
+	//=========================================================================
+
+	for (;;)
+	{
+		int chr = (int)(unsigned char) *p;
+
+		switch (chr)
+		{
+		case '.': case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+			p ++;
+			mantSize ++;
+			break;
+
+		default: goto END_MANTISSA_LOOP; break; 
+		}
+	}
+
 
 END_MANTISSA_LOOP:
 
@@ -208,20 +279,52 @@ END_MANTISSA_LOOP:
 		{
 			ds->start = (char *) p;
 
-			if (frac >> 31)
+			if (mantSize < 10)
 			{
-				return ds->dec->newLong( (JSINT64) frac * (JSINT64) fracNeg);
+				// This number is 9 digits and will definitly fit within a 32 bit value
+				//"685477580"
+				return ds->dec->newInt( (JSINT32) frac1 * (JSINT32) fracNeg);
 			}
 			else
+			if (mantSize < 19)
 			{
-				return ds->dec->newInt( (JSINT32) frac * (JSINT32) fracNeg);
+				// This number is 18 digits and will definitly fit within a 64 bit value
+				//"922337203685477580"
+				return ds->dec->newLong( ( ( (JSINT64) frac1 * decPowerOf10[mantSize - 9]) + (JSINT64) frac2) * (JSINT64) fracNeg);
 			}
+			else
+			if (mantSize > 19)
+			{
+				//This value is 20 digits and will not fit within a 64 bit value
+				//"92233720368547758089"
+				return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
+			}
+			
+			// 19 is the worst kind, try to figure out if this value will fit within a signed 64-bit value
+
+			if (frac1 > 922337203)
+			{
+				return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
+			}
+			else
+			if (frac1 == 922337203)
+			{
+				if (frac2 > overflowLimit)
+				{
+					return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
+				}
+			}
+			
+			return ds->dec->newLong( ( ( (JSINT64) frac1 * decPowerOf10[mantSize - 9]) + (JSINT64) frac2) * (JSINT64) fracNeg);
 		}
 	}
 
 END_EXPONENT_LOOP:
 
-	fraction = (double) frac;
+	if (mantSize > 9)
+		fraction = (frac1 * (double) decPowerOf10[mantSize - 9]) + frac2;
+	else
+		fraction = frac1;
 
 	if (decPt == -1)
 	{
@@ -231,6 +334,7 @@ END_EXPONENT_LOOP:
 	fracExp = decPt - mantSize;
 
 	exp = fracExp + (exp * expNeg);
+
 
 	/*
 	* Generate a floating-point number that represents the exponent.
@@ -644,28 +748,24 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 	{
 		SkipWhitespace(ds);
 
+		if ((*ds->start) == ']')
+		{
+			if (len == 0)
+			{
+				ds->start ++;
+				return newObj;
+			}
+
+			ds->dec->releaseObject(newObj);
+			return SetError(ds, -1, "Unexpected character found when decoding array value (1)");
+		}
+
 		itemValue = decode_any(ds);
 
 		if (itemValue == NULL)
 		{
-			switch (*(ds->start++))
-			{
-			case ']':
-				if (len > 0)
-				{
-					ds->dec->releaseObject(newObj);
-					return SetError(ds, -1, "Unexpected trailing comma in array");
-				}
-				// We end up here when decoding empty lists "[]"
-				ClearError(ds);
-				return newObj;
-
-			default:
-				ds->dec->releaseObject(newObj);
-				if (!ds->dec->errorStr)
-					SetError(ds, -1, "Unexpected character found when decoding array value (1)");
-				return NULL;
-			}
+			ds->dec->releaseObject(newObj);
+			return NULL;
 		}
 
 		ds->dec->arrayAddItem (newObj, itemValue);

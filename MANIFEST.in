@@ -1,8 +1,8 @@
 include README.rst
 include MANIFEST.in
 include setup.py
-include tests/*.py
-include tests/*.json
+include tests/tests.py
+include tests/sample.json
 include lib/*.c
 include lib/*.h
 include python/*.c

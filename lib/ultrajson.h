@@ -94,20 +94,20 @@ typedef __int64 JSLONG;
 
 #else
 
-#include <sys/types.h>
+#include <stdint.h>
 typedef int64_t JSINT64;
-typedef u_int64_t JSUINT64;
+typedef uint64_t JSUINT64;
 
 typedef int32_t JSINT32;
-typedef u_int32_t JSUINT32;
+typedef uint32_t JSUINT32;
 
 #define FASTCALL_MSVC 
 #define FASTCALL_ATTR __attribute__((fastcall))
 #define INLINE_PREFIX inline
 
-typedef u_int8_t JSUINT8;
-typedef u_int16_t JSUTF16;
-typedef u_int32_t JSUTF32;
+typedef uint8_t JSUINT8;
+typedef uint16_t JSUTF16;
+typedef uint32_t JSUTF32;
 
 typedef int64_t JSLONG;
 

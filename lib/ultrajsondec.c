@@ -123,7 +123,9 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 
 	int sign = FALSE;
 	int expSign = FALSE;
-	double fraction, dblExp;
+	JSINT64 fraction;
+	double dblFrc;
+	double dblExp;
 	const double *d;
 	const char *p;
 	int expNeg = 1;
@@ -322,7 +324,7 @@ END_MANTISSA_LOOP:
 END_EXPONENT_LOOP:
 
 	if (mantSize > 9)
-		fraction = (frac1 * (double) decPowerOf10[mantSize - 9]) + frac2;
+		fraction = frac1 * decPowerOf10[mantSize - 9] + frac2;
 	else
 		fraction = frac1;
 
@@ -368,17 +370,22 @@ END_EXPONENT_LOOP:
 		}
 	}
 
+	dblFrc = fraction;
+
 	if (expSign) 
 	{
-		fraction /= dblExp;
+		dblFrc /= dblExp;
 	} 
 	else 
 	{
-		fraction *= dblExp;
+		dblFrc *= dblExp;
 	}
 
+	dblFrc *= fracNeg;
+
+
 	ds->start = (char *) p;
-	return ds->dec->newDouble(fraction * (double) fracNeg);
+	return ds->dec->newDouble(dblFrc);
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 

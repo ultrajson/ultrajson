@@ -947,11 +947,12 @@ input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
 """
-#if __name__ == "__main__":
-#    unittest.main()
+if __name__ == "__main__":
+    unittest.main()
 
 
 # Use this to look for memory leaks
+"""
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -963,5 +964,5 @@ if __name__ == '__main__':
             pass
         heap = hp.heapu()
         print heap
-     
+""" 
 

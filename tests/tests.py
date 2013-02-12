@@ -32,14 +32,24 @@ json_unicode = (json.dumps if sys.version_info[0] >= 3
 
 class UltraJSONTests(TestCase):
 
-    def test_random_range(self):
-        sut = {u'a': -4342969734183514.0}
+    def test_doubleLongIssue(self):
+        sut = {u'a': -4342969734183514}
         encoded = json.dumps(sut)
         decoded = json.loads(encoded)
         self.assertEqual(sut, decoded)
         encoded = ujson.encode(sut, double_precision=100)
         decoded = ujson.decode(encoded)
         self.assertEqual(sut, decoded)
+        
+    def test_doubleLongDecimalIssue(self):
+        sut = {u'a': -12345678901234.56789012}
+        encoded = json.dumps(sut)
+        decoded = json.loads(encoded)
+        self.assertEqual(sut, decoded)
+        encoded = ujson.encode(sut, double_precision=100)
+        decoded = ujson.decode(encoded)
+        self.assertEqual(sut, decoded)
+
 
     def test_encodeDecodeLongDecimal(self):
         sut = {u'a': -528656961.4399388}
@@ -50,6 +60,12 @@ class UltraJSONTests(TestCase):
         sut = {u'a': 4.56}
         encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
+        self.assertNotEqual(sut, decoded)
+
+    def test_decimalDecodeTestPrecise(self):
+        sut = {u'a': 4.56}
+        encoded = ujson.encode(sut)
+        decoded = ujson.decode(encoded, precise_float=True)
         self.assertEqual(sut, decoded)
         
     def test_encodeDictWithUnicodeKeys(self):
@@ -906,7 +922,6 @@ if __name__ == "__main__":
 
 
 # Use this to look for memory leaks
-"""
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -918,4 +933,5 @@ if __name__ == '__main__':
             pass
         heap = hp.heapu()
         print heap
-"""     
+     
+

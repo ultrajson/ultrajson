@@ -43,22 +43,22 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs);
 void initObjToJSON(void);
 
 /* JSONToObj */
-PyObject* JSONToObj(PyObject* self, PyObject *arg);
+PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs);
 
 /* objToJSONFile */
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 
 /* JSONFileToObj */
-PyObject* JSONFileToObj(PyObject* self, PyObject *file);
+PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs);
 
 
 static PyMethodDef ujsonMethods[] = {
     {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursivly into JSON. Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision with doubles"},
-    {"decode", (PyCFunction) JSONToObj, METH_O, "Converts JSON as string to dict object structure"},
+    {"decode", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
     {"dumps", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursivly into JSON. Use ensure_ascii=false to output UTF-8"},
-    {"loads", (PyCFunction) JSONToObj, METH_O,  "Converts JSON as string to dict object structure"},
+    {"loads", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
     {"dump", (PyCFunction) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. Use ensure_ascii=false to output UTF-8"},
-    {"load", (PyCFunction) JSONFileToObj, METH_O, "Converts JSON as file to dict object structure"},
+    {"load", (PyCFunction) JSONFileToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

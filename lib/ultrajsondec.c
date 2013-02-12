@@ -41,6 +41,8 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <string.h>
 #include <limits.h>
 #include <wchar.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -63,8 +65,6 @@ struct DecoderState
 
 JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
-#define RETURN_JSOBJ_NULLCHECK(_expr) return(_expr);
-
 
 static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 {
@@ -79,313 +79,238 @@ static void ClearError( struct DecoderState *ds)
 	ds->dec->errorStr = NULL;
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+
+double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
 {
-	static int maxExponent = 511;	/* Largest possible base 10 exponent.  Any
-									* exponent larger than this will already
-									* produce underflow or overflow, so there's
-									* no need to worry about additional digits.
-									*/
-	static const double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
-		10.,			/* is 10^2^i.  Used to convert decimal */
-		100.,			/* exponents into floating-point numbers. */
-		1.0e4,
-		1.0e8,
-		1.0e16,
-		1.0e32,
-		1.0e64,
-		1.0e128,
-		1.0e256
-	};
+    static const double g_pow10[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001,0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001};
 
-	static const JSINT64 decPowerOf10[] = {
-		1LL,
-		10LL,
-		100LL,
-		1000LL,
-		10000LL,
-		100000LL,
-		1000000LL,
-		10000000LL,
-		100000000LL,
-		1000000000LL,
-		10000000000LL,
-		100000000000LL,
-		1000000000000LL,
-		10000000000000LL,
-		100000000000000LL,
-		1000000000000000LL,
-		10000000000000000LL,
-		100000000000000000LL,
-		1000000000000000000LL,
-		10000000000000000000LL,
-	};
+    return (intValue + (frcValue * g_pow10[frcDecimalCount])) * intNeg;
+}
 
-	int sign = FALSE;
-	int expSign = FALSE;
-	JSINT64 fraction;
-	double dblFrc;
-	double dblExp;
-	const double *d;
-	const char *p;
-	int expNeg = 1;
-	int fracNeg = 1;
-	int exp = 0;			/* Exponent read from "EX" field. */
-	int fracExp = 0;		/* Exponent that derives from the fractional
-							* part.  Under normal circumstatnces, it is
-							* the negative of the number of digits in F.
-							* However, if I is very long, the last digits
-							* of I get dropped (otherwise a long I with a
-							* large negative exponent could cause an
-							* unnecessary overflow on I alone).  In this
-							* case, fracExp is incremented one for each
-							* dropped digit. */
-	int mantSize;			/* Number of digits in mantissa. */
-	int decPt = -1;			/* Number of mantissa digits BEFORE decimal
-							* point. */
-	JSUINT32 frac1;
-	JSUINT64 frac2;
-	JSUINT64 overflowLimit = 6854775807;
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
+{
+	char *end;
+	double value;
+	errno = 0;
+	
+	value = strtod(ds->start, &end);
 
-	/*
-	* Strip off leading blanks and check for a sign.
-	*/
-
-	p = ds->start;
-	if (*p == '-') 
+	if (errno == ERANGE)
 	{
-		sign = TRUE;
-		p ++;
-		fracNeg = -1;	
-		overflowLimit = 6854775808;	
-	} 
-	else
-	{
-		if (*p == '+')
-			p ++;
+		return SetError(ds, -1, "Range error when decoding numeric as double");
 	}
 
-	//=========================================================================
-	// Fraction part 1 
-	//=========================================================================
-	frac1 = 0;
-	frac2 = 0;
-	mantSize = 0;
-	while (mantSize < 9)
-	{
-		int chr = (int)(unsigned char) *p;
+	ds->start = end;
+	return ds->dec->newDouble(value);
+}
 
-		switch (chr)
-		{
-		case '.':
-			//FIXME: Test for more than one decimal point here
-			decPt = mantSize;
-			p ++;
-			continue;
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
+{
+    int intNeg = 1;
+	int mantSize = 0;
+    JSUINT64 intValue;
+    int chr;
+    int decimalCount = 0;
+    double frcValue = 0.0;
+	double expNeg;
+	double expValue;
+    char *offset = ds->start;
 
-		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-			frac1 = 10U *frac1 + (chr - '0');
-			p ++;
+	JSUINT64 overflowLimit = LLONG_MAX;
+
+    if (*(offset) == '-')
+    {
+        offset ++;
+        intNeg = -1;
+		overflowLimit = LLONG_MIN;
+    }
+
+    // Scan integer part
+    intValue = 0;
+
+    while (1)
+    {
+        chr = (int) (unsigned char) *(offset);
+
+        switch (chr)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            //FIXME: Check for arithemtic overflow here
+            //PERF: Don't do 64-bit arithmetic here unless we know we have to
+            intValue = intValue * 10ULL + (JSLONG) (chr - 48);
+
+			if (intValue > overflowLimit)
+			{
+				return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big" : "Value is too small");
+			}
+
+            offset ++;
 			mantSize ++;
-			break;
+            break;
 
-		default: goto END_MANTISSA_LOOP; break;
-		}
+        case '.':
+            offset ++;
+            goto DECODE_FRACTION;
+            break;
+
+        case 'e':
+        case 'E':
+            offset ++;
+            goto DECODE_EXPONENT;
+            break;
+
+        default:
+            goto BREAK_INT_LOOP;
+            break;
+        }
+    }
+
+BREAK_INT_LOOP:
+
+    ds->lastType = JT_INT;
+    ds->start = offset;
+
+    if (intValue < 0)
+    {
+        intNeg = 1;
+    }
+
+    if ( (intValue >> 31))
+    {   
+        return ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg));
+    }
+    else
+    {
+        return ds->dec->newInt( (JSINT32) (intValue * intNeg));
+    }
+	
+DECODE_FRACTION:
+
+	if (ds->dec->preciseFloat)
+	{
+		return decodePreciseFloat(ds);
 	}
 
+    // Scan fraction part
+    frcValue = 0.0;
+    for (;;)
+    {
+        chr = (int) (unsigned char) *(offset);
 
-	//=========================================================================
-	// Fraction part 2 
-	//=========================================================================
-	frac2 = 0;
-	while (mantSize < 19)
+        switch (chr)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            if (decimalCount < JSON_DOUBLE_MAX_DECIMALS)
+            {
+                frcValue = frcValue * 10.0 + (double) (chr - 48);
+                decimalCount ++;
+            }
+            offset ++;
+            break;
+
+        case 'e':
+        case 'E':
+            offset ++;
+            goto DECODE_EXPONENT;
+            break;
+
+        default:
+            goto BREAK_FRC_LOOP;
+        }
+    }
+
+BREAK_FRC_LOOP:
+
+    if (intValue < 0)
+    {
+        intNeg = 1;
+    }
+
+    //FIXME: Check for arithemtic overflow here
+    ds->lastType = JT_DOUBLE;
+    ds->start = offset;
+    return ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
+
+DECODE_EXPONENT:
+	if (ds->dec->preciseFloat)
 	{
-		int chr = (int)(unsigned char) *p;
-
-		switch (chr)
-		{
-		case '.':
-			//FIXME: Test for more than one decimal point here
-			decPt = mantSize;
-			p ++;
-			continue;
-
-		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-			frac2 = 10ULL * frac2 + (chr - '0');
-			p ++;
-			mantSize ++;
-			break;
-
-		default: goto END_MANTISSA_LOOP; break;
-		}
+		return decodePreciseFloat(ds);
 	}
+	
+	expNeg = 1.0;
 
-	//=========================================================================
-	// Overlong fractions end up here, so we need to scan until the end of the 
-	// value
-	//=========================================================================
+    if (*(offset) == '-')
+    {
+        expNeg = -1.0;
+        offset ++;
+    }
+    else
+    if (*(offset) == '+')
+    {
+        expNeg = +1.0;
+        offset ++;
+    }
 
-	for (;;)
-	{
-		int chr = (int)(unsigned char) *p;
+    expValue = 0.0;
 
-		switch (chr)
-		{
-		case '.': case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-			p ++;
-			mantSize ++;
-			break;
+    for (;;)
+    {
+        chr = (int) (unsigned char) *(offset);
 
-		default: goto END_MANTISSA_LOOP; break; 
-		}
-	}
+        switch (chr)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            expValue = expValue * 10.0 + (double) (chr - 48);
+            offset ++;
+            break;
 
+        default:
+            goto BREAK_EXP_LOOP;
 
-END_MANTISSA_LOOP:
+        }
+    }
 
-	if ((*p == 'E') || (*p == 'e'))
-	{
-		p ++;
-		if (*p == '-') 
-		{
-			expSign = TRUE;
-			expNeg = -1;
-			p ++;
-		} 
-		else 
-		{
-			if (*p == '+') 
-				p ++;
-		}
+BREAK_EXP_LOOP:
 
-		for (;;)
-		{
-			int chr = (int)(unsigned char) *p;
-
-			switch (chr)
-			{
-			case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-				exp = 10 * exp + (chr - '0');
-				p ++;
-				break;
-
-			default:
-				goto END_EXPONENT_LOOP;
-				break;
-			}
-		}
-	}
-	else
-	{
-		if (decPt == -1) 
-		{
-			ds->start = (char *) p;
-
-			if (mantSize < 10)
-			{
-				// This number is 9 digits and will definitly fit within a 32 bit value
-				//"685477580"
-				return ds->dec->newInt( (JSINT32) frac1 * (JSINT32) fracNeg);
-			}
-			else
-			if (mantSize < 19)
-			{
-				// This number is 18 digits and will definitly fit within a 64 bit value
-				//"922337203685477580"
-				return ds->dec->newLong( ( ( (JSINT64) frac1 * decPowerOf10[mantSize - 9]) + (JSINT64) frac2) * (JSINT64) fracNeg);
-			}
-			else
-			if (mantSize > 19)
-			{
-				//This value is 20 digits and will not fit within a 64 bit value
-				//"92233720368547758089"
-				return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
-			}
-			
-			// 19 is the worst kind, try to figure out if this value will fit within a signed 64-bit value
-
-			if (frac1 > 922337203)
-			{
-				return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
-			}
-			else
-			if (frac1 == 922337203)
-			{
-				if (frac2 > overflowLimit)
-				{
-					return SetError(ds, -1, fracNeg == -1 ? "Value is too small" : "Value is too big");
-				}
-			}
-			
-			return ds->dec->newLong( ( ( (JSINT64) frac1 * decPowerOf10[mantSize - 9]) + (JSINT64) frac2) * (JSINT64) fracNeg);
-		}
-	}
-
-END_EXPONENT_LOOP:
-
-	if (mantSize > 9)
-		fraction = frac1 * decPowerOf10[mantSize - 9] + frac2;
-	else
-		fraction = frac1;
-
-	if (decPt == -1)
-	{
-		decPt = mantSize;
-	}
-
-	fracExp = decPt - mantSize;
-
-	exp = fracExp + (exp * expNeg);
-
-
-	/*
-	* Generate a floating-point number that represents the exponent.
-	* Do this by processing the exponent one bit at a time to combine
-	* many powers of 2 of 10. Then combine the exponent with the
-	* fraction.
-	*/
-
-	if (exp < 0) 
-	{
-		expSign = TRUE;
-		exp = -exp;
-	} 
-	else 
-	{
-		expSign = FALSE;
-	}
-	if (exp > maxExponent) 
-	{
-		exp = maxExponent;
-		//FIXME: errno = ERANGE;
-	}
-
-	dblExp = 1.0;
-
-	for (d = powersOf10; exp != 0; exp >>= 1, d += 1) 
-	{
-		if (exp & 01) 
-		{
-			dblExp *= *d;
-		}
-	}
-
-	dblFrc = fraction;
-
-	if (expSign) 
-	{
-		dblFrc /= dblExp;
-	} 
-	else 
-	{
-		dblFrc *= dblExp;
-	}
-
-	dblFrc *= fracNeg;
-
-
-	ds->start = (char *) p;
-	return ds->dec->newDouble(dblFrc);
+#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
+#else
+    if (intValue < 0)
+    {
+        intNeg = 1;
+    }
+#endif
+    
+    //FIXME: Check for arithemtic overflow here
+    ds->lastType = JT_DOUBLE;
+    ds->start = offset;
+    return ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds) 
@@ -402,7 +327,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 
 	ds->lastType = JT_TRUE;
 	ds->start = offset;
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newTrue());
+	return ds->dec->newTrue();
 
 SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'true'");
@@ -424,7 +349,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 
 	ds->lastType = JT_FALSE;
 	ds->start = offset;
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newFalse());
+	return ds->dec->newFalse();
 
 SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'false'");
@@ -446,7 +371,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 
 	ds->lastType = JT_NULL;
 	ds->start = offset;
-	RETURN_JSOBJ_NULLCHECK(ds->dec->newNull());
+	return ds->dec->newNull();
 
 SETERROR:
 	return SetError(ds, -1, "Unexpected character found when decoding 'null'");
@@ -559,7 +484,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 			ds->lastType = JT_UTF8;
 			inputOffset ++;
 			ds->start += ( (char *) inputOffset - (ds->start));
-			RETURN_JSOBJ_NULLCHECK(ds->dec->newString(ds->escStart, escOffset));
+			return ds->dec->newString(ds->escStart, escOffset);
 
 		case DS_UTFLENERROR:
 			return SetError (ds, -1, "Invalid UTF-8 sequence length when decoding 'string'");

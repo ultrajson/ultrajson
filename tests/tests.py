@@ -19,6 +19,7 @@ import calendar
 import StringIO
 import re
 import random
+import decimal
 from functools import partial
 
 PY3 = (sys.version_info[0] >= 3)
@@ -31,6 +32,35 @@ json_unicode = (json.dumps if sys.version_info[0] >= 3
                 else partial(json.dumps, encoding="utf-8"))
 
 class UltraJSONTests(TestCase):
+
+    def test_encodeDecimal(self):
+        sut = decimal.Decimal("1337.1337")
+        encoded = ujson.encode(sut, double_precision=100)
+        decoded = ujson.decode(encoded)
+        self.assertEquals(decoded, 1337.1337)
+
+    def test_encodeStringConversion(self):
+        input = "A string \\ / \b \f \n \r \t </script> &"
+        not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
+        html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"'
+
+        def helper(expected_output, **encode_kwargs):
+            output = ujson.encode(input, **encode_kwargs)
+            self.assertEquals(input, json.loads(output))
+            self.assertEquals(output, expected_output)
+            self.assertEquals(input, ujson.decode(output))
+
+        # Default behavior assumes encode_html_chars=False.
+        helper(not_html_encoded, ensure_ascii=True)
+        helper(not_html_encoded, ensure_ascii=False)
+
+        # Make sure explicit encode_html_chars=False works.
+        helper(not_html_encoded, ensure_ascii=True, encode_html_chars=False)
+        helper(not_html_encoded, ensure_ascii=False, encode_html_chars=False)
+
+        # Make sure explicit encode_html_chars=True does the encoding.
+        helper(html_encoded, ensure_ascii=True, encode_html_chars=True)
+        helper(html_encoded, ensure_ascii=False, encode_html_chars=True)
 
     def test_doubleLongIssue(self):
         sut = {u'a': -4342969734183514}
@@ -917,8 +947,8 @@ input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
 """
-if __name__ == "__main__":
-    unittest.main()
+#if __name__ == "__main__":
+#    unittest.main()
 
 
 # Use this to look for memory leaks

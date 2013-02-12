@@ -41,6 +41,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <ultrajson.h>
 
 #define EPOCH_ORD 719163
+static PyObject* type_decimal;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
@@ -86,6 +87,11 @@ struct PyDictIterState
 
 void initObjToJSON(void)
 {
+	PyObject* mod_decimal = PyImport_ImportModule("decimal");
+	type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
+	Py_INCREF(type_decimal);
+	Py_DECREF(mod_decimal);
+
     PyDateTime_IMPORT;
 }
 
@@ -112,7 +118,7 @@ static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
 static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
     PyObject *obj = (PyObject *) _obj;
-    *((double *) outValue) = PyFloat_AS_DOUBLE (obj);
+    *((double *) outValue) = PyFloat_AsDouble (obj);
     return NULL;
 }
 
@@ -596,7 +602,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
         return;
     }
     else
-    if (PyFloat_Check(obj))
+    if (PyFloat_Check(obj) || PyObject_IsInstance(obj, type_decimal))
     {
         PRINTMARK();
         pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
@@ -804,7 +810,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", NULL};
+    static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
 
     char buffer[65536];
     char *ret;
@@ -812,6 +818,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject *oinput = NULL;
     PyObject *oensureAscii = NULL;
     int idoublePrecision = 10; // default double precision setting
+	PyObject *oencodeHTMLChars = NULL;
 
     JSONObjectEncoder encoder = 
     {
@@ -833,12 +840,13 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
         -1, //recursionMax
         idoublePrecision,
         1, //forceAscii
+		0, //encodeHTMLChars
     };
 
 
     PRINTMARK();
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist, &oinput, &oensureAscii, &idoublePrecision))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
     {
         return NULL;
     }
@@ -847,6 +855,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
     {
         encoder.forceASCII = 0;
+    }
+
+    if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
+    {
+        encoder.encodeHTMLChars = 1;
     }
 
     encoder.doublePrecision = idoublePrecision;

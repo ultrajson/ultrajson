@@ -21,7 +21,7 @@ May be used as a drop in replacement for most other JSON parsers for Python::
 Encoder options
 ~~~~~~~~~~~~~    
 encode_html_chars
------------------
+=================
 Used to enable special encoding of "unsafe" HTML characters into safer Unicode sequences. Default is false
 
     >>> ujson.dumps("<script>John&Doe", encode_html_chars=True)

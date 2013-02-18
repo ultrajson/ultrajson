@@ -1,4 +1,4 @@
-UltraJSON
+ï»¿UltraJSON
 =============
 UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
 
@@ -31,9 +31,9 @@ ensure_ascii
 -------------
 Limits output to ASCII and escapes all extended characters above 127. Default is true. If your end format supports UTF-8 setting this optino to false is highly recommended to save space.
 
-    >>> ujson.dumps(u"åäö", ensure_ascii=True)
+    >>> ujson.dumps(u"Ã¥Ã¤Ã¶", ensure_ascii=True)
     '"\\u00e5\\u00e4\\u00f6"'
-    >>> ujson.dumps(u"åäö", ensure_ascii=False)
+    >>> ujson.dumps(u"Ã¥Ã¤Ã¶", ensure_ascii=False)
     '"\xc3\xa5\xc3\xa4\xc3\xb6"'
 
 double_precision

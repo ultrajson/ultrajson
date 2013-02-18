@@ -29,7 +29,7 @@ Used to enable special encoding of "unsafe" HTML characters into safer Unicode s
 
 ensure_ascii
 -------------
-Limits output to ASCII and escapes all extended characters above 127. Default is true. If your end format supports UTF-8 setting this optino to false is highly recommended to save space::
+Limits output to ASCII and escapes all extended characters above 127. Default is true. If your end format supports UTF-8 setting this option to false is highly recommended to save space::
 
     >>> ujson.dumps(u"\xe5\xe4\xf6")
     '"\\u00e5\\u00e4\\u00f6"'

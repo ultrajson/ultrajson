@@ -54,7 +54,7 @@ Decoders options
 ~~~~~~~~~~~~~~~~    
 precise_float
 -------------
-Set to enable usage of stdtod function when decoding string to double float values. Default is to use fast but less precise builtin funcions.
+Set to enable usage of higher precision (stdtod) function when decoding string to double values. Default is to use fast but less precise builtin functionality.
 
     >>> ujson.loads("4.56")
     4.5600000000000005

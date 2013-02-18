@@ -17,6 +17,36 @@ May be used as a drop in replacement for most other JSON parsers for Python::
     >>> ujson.loads("""[{"key": "value"}, 81, true]""")
     [{u'key': u'value'}, 81, True]
     
+~~~~~~~~~~~~~
+Encoder options
+~~~~~~~~~~~~~    
+encode_html_chars
+Used to enable special encoding of "unsafe" HTML characters into safer Unicode sequences. Default is false
+
+    >>> ujson.dumps("<script>John&Doe", encode_html_chars=True)
+    '"\\u003cscript\\u003eJohn\\u0026Doe"'
+
+ensure_ascii
+Limits output to ASCII and escapes all extended characters above 127. Default is true. If your end format supports UTF-8 setting this optino to false is highly recommended to save space.
+
+    >>> ujson.dumps(u"едц", ensure_ascii=True)
+    '"\\u00e5\\u00e4\\u00f6"'
+    >>> ujson.dumps(u"едц", ensure_ascii=False)
+    '"\xc3\xa5\xc3\xa4\xc3\xb6"'
+
+double_precision
+Controls how many decimals to encode for double or decimal values. Default is 9.
+
+    >>> ujson.dumps(math.pi)
+    '3.1415926536'
+    >>> ujson.dumps(math.pi, double_precision=1)
+    '3.1'
+    >>> ujson.dumps(math.pi, double_precision=0)
+    '3'
+    >>> ujson.dumps(math.pi, double_precision=4)
+    '3.1416'
+    
+    
 ============
 Benchmarks
 ============

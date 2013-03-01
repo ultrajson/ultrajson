@@ -61,6 +61,7 @@ struct DecoderState
 	int escHeap;
 	int lastType;
 	JSONObjectDecoder *dec;
+    JSOBJ keys;
 };
 
 JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
@@ -484,7 +485,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 			ds->lastType = JT_UTF8;
 			inputOffset ++;
 			ds->start += ( (char *) inputOffset - (ds->start));
-			return ds->dec->newString(ds->escStart, escOffset);
+			JSOBJ ns = ds->dec->newString(ds->escStart, escOffset);
+            JSOBJ is = ds->dec->objectLookupKey(ds->keys, ns);
+            if (is != NULL) return is;
+            ds->dec->objectAddKey(ds->keys, ns, ns);
+            return ns;
 
 		case DS_UTFLENERROR:
 			return SetError (ds, -1, "Invalid UTF-8 sequence length when decoding 'string'");
@@ -855,10 +860,13 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 	ds.dec = dec;
 	ds.dec->errorStr = NULL;
 	ds.dec->errorOffset = NULL;
-
+    ds.keys = dec->newObject();
 	ds.dec = dec;
 
 	ret = decode_any (&ds);
+
+    dec->objectClear(ds.keys);
+    dec->releaseObject(ds.keys);
 
 	if (ds.escHeap)
 	{

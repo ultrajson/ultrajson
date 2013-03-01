@@ -45,9 +45,25 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
     PyDict_SetItem (obj, name, value);
-    Py_DECREF( (PyObject *) name);
-    Py_DECREF( (PyObject *) value);
+    if (name != value) {
+        Py_DECREF( (PyObject *) name);
+        Py_DECREF( (PyObject *) value);
+    }
     return;
+}
+
+JSOBJ Object_objectLookupKey(JSOBJ obj, JSOBJ name)
+{
+    PyObject *val = PyDict_GetItem (obj, name);
+    if (val == NULL) return;
+    Py_INCREF( (PyObject *) val);
+    Py_DECREF( (PyObject *) name);
+    return val;
+}
+
+JSOBJ Object_objectClear(JSOBJ obj)
+{
+    PyDict_Clear (obj);
 }
 
 void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
@@ -119,6 +135,8 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     {
         Object_newString,
         Object_objectAddKey,
+        Object_objectLookupKey,
+        Object_objectClear,
         Object_arrayAddItem,
         Object_newTrue,
         Object_newFalse,

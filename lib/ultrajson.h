@@ -271,6 +271,8 @@ typedef struct __JSONObjectDecoder
 {
 	JSOBJ (*newString)(wchar_t *start, wchar_t *end);
 	void (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
+	JSOBJ (*objectLookupKey)(JSOBJ obj, JSOBJ name);
+	JSOBJ (*objectClear)(JSOBJ obj);
 	void (*arrayAddItem)(JSOBJ obj, JSOBJ value);
 	JSOBJ (*newTrue)(void);
 	JSOBJ (*newFalse)(void);

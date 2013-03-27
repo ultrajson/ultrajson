@@ -875,6 +875,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
 	if (PyErr_Occurred())
 	{
+		
+		if (ret != buffer) 
+		{
+			encoder.free (ret);
+		}
 		return NULL;
 	}
 

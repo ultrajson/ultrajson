@@ -82,7 +82,7 @@ struct PyDictIterState
 };
 
 
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)     
+//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__);
 #define PRINTMARK()         
 
 void initObjToJSON(void)
@@ -567,7 +567,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 			GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
 
 			exc = PyErr_Occurred();
-
+			
 			if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
 			{
 				PRINTMARK();
@@ -671,7 +671,12 @@ ISITERABLE:
 												return;
 											}
 											else
-												if (PyAnySet_Check(obj))
+												#if PY_MAJOR_VERSION >= 3
+                                                                                                if (PyAnySet_Check(obj) || PyGen_Check(obj) || PyIter_Check(obj))
+												#else
+												// PyIter_Check == 1 for old style classes
+                                                                                                if (PyAnySet_Check(obj) || PyGen_Check(obj) || (PyIter_Check(obj) && PyObject_HasAttrString(obj, "__iter__")))
+												#endif
 												{
 													PRINTMARK();
 													tc->type = JT_ARRAY;
@@ -870,6 +875,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
 	if (PyErr_Occurred())
 	{
+		
+		if (ret != buffer) 
+		{
+			encoder.free (ret);
+		}
 		return NULL;
 	}
 

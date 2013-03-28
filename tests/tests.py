@@ -923,7 +923,28 @@ class UltraJSONTests(TestCase):
         for v in dec:
             self.assertTrue(v in s)
         
-            
+
+    def test_encodeGenerator(self):
+	nums = list(xrange(10))
+        gen = (i for i in nums)
+        enc = ujson.encode(gen)
+	dec = ujson.decode(enc)
+	
+	for i in dec:
+            self.assertTrue(i in nums)
+
+    def test_encodeIterator(self):
+        from itertools import imap
+        ujson.encode(imap(lambda x: x, xrange(10000)))
+
+
+    def test_encodeGeneratorWithException(self):
+        def gen():
+            yield 1
+            raise Exception()
+        self.assertRaises(Exception, ujson.encode, gen())
+
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

@@ -2,6 +2,13 @@ UltraJSON
 =============
 UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
 
+*NEW!*
+For a more painless day to day C/C++ JSON decoder experience please checkout `ujson4c <http://github.com/esme/ujson4c/>`, based on UltraJSON.
+
+While you are here, please checkout the rest of the projects in the Ultra series:
+<http://github.com/esnme/ultramemcache>
+<http://github.com/esnme/ultramysql>
+
 To install it just run Pip as usual::
 
     $ pip install ujson

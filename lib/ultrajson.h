@@ -102,7 +102,13 @@ typedef int32_t JSINT32;
 typedef uint32_t JSUINT32;
 
 #define FASTCALL_MSVC
+
+#if !defined __x86_64__
 #define FASTCALL_ATTR __attribute__((fastcall))
+#else
+#define FASTCALL_ATTR
+#endif
+
 #define INLINE_PREFIX inline
 
 typedef uint8_t JSUINT8;
@@ -114,12 +120,16 @@ typedef int64_t JSLONG;
 #define EXPORTFUNCTION
 #endif
 
+#if !(defined(__LITTLE_ENDIAN__) || defined(__BIG_ENDIAN__))
+
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__
 #else
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define __BIG_ENDIAN__
+#endif
+
 #endif
 
 #endif

@@ -102,7 +102,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   return ds->dec->newDouble(value);
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
   int mantSize = 0;
@@ -183,11 +183,6 @@ BREAK_INT_LOOP:
   ds->lastType = JT_INT;
   ds->start = offset;
 
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-
   if ((intValue >> 31))
   {
     return ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg));
@@ -246,12 +241,6 @@ DECODE_FRACTION:
   }
 
 BREAK_FRC_LOOP:
-
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
@@ -308,15 +297,6 @@ DECODE_EXPONENT:
   }
 
 BREAK_EXP_LOOP:
-
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-#else
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-#endif
-
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;

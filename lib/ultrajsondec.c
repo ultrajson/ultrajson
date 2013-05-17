@@ -60,7 +60,7 @@ struct DecoderState
   wchar_t *escEnd;
   int escHeap;
   int lastType;
-  JSUTF16 objDepth;
+  JSUINT32 objDepth;
   JSONObjectDecoder *dec;
 };
 

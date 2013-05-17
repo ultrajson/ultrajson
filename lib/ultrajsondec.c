@@ -60,6 +60,7 @@ struct DecoderState
   wchar_t *escEnd;
   int escHeap;
   int lastType;
+  JSUINT32 objDepth;
   JSONObjectDecoder *dec;
 };
 
@@ -102,7 +103,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   return ds->dec->newDouble(value);
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
   int mantSize = 0;
@@ -183,11 +184,6 @@ BREAK_INT_LOOP:
   ds->lastType = JT_INT;
   ds->start = offset;
 
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-
   if ((intValue >> 31))
   {
     return ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg));
@@ -246,12 +242,6 @@ DECODE_FRACTION:
   }
 
 BREAK_FRC_LOOP:
-
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
@@ -308,15 +298,6 @@ DECODE_EXPONENT:
   }
 
 BREAK_EXP_LOOP:
-
-#ifdef JSON_DECODE_NUMERIC_AS_DOUBLE
-#else
-  if (intValue < 0)
-  {
-    intNeg = 1;
-  }
-#endif
-
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
@@ -685,8 +666,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 {
+  ds->objDepth++;
+  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
+    return SetError(ds, -1, "Reached object decoding depth limit");
+  }
+
   JSOBJ itemValue;
   JSOBJ newObj = ds->dec->newArray();
   int len = 0;
@@ -700,6 +686,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
     if ((*ds->start) == ']')
     {
+      ds->objDepth--;
       if (len == 0)
       {
         ds->start ++;
@@ -725,8 +712,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
     switch (*(ds->start++))
     {
     case ']':
+    {
+      ds->objDepth--;
       return newObj;
-
+    }
     case ',':
       break;
 
@@ -741,6 +730,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
+  ds->objDepth++;
+  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
+    return SetError(ds, -1, "Reached object decoding depth limit");
+  }
+
   JSOBJ itemName;
   JSOBJ itemValue;
   JSOBJ newObj = ds->dec->newObject();
@@ -753,6 +747,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if ((*ds->start) == '}')
     {
+      ds->objDepth--;
       ds->start ++;
       return newObj;
     }
@@ -800,8 +795,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     switch (*(ds->start++))
     {
       case '}':
+      {
+        ds->objDepth--;
         return newObj;
-
+      }
       case ',':
         break;
 
@@ -870,6 +867,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
   ds.dec = dec;
   ds.dec->errorStr = NULL;
   ds.dec->errorOffset = NULL;
+  ds.objDepth = 0;
 
   ds.dec = dec;
 

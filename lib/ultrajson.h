@@ -68,6 +68,11 @@ tree doesn't have cyclic references.
 #define JSON_MAX_RECURSION_DEPTH 1024
 #endif
 
+// Max recursion depth, default for decoder
+#ifndef JSON_MAX_OBJECT_DEPTH
+#define JSON_MAX_OBJECT_DEPTH 1024
+#endif
+
 /*
 Dictates and limits how much stack space for buffers UltraJSON will use before resorting to provided heap functions */
 #ifndef JSON_MAX_STACK_BUFFER_SIZE

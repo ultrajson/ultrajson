@@ -60,6 +60,7 @@ struct DecoderState
   wchar_t *escEnd;
   int escHeap;
   int lastType;
+  JSUTF16 objDepth;
   JSONObjectDecoder *dec;
 };
 
@@ -665,8 +666,13 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 {
+  ds->objDepth++;
+  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
+    return SetError(ds, -1, "Reached object decoding depth limit");
+  }
+
   JSOBJ itemValue;
   JSOBJ newObj = ds->dec->newArray();
   int len = 0;
@@ -680,6 +686,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
     if ((*ds->start) == ']')
     {
+      ds->objDepth--;
       if (len == 0)
       {
         ds->start ++;
@@ -705,8 +712,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
     switch (*(ds->start++))
     {
     case ']':
+    {
+      ds->objDepth--;
       return newObj;
-
+    }
     case ',':
       break;
 
@@ -721,6 +730,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array( struct DecoderState *ds)
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
+  ds->objDepth++;
+  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
+    return SetError(ds, -1, "Reached object decoding depth limit");
+  }
+
   JSOBJ itemName;
   JSOBJ itemValue;
   JSOBJ newObj = ds->dec->newObject();
@@ -733,6 +747,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if ((*ds->start) == '}')
     {
+      ds->objDepth--;
       ds->start ++;
       return newObj;
     }
@@ -780,8 +795,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     switch (*(ds->start++))
     {
       case '}':
+      {
+        ds->objDepth--;
         return newObj;
-
+      }
       case ',':
         break;
 
@@ -850,6 +867,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
   ds.dec = dec;
   ds.dec->errorStr = NULL;
   ds.dec->errorOffset = NULL;
+  ds.objDepth = 0;
 
   ds.dec = dec;
 

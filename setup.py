@@ -1,4 +1,7 @@
-from distutils.core import setup, Extension
+try:
+  from setuptools import setup, Extension
+except ImportError:
+  from distutils.core import setup, Extension
 import distutils.sysconfig
 import shutil
 import os.path

@@ -51,6 +51,20 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define FALSE 0
 #endif
 
+/*
+Worst cases being:
+
+Control characters (ASCII < 32)
+0x00 (1 byte) input => \u0000 output (6 bytes)
+1 * 6 => 6 (6 bytes required)
+
+or UTF-16 surrogate pairs
+4 bytes input in UTF-8 => \uXXXX\uYYYY (12 bytes).
+
+4 * 6 => 24 bytes (12 bytes required)
+*/
+#define RESERVE_STRING(_len) ((_len) * 6)
+
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000};
 static const char g_hexChars[] = "0123456789abcdef";
 static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
@@ -660,13 +674,9 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
   length of _name as encoded worst case +
   maxLength of double to string OR maxLength of JSLONG to string
-
-  Since input is assumed to be UTF-8 the worst character length is:
-
-  4 bytes (of UTF-8) => "\uXXXX\uXXXX" (12 bytes)
   */
 
-  Buffer_Reserve(enc, 256 + (((cbName / 4) + 1) * 12));
+  Buffer_Reserve(enc, 256 + RESERVE_STRING(cbName));
   if (enc->errorMsg)
   {
     return;
@@ -822,7 +832,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
   case JT_UTF8:
   {
       value = enc->getStringValue(obj, &tc, &szlen);
-      Buffer_Reserve(enc, ((szlen / 4) + 1) * 12);
+      Buffer_Reserve(enc, RESERVE_STRING(szlen));
       if (enc->errorMsg)
       {
         enc->endTypeContext(obj, &tc);

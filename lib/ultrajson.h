@@ -284,26 +284,25 @@ EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *
 
 typedef struct __JSONObjectDecoder
 {
-  JSOBJ (*newString)(wchar_t *start, wchar_t *end);
-  void (*objectAddKey)(JSOBJ obj, JSOBJ name, JSOBJ value);
-  void (*arrayAddItem)(JSOBJ obj, JSOBJ value);
-  JSOBJ (*newTrue)(void);
-  JSOBJ (*newFalse)(void);
-  JSOBJ (*newNull)(void);
-  JSOBJ (*newObject)(void);
-  JSOBJ (*newArray)(void);
-  JSOBJ (*newInt)(JSINT32 value);
-  JSOBJ (*newLong)(JSINT64 value);
-  JSOBJ (*newDouble)(double value);
-  void (*releaseObject)(JSOBJ obj);
+  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end);
+  void (*objectAddKey)(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
+  void (*arrayAddItem)(void *prv, JSOBJ obj, JSOBJ value);
+  JSOBJ (*newTrue)(void *prv);
+  JSOBJ (*newFalse)(void *prv);
+  JSOBJ (*newNull)(void *prv);
+  JSOBJ (*newObject)(void *prv);
+  JSOBJ (*newArray)(void *prv);
+  JSOBJ (*newInt)(void *prv, JSINT32 value);
+  JSOBJ (*newLong)(void *prv, JSINT64 value);
+  JSOBJ (*newDouble)(void *prv, double value);
+  void (*releaseObject)(void *prv, JSOBJ obj);
   JSPFN_MALLOC malloc;
   JSPFN_FREE free;
   JSPFN_REALLOC realloc;
-
   char *errorStr;
   char *errorOffset;
-
   int preciseFloat;
+  void *prv;
 } JSONObjectDecoder;
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);

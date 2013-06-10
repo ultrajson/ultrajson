@@ -802,21 +802,21 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
 	JSONObjectEncoder encoder =
 	{
-		Object_beginTypeContext,    //void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
-		Object_endTypeContext, //void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
-		Object_getStringValue, //const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
-		Object_getLongValue, //JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
-		Object_getIntValue, //JSLONG (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
-		Object_getDoubleValue, //double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
-		Object_iterBegin, //JSPFN_ITERBEGIN iterBegin;
-		Object_iterNext, //JSPFN_ITERNEXT iterNext;
-		Object_iterEnd, //JSPFN_ITEREND iterEnd;
-		Object_iterGetValue, //JSPFN_ITERGETVALUE iterGetValue;
-		Object_iterGetName, //JSPFN_ITERGETNAME iterGetName;
-		Object_releaseObject, //void (*releaseValue)(JSONTypeContext *ti);
-		PyObject_Malloc, //JSPFN_MALLOC malloc;
-		PyObject_Realloc, //JSPFN_REALLOC realloc;
-		PyObject_Free, //JSPFN_FREE free;
+		Object_beginTypeContext,
+		Object_endTypeContext,
+		Object_getStringValue,
+		Object_getLongValue,
+		Object_getIntValue,
+		Object_getDoubleValue,
+		Object_iterBegin,
+		Object_iterNext,
+		Object_iterEnd,
+		Object_iterGetValue,
+		Object_iterGetName,
+		Object_releaseObject,
+		PyObject_Malloc,
+		PyObject_Realloc,
+		PyObject_Free,
 		-1, //recursionMax
 		idoublePrecision,
 		1, //forceAscii

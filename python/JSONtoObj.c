@@ -42,7 +42,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
-void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
+void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
   PyDict_SetItem (obj, name, value);
   Py_DECREF( (PyObject *) name);
@@ -50,59 +50,59 @@ void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
   return;
 }
 
-void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
+void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 {
   PyList_Append(obj, value);
   Py_DECREF( (PyObject *) value);
   return;
 }
 
-JSOBJ Object_newString(wchar_t *start, wchar_t *end)
+JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
   return PyUnicode_FromWideChar (start, (end - start));
 }
 
-JSOBJ Object_newTrue(void)
+JSOBJ Object_newTrue(void *prv)
 {
   Py_RETURN_TRUE;
 }
 
-JSOBJ Object_newFalse(void)
+JSOBJ Object_newFalse(void *prv)
 {
   Py_RETURN_FALSE;
 }
 
-JSOBJ Object_newNull(void)
+JSOBJ Object_newNull(void *prv)
 {
   Py_RETURN_NONE;
 }
 
-JSOBJ Object_newObject(void)
+JSOBJ Object_newObject(void *prv)
 {
   return PyDict_New();
 }
 
-JSOBJ Object_newArray(void)
+JSOBJ Object_newArray(void *prv)
 {
   return PyList_New(0);
 }
 
-JSOBJ Object_newInteger(JSINT32 value)
+JSOBJ Object_newInteger(void *prv, JSINT32 value)
 {
   return PyInt_FromLong( (long) value);
 }
 
-JSOBJ Object_newLong(JSINT64 value)
+JSOBJ Object_newLong(void *prv, JSINT64 value)
 {
   return PyLong_FromLongLong (value);
 }
 
-JSOBJ Object_newDouble(double value)
+JSOBJ Object_newDouble(void *prv, double value)
 {
   return PyFloat_FromDouble(value);
 }
 
-static void Object_releaseObject(JSOBJ obj)
+static void Object_releaseObject(void *prv, JSOBJ obj)
 {
   Py_DECREF( ((PyObject *)obj));
 }
@@ -135,6 +135,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   };
 
   decoder.preciseFloat = 0;
+  decoder.prv = NULL;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", g_kwlist, &arg, &opreciseFloat))
   {

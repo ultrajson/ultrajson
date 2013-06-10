@@ -61,6 +61,7 @@ struct DecoderState
   int escHeap;
   int lastType;
   JSUINT32 objDepth;
+  void *prv;
   JSONObjectDecoder *dec;
 };
 
@@ -100,7 +101,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   }
 
   ds->start = end;
-  return ds->dec->newDouble(value);
+  return ds->dec->newDouble(ds->prv, value);
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
@@ -186,11 +187,11 @@ BREAK_INT_LOOP:
 
   if ((intValue >> 31))
   {
-    return ds->dec->newLong( (JSINT64) (intValue * (JSINT64) intNeg));
+    return ds->dec->newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
   }
   else
   {
-    return ds->dec->newInt( (JSINT32) (intValue * intNeg));
+    return ds->dec->newInt(ds->prv, (JSINT32) (intValue * intNeg));
   }
 
 DECODE_FRACTION:
@@ -245,7 +246,7 @@ BREAK_FRC_LOOP:
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
-  return ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
+  return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
 
 DECODE_EXPONENT:
   if (ds->dec->preciseFloat)
@@ -301,7 +302,7 @@ BREAK_EXP_LOOP:
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
-  return ds->dec->newDouble (createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
+  return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
@@ -318,7 +319,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 
   ds->lastType = JT_TRUE;
   ds->start = offset;
-  return ds->dec->newTrue();
+  return ds->dec->newTrue(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
@@ -340,7 +341,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 
   ds->lastType = JT_FALSE;
   ds->start = offset;
-  return ds->dec->newFalse();
+  return ds->dec->newFalse(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
@@ -360,7 +361,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 
   ds->lastType = JT_NULL;
   ds->start = offset;
-  return ds->dec->newNull();
+  return ds->dec->newNull(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
@@ -484,7 +485,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
         ds->lastType = JT_UTF8;
         inputOffset ++;
         ds->start += ( (char *) inputOffset - (ds->start));
-        return ds->dec->newString(ds->escStart, escOffset);
+        return ds->dec->newString(ds->prv, ds->escStart, escOffset);
       }
       case DS_UTFLENERROR:
       {
@@ -677,7 +678,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newArray();
+  newObj = ds->dec->newArray(ds->prv);
   len = 0;
 
   ds->lastType = JT_INVALID;
@@ -696,7 +697,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
         return newObj;
       }
 
-      ds->dec->releaseObject(newObj);
+      ds->dec->releaseObject(ds->prv, newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (1)");
     }
 
@@ -704,11 +705,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(newObj);
+      ds->dec->releaseObject(ds->prv, newObj);
       return NULL;
     }
 
-    ds->dec->arrayAddItem (newObj, itemValue);
+    ds->dec->arrayAddItem (ds->prv, newObj, itemValue);
 
     SkipWhitespace(ds);
 
@@ -723,7 +724,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
       break;
 
     default:
-      ds->dec->releaseObject(newObj);
+      ds->dec->releaseObject(ds->prv, newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
     }
 
@@ -742,7 +743,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newObject();
+  newObj = ds->dec->newObject(ds->prv);
 
   ds->start ++;
 
@@ -762,14 +763,14 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemName == NULL)
     {
-      ds->dec->releaseObject(newObj);
+      ds->dec->releaseObject(ds->prv, newObj);
       return NULL;
     }
 
     if (ds->lastType != JT_UTF8)
     {
-      ds->dec->releaseObject(newObj);
-      ds->dec->releaseObject(itemName);
+      ds->dec->releaseObject(ds->prv, newObj);
+      ds->dec->releaseObject(ds->prv, itemName);
       return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
     }
 
@@ -777,8 +778,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (*(ds->start++) != ':')
     {
-      ds->dec->releaseObject(newObj);
-      ds->dec->releaseObject(itemName);
+      ds->dec->releaseObject(ds->prv, newObj);
+      ds->dec->releaseObject(ds->prv, itemName);
       return SetError(ds, -1, "No ':' found when decoding object value");
     }
 
@@ -788,12 +789,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(newObj);
-      ds->dec->releaseObject(itemName);
+      ds->dec->releaseObject(ds->prv, newObj);
+      ds->dec->releaseObject(ds->prv, itemName);
       return NULL;
     }
 
-    ds->dec->objectAddKey (newObj, itemName, itemValue);
+    ds->dec->objectAddKey (ds->prv, newObj, itemName, itemValue);
 
     SkipWhitespace(ds);
 
@@ -808,7 +809,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
         break;
 
       default:
-        ds->dec->releaseObject(newObj);
+        ds->dec->releaseObject(ds->prv, newObj);
         return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
   }
@@ -869,6 +870,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
   ds.escStart = escBuffer;
   ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t));
   ds.escHeap = 0;
+  ds.prv = dec->prv;
   ds.dec = dec;
   ds.dec->errorStr = NULL;
   ds.dec->errorOffset = NULL;
@@ -887,7 +889,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 
   if (ds.start != ds.end && ret)
   {
-    dec->releaseObject(ret);
+    dec->releaseObject(ds.prv, ret);
     return SetError(&ds, -1, "Trailing data");
   }
 

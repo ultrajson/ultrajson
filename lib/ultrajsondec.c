@@ -423,6 +423,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
   int iSur = 0;
   int index;
   wchar_t *escOffset;
+  wchar_t *escStart;
   size_t escLen = (ds->escEnd - ds->escStart);
   JSUINT8 *inputOffset;
   JSUINT8 oct;
@@ -440,7 +441,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
-      wchar_t *escStart = (wchar_t *)ds->dec->realloc(ds->escStart, newSize * sizeof(wchar_t));
+      escStart = (wchar_t *)ds->dec->realloc(ds->escStart, newSize * sizeof(wchar_t));
       if (!escStart)
       {
         ds->dec->free(ds->escStart);
@@ -668,14 +669,16 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 {
+  JSOBJ itemValue;
+  JSOBJ newObj;
+  int len;
   ds->objDepth++;
   if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  JSOBJ itemValue;
-  JSOBJ newObj = ds->dec->newArray();
-  int len = 0;
+  newObj = ds->dec->newArray();
+  len = 0;
 
   ds->lastType = JT_INVALID;
   ds->start ++;
@@ -730,14 +733,16 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
+  JSOBJ itemName;
+  JSOBJ itemValue;
+  JSOBJ newObj;
+
   ds->objDepth++;
   if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  JSOBJ itemName;
-  JSOBJ itemValue;
-  JSOBJ newObj = ds->dec->newObject();
+  newObj = ds->dec->newObject();
 
   ds->start ++;
 

@@ -63,7 +63,7 @@ or UTF-16 surrogate pairs
 
 4 * 6 => 24 bytes (12 bytes required)
 */
-#define RESERVE_STRING(_len) ((_len) * 6)
+#define RESERVE_STRING(_len) (2 + ((_len) * 6))
 
 static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000};
 static const char g_hexChars[] = "0123456789abcdef";

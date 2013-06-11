@@ -62,6 +62,9 @@ or UTF-16 surrogate pairs
 4 bytes input in UTF-8 => \uXXXX\uYYYY (12 bytes).
 
 4 * 6 => 24 bytes (12 bytes required)
+
+The extra 2 bytes are for the quotes around the string
+
 */
 #define RESERVE_STRING(_len) (2 + ((_len) * 6))
 

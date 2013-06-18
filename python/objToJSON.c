@@ -550,390 +550,392 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
     return;
   }
   else
-    if (PyLong_Check(obj))
+  if (PyLong_Check(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyLongToINT64;
+    tc->type = JT_LONG;
+    GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+
+    exc = PyErr_Occurred();
+
+    if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
     {
       PRINTMARK();
-      pc->PyTypeToJSON = PyLongToINT64;
-      tc->type = JT_LONG;
-      GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
-
-      exc = PyErr_Occurred();
-
-      if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
-      {
-        PRINTMARK();
-        goto INVALID;
-      }
-
-      return;
+      goto INVALID;
     }
-    else
-      if (PyInt_Check(obj))
-      {
-        PRINTMARK();
+
+    return;
+  }
+  else
+  if (PyInt_Check(obj))
+  {
+    PRINTMARK();
 #ifdef _LP64
-        pc->PyTypeToJSON = PyIntToINT64; tc->type = JT_LONG;
+    pc->PyTypeToJSON = PyIntToINT64; tc->type = JT_LONG;
 #else
-        pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
+    pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
 #endif
-        return;
-      }
-      else
-        if (PyString_Check(obj))
-        {
-          PRINTMARK();
-          pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
-          return;
-        }
-        else
-          if (PyUnicode_Check(obj))
-          {
-            PRINTMARK();
-            pc->PyTypeToJSON = PyUnicodeToUTF8; tc->type = JT_UTF8;
-            return;
-          }
-          else
-            if (PyFloat_Check(obj) || PyObject_IsInstance(obj, type_decimal))
-            {
-              PRINTMARK();
-              pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
-              return;
-            }
-            else
-              if (PyDateTime_Check(obj))
-              {
-                PRINTMARK();
-                pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
-                return;
-              }
-              else
-                if (PyDate_Check(obj))
-                {
-                  PRINTMARK();
-                  pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
-                  return;
-                }
-                else
-                  if (obj == Py_None)
-                  {
-                    PRINTMARK();
-                    tc->type = JT_NULL;
-                    return;
-                  }
+    return;
+  }
+  else
+  if (PyString_Check(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
+    return;
+  }
+  else
+  if (PyUnicode_Check(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyUnicodeToUTF8; tc->type = JT_UTF8;
+    return;
+  }
+  else
+  if (PyFloat_Check(obj) || PyObject_IsInstance(obj, type_decimal))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
+    return;
+  }
+  else
+  if (PyDateTime_Check(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+    return;
+  }
+  else
+  if (PyDate_Check(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+    return;
+  }
+  else
+  if (obj == Py_None)
+  {
+    PRINTMARK();
+    tc->type = JT_NULL;
+    return;
+  }
 
 ISITERABLE:
-                  if (PyDict_Check(obj))
-                  {
-                    PRINTMARK();
-                    tc->type = JT_OBJECT;
-                    pc->iterBegin = Dict_iterBegin;
-                    pc->iterEnd = Dict_iterEnd;
-                    pc->iterNext = Dict_iterNext;
-                    pc->iterGetValue = Dict_iterGetValue;
-                    pc->iterGetName = Dict_iterGetName;
-                    pc->dictObj = obj;
-                    Py_INCREF(obj);
-                    return;
-                	}
-									else
-										if (PyList_Check(obj))
-										{
-											PRINTMARK();
-											tc->type = JT_ARRAY;
-											pc->iterBegin = List_iterBegin;
-											pc->iterEnd = List_iterEnd;
-											pc->iterNext = List_iterNext;
-											pc->iterGetValue = List_iterGetValue;
-											pc->iterGetName = List_iterGetName;
-											return;
-										}
-										else
-											if (PyTuple_Check(obj))
-											{
-												PRINTMARK();
-												tc->type = JT_ARRAY;
-												pc->iterBegin = Tuple_iterBegin;
-												pc->iterEnd = Tuple_iterEnd;
-												pc->iterNext = Tuple_iterNext;
-												pc->iterGetValue = Tuple_iterGetValue;
-												pc->iterGetName = Tuple_iterGetName;
-												return;
-											}
-											else
-												if (PyAnySet_Check(obj))
-												{
-													PRINTMARK();
-													tc->type = JT_ARRAY;
-													pc->iterBegin = Iter_iterBegin;
-													pc->iterEnd = Iter_iterEnd;
-													pc->iterNext = Iter_iterNext;
-													pc->iterGetValue = Iter_iterGetValue;
-													pc->iterGetName = Iter_iterGetName;
-													return;
-												}
+  if (PyDict_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_OBJECT;
+    pc->iterBegin = Dict_iterBegin;
+    pc->iterEnd = Dict_iterEnd;
+    pc->iterNext = Dict_iterNext;
+    pc->iterGetValue = Dict_iterGetValue;
+    pc->iterGetName = Dict_iterGetName;
+    pc->dictObj = obj;
+    Py_INCREF(obj);
+    return;
+  }
+  else
+  if (PyList_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterBegin = List_iterBegin;
+    pc->iterEnd = List_iterEnd;
+    pc->iterNext = List_iterNext;
+    pc->iterGetValue = List_iterGetValue;
+    pc->iterGetName = List_iterGetName;
+    return;
+  }
+  else
+  if (PyTuple_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterBegin = Tuple_iterBegin;
+    pc->iterEnd = Tuple_iterEnd;
+    pc->iterNext = Tuple_iterNext;
+    pc->iterGetValue = Tuple_iterGetValue;
+    pc->iterGetName = Tuple_iterGetName;
+    return;
+  }
+  else
+  if (PyAnySet_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterBegin = Iter_iterBegin;
+    pc->iterEnd = Iter_iterEnd;
+    pc->iterNext = Iter_iterNext;
+    pc->iterGetValue = Iter_iterGetValue;
+    pc->iterGetName = Iter_iterGetName;
+    return;
+  }
 
-												toDictFunc = PyObject_GetAttrString(obj, "toDict");
+  toDictFunc = PyObject_GetAttrString(obj, "toDict");
 
-												if (toDictFunc)
-												{
-													PyObject* tuple = PyTuple_New(0);
-													PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
-													Py_DECREF(tuple);
-													Py_DECREF(toDictFunc);
+  if (toDictFunc)
+  {
+    PyObject* tuple = PyTuple_New(0);
+    PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
+    Py_DECREF(tuple);
+    Py_DECREF(toDictFunc);
 
-													if (toDictResult == NULL)
-													{
-														PyErr_Clear();
-														tc->type = JT_NULL;
-														return;
-													}
+    if (toDictResult == NULL)
+    {
+      PyErr_Clear();
+      tc->type = JT_NULL;
+      return;
+    }
 
-													if (!PyDict_Check(toDictResult))
-													{
-														Py_DECREF(toDictResult);
-														tc->type = JT_NULL;
-														return;
-													}
+    if (!PyDict_Check(toDictResult))
+    {
+      Py_DECREF(toDictResult);
+      tc->type = JT_NULL;
+      return;
+    }
 
-													PRINTMARK();
-													tc->type = JT_OBJECT;
-													pc->iterBegin = Dict_iterBegin;
-													pc->iterEnd = Dict_iterEnd;
-													pc->iterNext = Dict_iterNext;
-													pc->iterGetValue = Dict_iterGetValue;
-													pc->iterGetName = Dict_iterGetName;
-													pc->dictObj = toDictResult;
-													return;
-												}
+    PRINTMARK();
+    tc->type = JT_OBJECT;
+    pc->iterBegin = Dict_iterBegin;
+    pc->iterEnd = Dict_iterEnd;
+    pc->iterNext = Dict_iterNext;
+    pc->iterGetValue = Dict_iterGetValue;
+    pc->iterGetName = Dict_iterGetName;
+    pc->dictObj = toDictResult;
+    return;
+  }
 
-												PyErr_Clear();
+  PyErr_Clear();
 
-												PRINTMARK();
-												tc->type = JT_OBJECT;
-												pc->iterBegin = Dir_iterBegin;
-												pc->iterEnd = Dir_iterEnd;
-												pc->iterNext = Dir_iterNext;
-												pc->iterGetValue = Dir_iterGetValue;
-												pc->iterGetName = Dir_iterGetName;
-												return;
+  PRINTMARK();
+  tc->type = JT_OBJECT;
+  pc->iterBegin = Dir_iterBegin;
+  pc->iterEnd = Dir_iterEnd;
+  pc->iterNext = Dir_iterNext;
+  pc->iterGetValue = Dir_iterGetValue;
+  pc->iterGetName = Dir_iterGetName;
+  return;
 
 INVALID:
-												tc->type = JT_INVALID;
-												PyObject_Free(tc->prv);
-												tc->prv = NULL;
-												return;
+  tc->type = JT_INVALID;
+  PyObject_Free(tc->prv);
+  tc->prv = NULL;
+  return;
 }
 
 void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
-	Py_XDECREF(GET_TC(tc)->newObj);
+  Py_XDECREF(GET_TC(tc)->newObj);
 
-	PyObject_Free(tc->prv);
-	tc->prv = NULL;
+  PyObject_Free(tc->prv);
+  tc->prv = NULL;
 }
 
 const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
 {
-	return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
+  return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
 }
 
 JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	JSINT64 ret;
-	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
-	return ret;
+  JSINT64 ret;
+  GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+  return ret;
 }
 
 JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	JSINT32 ret;
-	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
-	return ret;
+  JSINT32 ret;
+  GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+  return ret;
 }
 
 double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	double ret;
-	GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
-	return ret;
+  double ret;
+  GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+  return ret;
 }
 
 static void Object_releaseObject(JSOBJ _obj)
 {
-	Py_DECREF( (PyObject *) _obj);
+  Py_DECREF( (PyObject *) _obj);
 }
 
 void Object_iterBegin(JSOBJ obj, JSONTypeContext *tc)
 {
-	GET_TC(tc)->iterBegin(obj, tc);
+  GET_TC(tc)->iterBegin(obj, tc);
 }
 
 int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-	return GET_TC(tc)->iterNext(obj, tc);
+  return GET_TC(tc)->iterNext(obj, tc);
 }
 
 void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
-	GET_TC(tc)->iterEnd(obj, tc);
+  GET_TC(tc)->iterEnd(obj, tc);
 }
 
 JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 {
-	return GET_TC(tc)->iterGetValue(obj, tc);
+  return GET_TC(tc)->iterGetValue(obj, tc);
 }
 
 char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
-	return GET_TC(tc)->iterGetName(obj, tc, outLen);
+  return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-	static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
 
-	char buffer[65536];
-	char *ret;
-	PyObject *newobj;
-	PyObject *oinput = NULL;
-	PyObject *oensureAscii = NULL;
-	int idoublePrecision = 10; // default double precision setting
-	PyObject *oencodeHTMLChars = NULL;
+  char buffer[65536];
+  char *ret;
+  PyObject *newobj;
+  PyObject *oinput = NULL;
+  PyObject *oensureAscii = NULL;
+  int idoublePrecision = 10; // default double precision setting
+  PyObject *oencodeHTMLChars = NULL;
 
-	JSONObjectEncoder encoder =
-	{
-		Object_beginTypeContext,
-		Object_endTypeContext,
-		Object_getStringValue,
-		Object_getLongValue,
-		Object_getIntValue,
-		Object_getDoubleValue,
-		Object_iterBegin,
-		Object_iterNext,
-		Object_iterEnd,
-		Object_iterGetValue,
-		Object_iterGetName,
-		Object_releaseObject,
-		PyObject_Malloc,
-		PyObject_Realloc,
-		PyObject_Free,
-		-1, //recursionMax
-		idoublePrecision,
-		1, //forceAscii
-		0, //encodeHTMLChars
-	};
+  JSONObjectEncoder encoder =
+  {
+    Object_beginTypeContext,
+    Object_endTypeContext,
+    Object_getStringValue,
+    Object_getLongValue,
+    Object_getIntValue,
+    Object_getDoubleValue,
+    Object_iterBegin,
+    Object_iterNext,
+    Object_iterEnd,
+    Object_iterGetValue,
+    Object_iterGetName,
+    Object_releaseObject,
+    PyObject_Malloc,
+    PyObject_Realloc,
+    PyObject_Free,
+    -1, //recursionMax
+    idoublePrecision,
+    1, //forceAscii
+    0, //encodeHTMLChars
+  };
 
 
-	PRINTMARK();
+  PRINTMARK();
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
-	{
-		return NULL;
-	}
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
+  {
+    return NULL;
+  }
 
-	if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
-	{
-		encoder.forceASCII = 0;
-	}
+  if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
+  {
+    encoder.forceASCII = 0;
+  }
 
-	if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
-	{
-		encoder.encodeHTMLChars = 1;
-	}
+  if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
+  {
+    encoder.encodeHTMLChars = 1;
+  }
 
-	encoder.doublePrecision = idoublePrecision;
+  encoder.doublePrecision = idoublePrecision;
 
-	PRINTMARK();
-	ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
-	PRINTMARK();
+  PRINTMARK();
+  ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
+  PRINTMARK();
 
-	if (PyErr_Occurred())
-	{
-		return NULL;
-	}
+  if (PyErr_Occurred())
+  {
+    return NULL;
+  }
 
-	if (encoder.errorMsg)
-	{
-		if (ret != buffer)
-		{
-			encoder.free (ret);
-		}
+  if (encoder.errorMsg)
+  {
+    if (ret != buffer)
+    {
+      encoder.free (ret);
+    }
 
-		PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
-		return NULL;
-	}
+    PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
+    return NULL;
+  }
 
-	newobj = PyString_FromString (ret);
+  newobj = PyString_FromString (ret);
 
-	if (ret != buffer)
-	{
-		encoder.free (ret);
-	}
+  if (ret != buffer)
+  {
+    encoder.free (ret);
+  }
 
-	PRINTMARK();
+  PRINTMARK();
 
-	return newobj;
+  return newobj;
 }
 
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-	PyObject *data;
-	PyObject *file;
-	PyObject *string;
-	PyObject *write;
-	PyObject *argtuple;
+  PyObject *data;
+  PyObject *file;
+  PyObject *string;
+  PyObject *write;
+  PyObject *argtuple;
 
-	PRINTMARK();
+  PRINTMARK();
 
-	if (!PyArg_ParseTuple (args, "OO", &data, &file)) {
-		return NULL;
-	}
+  if (!PyArg_ParseTuple (args, "OO", &data, &file))
+  {
+    return NULL;
+  }
 
-	if (!PyObject_HasAttrString (file, "write"))
-	{
-		PyErr_Format (PyExc_TypeError, "expected file");
-		return NULL;
-	}
+  if (!PyObject_HasAttrString (file, "write"))
+  {
+    PyErr_Format (PyExc_TypeError, "expected file");
+    return NULL;
+  }
 
-	write = PyObject_GetAttrString (file, "write");
+  write = PyObject_GetAttrString (file, "write");
 
-	if (!PyCallable_Check (write)) {
-		Py_XDECREF(write);
-		PyErr_Format (PyExc_TypeError, "expected file");
-		return NULL;
-	}
+  if (!PyCallable_Check (write))
+  {
+    Py_XDECREF(write);
+    PyErr_Format (PyExc_TypeError, "expected file");
+    return NULL;
+  }
 
-	argtuple = PyTuple_Pack(1, data);
+  argtuple = PyTuple_Pack(1, data);
 
-	string = objToJSON (self, argtuple, kwargs);
+  string = objToJSON (self, argtuple, kwargs);
 
-	if (string == NULL)
-	{
-		Py_XDECREF(write);
-		Py_XDECREF(argtuple);
-		return NULL;
-	}
+  if (string == NULL)
+  {
+    Py_XDECREF(write);
+    Py_XDECREF(argtuple);
+    return NULL;
+  }
 
-	Py_XDECREF(argtuple);
+  Py_XDECREF(argtuple);
 
-	argtuple = PyTuple_Pack (1, string);
-	if (argtuple == NULL)
-	{
-		Py_XDECREF(write);
-		return NULL;
-	}
-	if (PyObject_CallObject (write, argtuple) == NULL)
-	{
-		Py_XDECREF(write);
-		Py_XDECREF(argtuple);
-		return NULL;
-	}
+  argtuple = PyTuple_Pack (1, string);
+  if (argtuple == NULL)
+  {
+    Py_XDECREF(write);
+    return NULL;
+  }
+  if (PyObject_CallObject (write, argtuple) == NULL)
+  {
+    Py_XDECREF(write);
+    Py_XDECREF(argtuple);
+    return NULL;
+  }
 
-	Py_XDECREF(write);
-	Py_DECREF(argtuple);
-	Py_XDECREF(string);
+  Py_XDECREF(write);
+  Py_DECREF(argtuple);
+  Py_XDECREF(string);
 
-	PRINTMARK();
+  PRINTMARK();
 
-	Py_RETURN_NONE;
+  Py_RETURN_NONE;
 }

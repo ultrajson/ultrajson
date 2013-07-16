@@ -41,7 +41,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <ultrajson.h>
 
 #define EPOCH_ORD 719163
-static PyObject* type_decimal;
+static PyObject* type_decimal = NULL;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
@@ -84,9 +84,14 @@ struct PyDictIterState
 void initObjToJSON(void)
 {
   PyObject* mod_decimal = PyImport_ImportModule("decimal");
-  type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
-  Py_INCREF(type_decimal);
-  Py_DECREF(mod_decimal);
+  if (mod_decimal)
+  {
+    type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
+    Py_INCREF(type_decimal);
+    Py_DECREF(mod_decimal);
+  }
+  else
+    PyErr_Clear();
 
   PyDateTime_IMPORT;
 }
@@ -593,7 +598,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
     return;
   }
   else
-  if (PyFloat_Check(obj) || PyObject_IsInstance(obj, type_decimal))
+  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;

@@ -712,7 +712,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #endif
     }
 
-    enc->beginTypeContext(obj, &tc);
+    enc->beginTypeContext(obj, &tc, enc->isoDates);
 
     switch (tc.type)
     {

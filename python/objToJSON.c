@@ -178,6 +178,16 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
   return NULL;
 }
 
+static void *PyDateToISO(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  PyObject *obj = (PyObject *) _obj;
+  PyObject *iso;
+
+  iso = PyObject_CallMethod(obj, "isoformat", NULL);
+  *_outLen = PyString_GET_SIZE(iso);
+  return PyString_AS_STRING(iso);
+}
+
 //=============================================================================
 // Tuple iteration functions
 // itemValue is borrowed reference, no ref counting
@@ -508,7 +518,7 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
+void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, int isoDates)
 {
   PyObject *obj, *exc, *toDictFunc;
   TypeContext *pc;
@@ -603,14 +613,28 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
               if (PyDateTime_Check(obj))
               {
                 PRINTMARK();
-                pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+                if (isoDates)
+                {
+                  pc->PyTypeToJSON = PyDateToISO; tc->type = JT_UTF8;
+                }
+                else
+                {
+                  pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+                }
                 return;
               }
               else
                 if (PyDate_Check(obj))
                 {
                   PRINTMARK();
-                  pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+                  if (isoDates)
+                  {
+                    pc->PyTypeToJSON = PyDateToISO; tc->type = JT_UTF8;
+                  }
+                  else
+                  {
+                    pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+                  }
                   return;
                 }
                 else
@@ -790,7 +814,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-	static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
+	static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "iso_dates", NULL};
 
 	char buffer[65536];
 	char *ret;
@@ -799,6 +823,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 	PyObject *oensureAscii = NULL;
 	int idoublePrecision = 10; // default double precision setting
 	PyObject *oencodeHTMLChars = NULL;
+	PyObject *oisoDates = NULL;
 
 	JSONObjectEncoder encoder =
 	{
@@ -821,12 +846,13 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 		idoublePrecision,
 		1, //forceAscii
 		0, //encodeHTMLChars
+		0, // isoDates
 	};
 
 
 	PRINTMARK();
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars, &oisoDates))
 	{
 		return NULL;
 	}
@@ -839,6 +865,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 	if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
 	{
 		encoder.encodeHTMLChars = 1;
+	}
+
+	if (oisoDates != NULL && PyObject_IsTrue(oisoDates))
+	{
+		encoder.isoDates = 1;
 	}
 
 	encoder.doublePrecision = idoublePrecision;

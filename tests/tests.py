@@ -316,6 +316,14 @@ class UltraJSONTests(TestCase):
         self.assertEquals(int(expected), ujson.decode(output))
         pass
 
+    def test_encodeDatetimeConversionISO(self):
+        ts = time.time()
+        input = datetime.datetime.fromtimestamp(ts)
+        output = ujson.encode(input, iso_dates=True)
+        expected = input.isoformat()
+        self.assertEquals(expected, ujson.decode(output))
+        pass
+
     def test_encodeDateConversion(self):
         ts = time.time()
         input = datetime.date.fromtimestamp(ts)
@@ -326,6 +334,14 @@ class UltraJSONTests(TestCase):
         expected = calendar.timegm(tup)
         self.assertEquals(int(expected), json.loads(output))
         self.assertEquals(int(expected), ujson.decode(output))
+        pass
+
+    def test_encodeDateConversionISO(self):
+        ts = time.time()
+        input = datetime.date.fromtimestamp(ts)
+        output = ujson.encode(input, iso_dates=True)
+        expected = input.isoformat()
+        self.assertEquals(expected, ujson.decode(output))
         pass
 
     def test_encodeToUTF8(self):

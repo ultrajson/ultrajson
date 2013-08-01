@@ -179,7 +179,7 @@ typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
 typedef struct __JSONObjectEncoder
 {
-  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
+  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, int isoDates);
   void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
   const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
   JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
@@ -243,6 +243,10 @@ typedef struct __JSONObjectEncoder
   /*
   If true, '<', '>', and '&' characters will be encoded as \u003c, \u003e, and \u0026, respectively. If false, no special encoding will be used. */
   int encodeHTMLChars;
+
+  /*
+  if true, date and datetime objects will be converted using .isoformat() */
+  int isoDates;
 
   /*
   Set to an error message if error occured */

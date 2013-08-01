@@ -24,10 +24,10 @@ May be used as a drop in replacement for most other JSON parsers for Python::
     '[{"key":"value"},81,true]'
     >>> ujson.loads("""[{"key": "value"}, 81, true]""")
     [{u'key': u'value'}, 81, True]
-    
+
 ~~~~~~~~~~~~~~~
 Encoder options
-~~~~~~~~~~~~~~~    
+~~~~~~~~~~~~~~~
 encode_html_chars
 -----------------
 Used to enable special encoding of "unsafe" HTML characters into safer Unicode sequences. Default is false::
@@ -56,10 +56,17 @@ Controls how many decimals to encode for double or decimal values. Default is 9:
     '3'
     >>> ujson.dumps(math.pi, double_precision=4)
     '3.1416'
-    
+
+iso_dates
+---------
+Dump date and datetime objects in ISO 6081 format instead of a unix timestamp. Default is false::
+
+    >>> ujson.dumps(datetime.datetime.now(), iso_dates=True)
+    '"2013-07-31T17:26:28.647009"'
+
 ~~~~~~~~~~~~~~~~
 Decoders options
-~~~~~~~~~~~~~~~~    
+~~~~~~~~~~~~~~~~
 precise_float
 -------------
 Set to enable usage of higher precision (strtod) function when decoding string to double values. Default is to use fast but less precise builtin functionality::
@@ -69,7 +76,7 @@ Set to enable usage of higher precision (strtod) function when decoding string t
     >>> ujson.loads("4.56", precise_float=True)
     4.5599999999999996
 
-    
+
 ============
 Benchmarks
 ============

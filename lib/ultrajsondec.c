@@ -885,12 +885,18 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
     dec->free(ds.escStart);
   }
 
-  SkipWhitespace(&ds);
-
-  if (ds.start != ds.end && ret)
+  if (!(dec->errorStr))
   {
-    dec->releaseObject(ds.prv, ret);
-    return SetError(&ds, -1, "Trailing data");
+    if ((ds.end - ds.start) > 0)
+    {
+      SkipWhitespace(&ds);
+    }
+
+    if (ds.start != ds.end && ret)
+    {
+      dec->releaseObject(ds.prv, ret);
+      return SetError(&ds, -1, "Trailing data");
+    }
   }
 
   return ret;

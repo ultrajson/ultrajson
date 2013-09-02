@@ -51,6 +51,10 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define FALSE 0
 #endif
 
+#if ( (defined(_WIN32) || defined(WIN32) ) && ( defined(_MSC_VER) ) )
+#define snprintf sprintf_s
+#endif
+
 /*
 Worst cases being:
 
@@ -573,11 +577,7 @@ int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value
   */
   if (value > thres_max)
   {
-#ifdef _WIN32
-  enc->offset += sprintf_s(str, enc->end - enc->offset, "%.15e", neg ? -value : value);
-#else
-  enc->offset += snprintf(str, enc->end - enc->offset, "%.15e", neg ? -value : value);
-#endif
+     enc->offset += snprintf(str, enc->end - enc->offset, "%.15e", neg ? -value : value);
      return TRUE;
    }
 

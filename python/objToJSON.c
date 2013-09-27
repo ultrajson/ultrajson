@@ -96,19 +96,21 @@ void initObjToJSON(void)
   PyDateTime_IMPORT;
 }
 
-static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
-{
-  PyObject *obj = (PyObject *) _obj;
-  *((JSINT32 *) outValue) = PyInt_AS_LONG (obj);
-  return NULL;
-}
-
+#ifdef _LP64
 static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
   *((JSINT64 *) outValue) = PyInt_AS_LONG (obj);
   return NULL;
 }
+#else
+static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  PyObject *obj = (PyObject *) _obj;
+  *((JSINT32 *) outValue) = PyInt_AS_LONG (obj);
+  return NULL;
+}
+#endif
 
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {

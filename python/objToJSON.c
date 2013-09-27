@@ -802,7 +802,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *newobj;
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
-  int idoublePrecision = 10; // default double precision setting
+  static const int idoublePrecision = 10; // default double precision setting
   PyObject *oencodeHTMLChars = NULL;
 
   JSONObjectEncoder encoder =

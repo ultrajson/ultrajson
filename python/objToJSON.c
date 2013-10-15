@@ -547,7 +547,66 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   if (PyIter_Check(obj))
   {
     PRINTMARK();
-    goto ISITERABLE;
+    if (PyDict_Check(obj))
+	  {
+	    PRINTMARK();
+	    tc->type = JT_OBJECT;
+	    pc->iterBegin = Dict_iterBegin;
+	    pc->iterEnd = Dict_iterEnd;
+	    pc->iterNext = Dict_iterNext;
+	    pc->iterGetValue = Dict_iterGetValue;
+	    pc->iterGetName = Dict_iterGetName;
+	    pc->dictObj = obj;
+	    Py_INCREF(obj);
+	    return;
+	  }
+	  else
+	  if (PyList_Check(obj))
+	  {
+      PRINTMARK();
+      tc->type = JT_ARRAY;
+      pc->iterBegin = List_iterBegin;
+      pc->iterEnd = List_iterEnd;
+      pc->iterNext = List_iterNext;
+      pc->iterGetValue = List_iterGetValue;
+      pc->iterGetName = List_iterGetName;
+      return;
+    }
+    else
+    if (PyTuple_Check(obj))
+    {
+      PRINTMARK();
+      tc->type = JT_ARRAY;
+      pc->iterBegin = Tuple_iterBegin;
+      pc->iterEnd = Tuple_iterEnd;
+      pc->iterNext = Tuple_iterNext;
+      pc->iterGetValue = Tuple_iterGetValue;
+      pc->iterGetName = Tuple_iterGetName;
+      return;
+    }
+    else
+    if (PyAnySet_Check(obj))
+    {
+      PRINTMARK();
+      tc->type = JT_ARRAY;
+      pc->iterBegin = Iter_iterBegin;
+      pc->iterEnd = Iter_iterEnd;
+      pc->iterNext = Iter_iterNext;
+      pc->iterGetValue = Iter_iterGetValue;
+      pc->iterGetName = Iter_iterGetName;
+      return;
+    }
+    else
+    {
+	  	PRINTMARK();
+	  	tc->type = JT_ARRAY;
+	  	pc->iterBegin = Iter_iterBegin;
+	  	pc->iterEnd = Iter_iterEnd;
+	  	pc->iterNext = Iter_iterNext;
+	  	pc->iterGetValue = Iter_iterGetValue;
+	  	pc->iterGetName = Iter_iterGetName;
+	  	return;
+    }
   }
 
   if (PyBool_Check(obj))
@@ -625,57 +684,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   {
     PRINTMARK();
     tc->type = JT_NULL;
-    return;
-  }
-
-ISITERABLE:
-  if (PyDict_Check(obj))
-  {
-    PRINTMARK();
-    tc->type = JT_OBJECT;
-    pc->iterBegin = Dict_iterBegin;
-    pc->iterEnd = Dict_iterEnd;
-    pc->iterNext = Dict_iterNext;
-    pc->iterGetValue = Dict_iterGetValue;
-    pc->iterGetName = Dict_iterGetName;
-    pc->dictObj = obj;
-    Py_INCREF(obj);
-    return;
-  }
-  else
-  if (PyList_Check(obj))
-  {
-    PRINTMARK();
-    tc->type = JT_ARRAY;
-    pc->iterBegin = List_iterBegin;
-    pc->iterEnd = List_iterEnd;
-    pc->iterNext = List_iterNext;
-    pc->iterGetValue = List_iterGetValue;
-    pc->iterGetName = List_iterGetName;
-    return;
-  }
-  else
-  if (PyTuple_Check(obj))
-  {
-    PRINTMARK();
-    tc->type = JT_ARRAY;
-    pc->iterBegin = Tuple_iterBegin;
-    pc->iterEnd = Tuple_iterEnd;
-    pc->iterNext = Tuple_iterNext;
-    pc->iterGetValue = Tuple_iterGetValue;
-    pc->iterGetName = Tuple_iterGetName;
-    return;
-  }
-  else
-  if (PyAnySet_Check(obj))
-  {
-    PRINTMARK();
-    tc->type = JT_ARRAY;
-    pc->iterBegin = Iter_iterBegin;
-    pc->iterEnd = Iter_iterEnd;
-    pc->iterNext = Iter_iterNext;
-    pc->iterGetValue = Iter_iterGetValue;
-    pc->iterGetName = Iter_iterGetName;
     return;
   }
 

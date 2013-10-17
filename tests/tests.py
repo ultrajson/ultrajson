@@ -41,7 +41,7 @@ class UltraJSONTests(TestCase):
 
     def test_encodeStringConversion(self):
         input = "A string \\ / \b \f \n \r \t </script> &"
-        not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
+        not_html_encoded = '"A string \\\\ / \\b \\f \\n \\r \\t </script> &"'
         html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"'
 
         def helper(expected_output, **encode_kwargs):
@@ -174,7 +174,7 @@ class UltraJSONTests(TestCase):
         input = "A string \\ / \b \f \n \r \t"
         output = ujson.encode(input)
         self.assertEquals(input, json.loads(output))
-        self.assertEquals(output, '"A string \\\\ \\/ \\b \\f \\n \\r \\t"')
+        self.assertEquals(output, '"A string \\\\ / \\b \\f \\n \\r \\t"')
         self.assertEquals(input, ujson.decode(output))
 
     def test_decodeUnicodeConversion(self):

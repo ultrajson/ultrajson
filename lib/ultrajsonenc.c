@@ -183,14 +183,21 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
       }
       case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
       case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
-      case '/':  (*of++) = '\\'; (*of++) = '/'; break;
+      case '/':
+      {
+        if (enc->encodeHTMLChars)
+        {
+          (*of++) = '\\';
+        }
+        (*of++) = '/'; break;
+      }          
       case '\b': (*of++) = '\\'; (*of++) = 'b'; break;
       case '\f': (*of++) = '\\'; (*of++) = 'f'; break;
       case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
       case '\r': (*of++) = '\\'; (*of++) = 'r'; break;
       case '\t': (*of++) = '\\'; (*of++) = 't'; break;
 
-      case 0x26: // '/'
+      case 0x26: // '&'
       case 0x3c: // '<'
       case 0x3e: // '>'
       {
@@ -413,6 +420,19 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
         io ++;
         continue;
       }
+      case 24:
+      {
+        if (enc->encodeHTMLChars)
+        {
+          // Fall through to \u00XX case 22 below.
+        }
+        else 
+        {
+          // Same as case 1 above.
+          *(of++) = (*io++);
+          continue;          
+        }
+      }
       case 10:
       case 12:
       case 14:
@@ -420,7 +440,6 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
       case 18:
       case 20:
       case 22:
-      case 24:
       {
         *(of++) = *( (char *) (g_escapeChars + utflen + 0));
         *(of++) = *( (char *) (g_escapeChars + utflen + 1));

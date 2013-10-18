@@ -854,7 +854,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   }
   if (doublePrecision)
   {
-	encoder.doublePrecision = (int)(PyInt_AS_LONG(doublePrecision));
+    encoder.doublePrecision = (int)(PyInt_AS_LONG(doublePrecision));
   }
 
   PRINTMARK();

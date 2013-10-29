@@ -854,6 +854,13 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   }
   if (doublePrecision)
   {
+    PRINTMARK();
+    if (!PyInt_Check(lifetime))
+    {
+      PRINTMARK();
+      PyErr_Format(PyExc_TypeError, "Expected integer as double_precision paramater.");
+      return NULL;
+    }
     encoder.doublePrecision = (int)(PyInt_AS_LONG(doublePrecision));
   }
 

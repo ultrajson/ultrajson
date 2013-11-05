@@ -809,7 +809,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *newobj;
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
-  PyObject *doublePrecision = NULL;
+  short int idoublePrecision = 10;
   PyObject *oencodeHTMLChars = NULL;
 
   JSONObjectEncoder encoder =
@@ -838,7 +838,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOO", kwlist, &oinput, &oensureAscii, &doublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OhO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
   {
     return NULL;
   }
@@ -852,17 +852,8 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     encoder.encodeHTMLChars = 1;
   }
-  if (doublePrecision)
-  {
-    PRINTMARK();
-    if (!PyInt_Check(lifetime))
-    {
-      PRINTMARK();
-      PyErr_Format(PyExc_TypeError, "Expected integer as double_precision paramater.");
-      return NULL;
-    }
-    encoder.doublePrecision = (int)(PyInt_AS_LONG(doublePrecision));
-  }
+
+  encoder.doublePrecision = idoublePrecision;
 
   PRINTMARK();
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));

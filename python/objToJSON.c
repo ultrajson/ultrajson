@@ -150,8 +150,8 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
   int y, m, d, h, mn, s, days;
 
   utcoffset = PyObject_CallMethod(obj, "utcoffset", NULL);
-  if(utcoffset != NULL){
-     obj = PyNumber_Subtract(obj, utcoffset);
+  if(utcoffset != Py_None){
+    obj = PyNumber_Subtract(obj, utcoffset);
   }
 
   y = PyDateTime_GET_YEAR(obj);

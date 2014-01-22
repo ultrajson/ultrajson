@@ -84,7 +84,10 @@ struct PyDictIterState
 
 void initObjToJSON(void)
 {
-  PyObject* mod_decimal = PyImport_ImportModule("decimal");
+  PyObject* mod_decimal;
+  PyObject* mod_cdecimal;
+  
+  mod_decimal = PyImport_ImportModule("decimal");
   if (mod_decimal)
   {
     type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
@@ -94,7 +97,7 @@ void initObjToJSON(void)
   else
     PyErr_Clear();
 
-  PyObject* mod_cdecimal = PyImport_ImportModule("cdecimal");
+  mod_cdecimal = PyImport_ImportModule("cdecimal");
   if (mod_cdecimal)
   {
     type_cdecimal = PyObject_GetAttrString(mod_cdecimal, "Decimal");

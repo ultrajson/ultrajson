@@ -795,17 +795,61 @@ class UltraJSONTests(TestCase):
             input = quote + (base * 1024 * 1024 * 2) + quote
             output = ujson.decode(input)
 
+    def test_object_default(self):
+        # An object without toDict or __unicode__ defined should be seralized
+        # as an empty dict.
+        class ObjectTest:
+            pass
+
+        output = ujson.encode(ObjectTest())
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {})
+
     def test_toDict(self):
         d = {u"key": 31337}
 
         class DictTest:
             def toDict(self):
                 return d
+            def __unicode__(self):
+                return 'unicode defined'  # Fallback and shouldn't be called.
 
         o = DictTest()
         output = ujson.encode(o)
         dec = ujson.decode(output)
         self.assertEquals(dec, d)
+
+    def test_object_with_unicode(self):
+        # If __unicode__ returns a unicode string, then the that string
+        # will be the serialized value of the object.
+        output_text = 'this is the correct output'
+        class UnicodeTest:
+            def __unicode__(self):
+                return output_text
+
+        d = {u'key': UnicodeTest()}
+        output = ujson.encode(d)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {u'key': output_text})
+
+    def test_object_with_unicode_type_error(self):
+        # __unicode__ must return a string, otherwise it should raise an error.
+        for return_value in (None, 1234, 12.34, True):
+            class UnicodeTest:
+                def __unicode__(self):
+                    return return_value
+
+            d = {u'key': UnicodeTest()}
+            self.assertRaises(TypeError, ujson.encode, d)
+
+    def test_object_with_unicode_attribute_error(self):
+        # If __unicode__ raises an error, make sure python actually raises it.
+        class UnicodeTest:
+            def __unicode__(self):
+                raise AttributeError
+
+        d = {u'key': UnicodeTest()}
+        self.assertRaises(AttributeError, ujson.encode, d)
 
     def test_decodeArrayTrailingCommaFail(self):
         input = "[31337,]"

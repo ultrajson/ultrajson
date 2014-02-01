@@ -804,7 +804,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *newobj;
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
-  static const int idoublePrecision = 10; // default double precision setting
   PyObject *oencodeHTMLChars = NULL;
 
   JSONObjectEncoder encoder =
@@ -825,7 +824,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Realloc,
     PyObject_Free,
     -1, //recursionMax
-    idoublePrecision,
+    10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars
   };
@@ -833,7 +832,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars))
   {
     return NULL;
   }
@@ -847,8 +846,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     encoder.encodeHTMLChars = 1;
   }
-
-  encoder.doublePrecision = idoublePrecision;
 
   PRINTMARK();
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));

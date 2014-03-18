@@ -674,14 +674,14 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   else
   if (PyIter_Check(obj))
   {
-		PRINTMARK();
-		tc->type = JT_ARRAY;
-		pc->iterBegin = Iter_iterBegin;
-		pc->iterEnd = Iter_iterEnd;
-		pc->iterNext = Iter_iterNext;
-		pc->iterGetValue = Iter_iterGetValue;
-		pc->iterGetName = Iter_iterGetName;
-		return;
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterBegin = Iter_iterBegin;
+    pc->iterEnd = Iter_iterEnd;
+    pc->iterNext = Iter_iterNext;
+    pc->iterGetValue = Iter_iterGetValue;
+    pc->iterGetName = Iter_iterGetName;
+    return;
   }
 
   toDictFunc = PyObject_GetAttrString(obj, "toDict");

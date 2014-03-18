@@ -544,12 +544,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   pc->size = 0;
   pc->longValue = 0;
 
-  if (PyIter_Check(obj))
-  {
-    PRINTMARK();
-    goto ISITERABLE;
-  }
-
   if (PyBool_Check(obj))
   {
     PRINTMARK();
@@ -627,8 +621,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
     tc->type = JT_NULL;
     return;
   }
-
-ISITERABLE:
+  else
   if (PyDict_Check(obj))
   {
     PRINTMARK();
@@ -668,6 +661,18 @@ ISITERABLE:
   }
   else
   if (PyAnySet_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterBegin = Iter_iterBegin;
+    pc->iterEnd = Iter_iterEnd;
+    pc->iterNext = Iter_iterNext;
+    pc->iterGetValue = Iter_iterGetValue;
+    pc->iterGetName = Iter_iterGetName;
+    return;
+  }
+  else
+  if (PyIter_Check(obj))
   {
     PRINTMARK();
     tc->type = JT_ARRAY;
@@ -804,7 +809,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *newobj;
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
-  static const int idoublePrecision = 10; // default double precision setting
+  short int idoublePrecision = 10;
   PyObject *oencodeHTMLChars = NULL;
 
   JSONObjectEncoder encoder =
@@ -825,7 +830,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Realloc,
     PyObject_Free,
     -1, //recursionMax
-    idoublePrecision,
+    10, //doublePrecision,
     1, //forceAscii
     0, //encodeHTMLChars
   };
@@ -833,7 +838,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OhO", kwlist, &oinput, &oensureAscii, &idoublePrecision, &oencodeHTMLChars))
   {
     return NULL;
   }

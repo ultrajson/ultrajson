@@ -432,7 +432,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
     if (ds->escHeap)
     {
-      if (newSize > (UINT_MAX / sizeof(wchar_t)))
+      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
@@ -448,7 +448,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
     {
       wchar_t *oldStart = ds->escStart;
       ds->escHeap = 1;
-      if (newSize > (UINT_MAX / sizeof(wchar_t)))
+      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }

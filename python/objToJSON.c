@@ -146,8 +146,13 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
-  PyObject *date, *ord;
+  PyObject *date, *ord, *utcoffset;
   int y, m, d, h, mn, s, days;
+
+  utcoffset = PyObject_CallMethod(obj, "utcoffset", NULL);
+  if(utcoffset != Py_None){
+    obj = PyNumber_Subtract(obj, utcoffset);
+  }
 
   y = PyDateTime_GET_YEAR(obj);
   m = PyDateTime_GET_MONTH(obj);

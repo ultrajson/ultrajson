@@ -234,8 +234,6 @@ class UltraJSONTests(TestCase):
         encoded_json = json.dumps(s)
 		
         print encoded
-        print "Len(s): %d" % (len(s), )
-        print "Len(encoded): %d" % (len(encoded), )
         if len(s) == 4:
             self.assertEqual(len(encoded), len(s) * 12 + 2)
         else:

@@ -232,7 +232,15 @@ class UltraJSONTests(TestCase):
         s = u'\U0001f42e\U0001f42e\U0001F42D\U0001F42D' # 🐮🐮🐭🐭
         encoded = ujson.dumps(s)
         encoded_json = json.dumps(s)
-        self.assertEqual(len(encoded), len(s) * 12 + 2) # 12 characters + quotes
+		
+        print encoded
+        print "Len(s): %d" % (len(s), )
+        print "Len(encoded): %d" % (len(encoded), )
+        if len(s) == 4:
+            self.assertEqual(len(encoded), len(s) * 12 + 2)
+        else:
+            self.assertEqual(len(encoded), len(s) * 6 + 2) 
+          
         self.assertEqual(encoded, encoded_json)
         decoded = ujson.loads(encoded)
         self.assertEqual(s, decoded)

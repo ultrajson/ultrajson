@@ -53,6 +53,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define NULL 0
 #endif
 
+#define CHK_OVERFLOW
 struct DecoderState
 {
   char *start;
@@ -104,6 +105,9 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
   int intNeg = 1;
   int mantSize = 0;
   JSUINT64 intValue;
+#ifdef CHK_OVERFLOW
+  JSUINT64 newValue;
+#endif
   int chr;
   int decimalCount = 0;
   double frcValue = 0.0;
@@ -140,14 +144,28 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
       case '8':
       case '9':
       {
-        //FIXME: Check for arithemtic overflow here
-        //PERF: Don't do 64-bit arithmetic here unless we know we have to
+#ifdef CHK_OVERFLOW
+	newValue = intValue * 10ULL;
+	if(!intValue || newValue / intValue == 10ULL)
+	{
+		intValue = newValue;
+		newValue = intValue + (JSLONG)(chr - 48);
+		if(newValue < intValue)
+		{
+			return SetError(ds, -1, "arithemtic overflow");
+		}
+		else
+		{
+			intValue = newValue;
+		}
+	}
+	else
+	{
+		return SetError(ds, -1, "arithemtic overflow");
+	}
+#else
         intValue = intValue * 10ULL + (JSLONG) (chr - 48);
-
-        if (intValue > overflowLimit)
-        {
-          return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big" : "Value is too small");
-        }
+#endif
 
         offset ++;
         mantSize ++;
@@ -182,7 +200,15 @@ BREAK_INT_LOOP:
 
   if ((intValue >> 31))
   {
-    return ds->dec->newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
+	if(intNeg == 1)
+	{
+    		return ds->dec->newULong(ds->prv, intValue);
+	}
+	else if(intNeg == -1)
+	{
+
+    		return ds->dec->newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
+	}
   }
   else
   {

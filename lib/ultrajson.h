@@ -168,7 +168,6 @@ typedef struct __JSONTypeContext
 
 /*
 Function pointer declarations, suitable for implementing UltraJSON */
-typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *tc);
 typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
 typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
 typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *tc);
@@ -185,12 +184,6 @@ typedef struct __JSONObjectEncoder
   JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
   JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
   double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
-
-  /*
-  Begin iteration of an iteratable object (JS_ARRAY or JS_OBJECT)
-  Implementor should setup iteration state in ti->prv
-  */
-  JSPFN_ITERBEGIN iterBegin;
 
   /*
   Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items.

@@ -724,7 +724,6 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       case JT_ARRAY:
       {
         count = 0;
-        enc->iterBegin(obj, &tc);
 
         Buffer_AppendCharUnchecked (enc, '[');
 
@@ -753,7 +752,6 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
   case JT_OBJECT:
   {
     count = 0;
-    enc->iterBegin(obj, &tc);
 
     Buffer_AppendCharUnchecked (enc, '{');
 

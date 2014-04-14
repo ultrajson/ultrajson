@@ -51,7 +51,6 @@ typedef ssize_t Py_ssize_t;
 
 typedef struct __TypeContext
 {
-  JSPFN_ITERBEGIN iterBegin;
   JSPFN_ITEREND iterEnd;
   JSPFN_ITERNEXT iterNext;
   JSPFN_ITERGETNAME iterGetName;
@@ -185,17 +184,6 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
   return NULL;
 }
 
-//=============================================================================
-// Tuple iteration functions
-// itemValue is borrowed reference, no ref counting
-//=============================================================================
-void Tuple_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->index = 0;
-  GET_TC(tc)->size = PyTuple_GET_SIZE( (PyObject *) obj);
-  GET_TC(tc)->itemValue = NULL;
-}
-
 int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject *item;
@@ -226,16 +214,6 @@ char *Tuple_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return NULL;
 }
 
-//=============================================================================
-// Iterator iteration functions
-// itemValue is borrowed reference, no ref counting
-//=============================================================================
-void Iter_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->itemValue = NULL;
-  GET_TC(tc)->iterator = PyObject_GetIter(obj);
-}
-
 int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject *item;
@@ -244,6 +222,11 @@ int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
   {
     Py_DECREF(GET_TC(tc)->itemValue);
     GET_TC(tc)->itemValue = NULL;
+  }
+
+  if (GET_TC(tc)->iterator == NULL)
+  {
+    return 0;
   }
 
   item = PyIter_Next(GET_TC(tc)->iterator);
@@ -280,19 +263,6 @@ JSOBJ Iter_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 char *Iter_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
   return NULL;
-}
-
-//=============================================================================
-// Dir iteration functions
-// itemName ref is borrowed from PyObject_Dir (attrList). No refcount
-// itemValue ref is from PyObject_GetAttr. Ref counted
-//=============================================================================
-void Dir_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->attrList = PyObject_Dir(obj);
-  GET_TC(tc)->index = 0;
-  GET_TC(tc)->size = PyList_GET_SIZE(GET_TC(tc)->attrList);
-  PRINTMARK();
 }
 
 void Dir_iterEnd(JSOBJ obj, JSONTypeContext *tc)
@@ -402,17 +372,6 @@ char *Dir_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return PyString_AS_STRING(GET_TC(tc)->itemName);
 }
 
-
-//=============================================================================
-// List iteration functions
-// itemValue is borrowed from object (which is list). No refcounting
-//=============================================================================
-void List_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->index =  0;
-  GET_TC(tc)->size = PyList_GET_SIZE( (PyObject *) obj);
-}
-
 int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
@@ -445,11 +404,6 @@ char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 // itemName might converted to string (Python_Str). Do refCounting
 // itemValue is borrowed from object (which is dict). No refCounting
 //=============================================================================
-void Dict_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->index = 0;
-  PRINTMARK();
-}
 
 int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
@@ -515,9 +469,19 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
+void SetupDictIter(PyObject *dictObj, TypeContext *pc)
+{
+  pc->iterEnd = Dict_iterEnd;
+  pc->iterNext = Dict_iterNext;
+  pc->iterGetValue = Dict_iterGetValue;
+  pc->iterGetName = Dict_iterGetName;
+  pc->dictObj = dictObj;
+  pc->index = 0;
+}
+
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 {
-  PyObject *obj, *exc, *toDictFunc;
+  PyObject *obj, *exc, *toDictFunc, *iter;
   TypeContext *pc;
   PRINTMARK();
   if (!_obj) {
@@ -539,6 +503,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   pc->dictObj = NULL;
   pc->itemValue = NULL;
   pc->itemName = NULL;
+  pc->iterator = NULL;
   pc->attrList = NULL;
   pc->index = 0;
   pc->size = 0;
@@ -633,12 +598,7 @@ ISITERABLE:
   {
     PRINTMARK();
     tc->type = JT_OBJECT;
-    pc->iterBegin = Dict_iterBegin;
-    pc->iterEnd = Dict_iterEnd;
-    pc->iterNext = Dict_iterNext;
-    pc->iterGetValue = Dict_iterGetValue;
-    pc->iterGetName = Dict_iterGetName;
-    pc->dictObj = obj;
+    SetupDictIter(obj, pc);
     Py_INCREF(obj);
     return;
   }
@@ -647,11 +607,12 @@ ISITERABLE:
   {
     PRINTMARK();
     tc->type = JT_ARRAY;
-    pc->iterBegin = List_iterBegin;
     pc->iterEnd = List_iterEnd;
     pc->iterNext = List_iterNext;
     pc->iterGetValue = List_iterGetValue;
     pc->iterGetName = List_iterGetName;
+    GET_TC(tc)->index =  0;
+    GET_TC(tc)->size = PyList_GET_SIZE( (PyObject *) obj);
     return;
   }
   else
@@ -659,25 +620,30 @@ ISITERABLE:
   {
     PRINTMARK();
     tc->type = JT_ARRAY;
-    pc->iterBegin = Tuple_iterBegin;
     pc->iterEnd = Tuple_iterEnd;
     pc->iterNext = Tuple_iterNext;
     pc->iterGetValue = Tuple_iterGetValue;
     pc->iterGetName = Tuple_iterGetName;
+    GET_TC(tc)->index = 0;
+    GET_TC(tc)->size = PyTuple_GET_SIZE( (PyObject *) obj);
+    GET_TC(tc)->itemValue = NULL;
+
     return;
   }
+  /*
   else
   if (PyAnySet_Check(obj))
   {
     PRINTMARK();
     tc->type = JT_ARRAY;
-    pc->iterBegin = Iter_iterBegin;
+    pc->iterBegin = NULL;
     pc->iterEnd = Iter_iterEnd;
     pc->iterNext = Iter_iterNext;
     pc->iterGetValue = Iter_iterGetValue;
     pc->iterGetName = Iter_iterGetName;
     return;
   }
+  */
 
   toDictFunc = PyObject_GetAttrString(obj, "toDict");
 
@@ -704,20 +670,44 @@ ISITERABLE:
 
     PRINTMARK();
     tc->type = JT_OBJECT;
-    pc->iterBegin = Dict_iterBegin;
-    pc->iterEnd = Dict_iterEnd;
-    pc->iterNext = Dict_iterNext;
-    pc->iterGetValue = Dict_iterGetValue;
-    pc->iterGetName = Dict_iterGetName;
-    pc->dictObj = toDictResult;
+    SetupDictIter(toDictResult, pc);
     return;
   }
 
+  PRINTMARK();
+  PyErr_Clear();
+
+  iter = PyObject_GetIter(obj);
+
+  if (iter != NULL)
+  {
+    PRINTMARK();
+    tc->type = JT_ARRAY;
+    pc->iterator = iter;
+    pc->iterEnd = Iter_iterEnd;
+    pc->iterNext = Iter_iterNext;
+    pc->iterGetValue = Iter_iterGetValue;
+    pc->iterGetName = Iter_iterGetName;
+    return;
+  }
+
+  PRINTMARK();
   PyErr_Clear();
 
   PRINTMARK();
   tc->type = JT_OBJECT;
-  pc->iterBegin = Dir_iterBegin;
+  GET_TC(tc)->attrList = PyObject_Dir(obj);
+  
+  if (GET_TC(tc)->attrList == NULL)
+  {
+    PyErr_Clear();
+    goto INVALID;
+  }
+
+  GET_TC(tc)->index = 0;
+  GET_TC(tc)->size = PyList_GET_SIZE(GET_TC(tc)->attrList);
+  PRINTMARK();
+  
   pc->iterEnd = Dir_iterEnd;
   pc->iterNext = Dir_iterNext;
   pc->iterGetValue = Dir_iterGetValue;
@@ -725,6 +715,7 @@ ISITERABLE:
   return;
 
 INVALID:
+  PRINTMARK();
   tc->type = JT_INVALID;
   PyObject_Free(tc->prv);
   tc->prv = NULL;
@@ -770,11 +761,6 @@ static void Object_releaseObject(JSOBJ _obj)
   Py_DECREF( (PyObject *) _obj);
 }
 
-void Object_iterBegin(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->iterBegin(obj, tc);
-}
-
 int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->iterNext(obj, tc);
@@ -814,7 +800,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_getLongValue,
     Object_getIntValue,
     Object_getDoubleValue,
-    Object_iterBegin,
     Object_iterNext,
     Object_iterEnd,
     Object_iterGetValue,

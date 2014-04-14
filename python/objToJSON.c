@@ -492,7 +492,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 
   obj = (PyObject*) _obj;
 
-  tc->prv = PyObject_Malloc(sizeof(TypeContext));
   pc = (TypeContext *) tc->prv;
   if (!pc)
   {
@@ -726,9 +725,6 @@ INVALID:
 void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
-
-  PyObject_Free(tc->prv);
-  tc->prv = NULL;
 }
 
 const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)

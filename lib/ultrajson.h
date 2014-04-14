@@ -161,8 +161,11 @@ enum JSTYPES
 typedef void * JSOBJ;
 typedef void * JSITER;
 
+#define JSON_TYPECONTEXT_PRIVATE_BUFFER_SIZE 128
+
 typedef struct __JSONTypeContext
 {
+  JSUINT8 prvBuffer[JSON_TYPECONTEXT_PRIVATE_BUFFER_SIZE];
   int type;
   void *prv;
   void *encoder_prv;

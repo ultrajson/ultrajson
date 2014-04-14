@@ -185,6 +185,20 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
   return NULL;
 }
 
+static void *NewObjPyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+    return PyStringToUTF8(GET_TC(tc)->newObj, tc, outValue, _outLen);
+}
+
+static void *NewObjPyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+    PyObject *toJsonObj = GET_TC(tc)->newObj;
+    void * ret = PyUnicodeToUTF8(toJsonObj, tc, outValue, _outLen);
+    Py_DECREF(toJsonObj);
+
+    return ret;
+}
+
 //=============================================================================
 // Tuple iteration functions
 // itemValue is borrowed reference, no ref counting
@@ -517,7 +531,7 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 {
-  PyObject *obj, *exc, *toDictFunc;
+  PyObject *obj, *exc, *toFunc;
   TypeContext *pc;
   PRINTMARK();
   if (!_obj) {
@@ -679,14 +693,14 @@ ISITERABLE:
     return;
   }
 
-  toDictFunc = PyObject_GetAttrString(obj, "toDict");
+  toFunc = PyObject_GetAttrString(obj, "toDict");
 
-  if (toDictFunc)
+  if (toFunc)
   {
     PyObject* tuple = PyTuple_New(0);
-    PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
+    PyObject* toDictResult = PyObject_Call(toFunc, tuple, NULL);
     Py_DECREF(tuple);
-    Py_DECREF(toDictFunc);
+    Py_DECREF(toFunc);
 
     if (toDictResult == NULL)
     {
@@ -711,6 +725,49 @@ ISITERABLE:
     pc->iterGetName = Dict_iterGetName;
     pc->dictObj = toDictResult;
     return;
+  }
+
+  PyErr_Clear();
+
+  toFunc = PyObject_GetAttrString(obj, "toJson");
+
+  if (toFunc)
+  {
+    PyObject* tuple = PyTuple_New(0);
+    PyObject* toJsonResult = PyObject_Call(toFunc, tuple, NULL);
+    Py_DECREF(tuple);
+    Py_DECREF(toFunc);
+
+    if (toJsonResult == NULL)
+    {
+      PyErr_Clear();
+      tc->type = JT_NULL;
+      return;
+    }
+
+    if (PyString_Check(toJsonResult))
+    {
+      PRINTMARK();
+      pc->PyTypeToJSON = NewObjPyStringToUTF8;
+      pc->newObj = toJsonResult;
+      tc->type = JT_JSON;
+      return;
+    }
+    else
+    if (PyUnicode_Check(toJsonResult))
+    {
+      PRINTMARK();
+      pc->PyTypeToJSON = NewObjPyUnicodeToUTF8;
+      pc->newObj = toJsonResult;
+      tc->type = JT_JSON;
+      return;
+    }
+    else
+    {
+      Py_DECREF(toJsonResult);
+      tc->type = JT_NULL;
+      return;
+    }
   }
 
   PyErr_Clear();

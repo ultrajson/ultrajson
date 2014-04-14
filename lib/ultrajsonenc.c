@@ -721,6 +721,21 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
         return;
       }
 
+      case JT_JSON:
+      {
+        value = enc->getStringValue(obj, &tc, &szlen);
+        Buffer_Reserve(enc, szlen);
+        if (enc->errorMsg)
+        {
+          enc->endTypeContext(obj, &tc);
+          return;
+        }
+
+        memcpy(enc->offset, value, szlen);
+        enc->offset += szlen;
+        break;
+      }
+
       case JT_ARRAY:
       {
         count = 0;

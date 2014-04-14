@@ -802,6 +802,19 @@ class UltraJSONTests(TestCase):
         dec = ujson.decode(output)
         self.assertEquals(dec, d)
 
+    def test_toJson(self):
+        d = {u"key": 31337}
+        json = ujson.encode(d)
+
+        class AlreadyJson:
+            def toJson(self):
+                return json
+
+        o = AlreadyJson()
+        output = ujson.encode(o)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, d)
+
     def test_decodeArrayTrailingCommaFail(self):
         input = "[31337,]"
         try:

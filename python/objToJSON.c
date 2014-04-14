@@ -813,6 +813,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars
+    NULL, //prv
   };
 
 

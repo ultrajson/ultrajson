@@ -165,6 +165,7 @@ typedef struct __JSONTypeContext
 {
   int type;
   void *prv;
+  void *encoder_prv;
 } JSONTypeContext;
 
 /*
@@ -227,7 +228,7 @@ typedef struct __JSONObjectEncoder
   int recursionMax;
 
   /*
-  Configuration for max decimals of double floating poiunt numbers to encode (0-9) */
+  Configuration for max decimals of double floating point numbers to encode (0-9) */
   int doublePrecision;
 
   /*
@@ -237,6 +238,10 @@ typedef struct __JSONObjectEncoder
   /*
   If true, '<', '>', and '&' characters will be encoded as \u003c, \u003e, and \u0026, respectively. If false, no special encoding will be used. */
   int encodeHTMLChars;
+
+  /*
+  Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
+  void *prv;
 
   /*
   Set to an error message if error occured */

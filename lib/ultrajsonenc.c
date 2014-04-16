@@ -714,7 +714,6 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     }
 
     tc.encoder_prv = enc->prv;
-    tc.prv = (void *) tc.prvBuffer;
     enc->beginTypeContext(obj, &tc);
 
     switch (tc.type)

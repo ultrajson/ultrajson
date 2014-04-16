@@ -145,7 +145,6 @@ for x in xrange(256):
 COUNT = 10000
 
 print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEnc()", "from __main__ import ujsonEnc", gettime,10, COUNT)), )
-print "cjson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("cjsonEnc()", "from __main__ import cjsonEnc", gettime, 10, COUNT)), )
 print "yajl  encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlEnc()", "from __main__ import yajlEnc", gettime, 10, COUNT)), )
 
 decodeData = json.dumps(testObject)

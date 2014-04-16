@@ -232,7 +232,12 @@ class UltraJSONTests(TestCase):
         s = u'\U0001f42e\U0001f42e\U0001F42D\U0001F42D' # 🐮🐮🐭🐭
         encoded = ujson.dumps(s)
         encoded_json = json.dumps(s)
-        self.assertEqual(len(encoded), len(s) * 12 + 2) # 12 characters + quotes
+		
+        if len(s) == 4:
+            self.assertEqual(len(encoded), len(s) * 12 + 2)
+        else:
+            self.assertEqual(len(encoded), len(s) * 6 + 2) 
+          
         self.assertEqual(encoded, encoded_json)
         decoded = ujson.loads(encoded)
         self.assertEqual(s, decoded)
@@ -952,6 +957,21 @@ class UltraJSONTests(TestCase):
             s.add(x)
         ujson.encode(s)
 
+    def test_encodeBlist(self):
+        try:
+            from blist import blist
+        except ImportError:
+            return
+
+        b = blist(range(10))
+        c = ujson.dumps(b)
+        d = ujson.loads(c)
+
+        self.assertEquals(10, len(d))
+
+        for x in xrange(10):
+            self.assertEquals(x, d[x])
+
     def test_encodeEmptySet(self):
         s = set()
         self.assertEquals("[]", ujson.encode(s))
@@ -999,6 +1019,7 @@ class UltraJSONTests(TestCase):
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
 
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"
@@ -1022,12 +1043,13 @@ input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 
 """
+
 if __name__ == "__main__":
     unittest.main()
 
 
-# Use this to look for memory leaks
 """
+# Use this to look for memory leaks
 if __name__ == '__main__':
     from guppy import hpy
     hp = hpy()
@@ -1039,5 +1061,5 @@ if __name__ == '__main__':
             pass
         heap = hp.heapu()
         print heap
-"""
 
+"""

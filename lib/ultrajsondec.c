@@ -1,5 +1,6 @@
 /*
-Copyright (c) 2011-2013, ESN Social Software AB and Jonas Tarnstrom
+Developed by ESN, an Electronic Arts Inc. studio. 
+Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -9,14 +10,14 @@ notice, this list of conditions and the following disclaimer.
 * Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
-* Neither the name of the ESN Social Software AB nor the
+* Neither the name of ESN, Electronic Arts Inc. nor the
 names of its contributors may be used to endorse or promote products
 derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ESN SOCIAL SOFTWARE AB OR JONAS TARNSTROM BE LIABLE
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -432,7 +433,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 
     if (ds->escHeap)
     {
-      if (newSize > (UINT_MAX / sizeof(wchar_t)))
+      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
@@ -448,7 +449,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
     {
       wchar_t *oldStart = ds->escStart;
       ds->escHeap = 1;
-      if (newSize > (UINT_MAX / sizeof(wchar_t)))
+      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }

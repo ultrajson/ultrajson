@@ -1,22 +1,23 @@
 /*
-Copyright (c) 2011-2013, ESN Social Software AB and Jonas Tarnstrom
+Developed by ESN, an Electronic Arts Inc. studio. 
+Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the ESN Social Software AB nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+* Neither the name of ESN, Electronic Arts Inc. nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ESN SOCIAL SOFTWARE AB OR JONAS TARNSTROM BE LIABLE
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -160,15 +161,18 @@ enum JSTYPES
 typedef void * JSOBJ;
 typedef void * JSITER;
 
+#define JSON_TYPECONTEXT_PRIVATE_BUFFER_SIZE 128
+
 typedef struct __JSONTypeContext
 {
+  JSUINT8 prvBuffer[JSON_TYPECONTEXT_PRIVATE_BUFFER_SIZE];
   int type;
   void *prv;
+  void *encoder_prv;
 } JSONTypeContext;
 
 /*
 Function pointer declarations, suitable for implementing UltraJSON */
-typedef void (*JSPFN_ITERBEGIN)(JSOBJ obj, JSONTypeContext *tc);
 typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
 typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
 typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *tc);
@@ -185,12 +189,6 @@ typedef struct __JSONObjectEncoder
   JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
   JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
   double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
-
-  /*
-  Begin iteration of an iteratable object (JS_ARRAY or JS_OBJECT)
-  Implementor should setup iteration state in ti->prv
-  */
-  JSPFN_ITERBEGIN iterBegin;
 
   /*
   Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items.
@@ -233,7 +231,7 @@ typedef struct __JSONObjectEncoder
   int recursionMax;
 
   /*
-  Configuration for max decimals of double floating poiunt numbers to encode (0-9) */
+  Configuration for max decimals of double floating point numbers to encode (0-9) */
   int doublePrecision;
 
   /*
@@ -243,6 +241,10 @@ typedef struct __JSONObjectEncoder
   /*
   If true, '<', '>', and '&' characters will be encoded as \u003c, \u003e, and \u0026, respectively. If false, no special encoding will be used. */
   int encodeHTMLChars;
+
+  /*
+  Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
+  void *prv;
 
   /*
   Set to an error message if error occured */

@@ -293,6 +293,7 @@ typedef struct __JSONObjectDecoder
   JSOBJ (*newArray)(void *prv);
   JSOBJ (*newInt)(void *prv, JSINT32 value);
   JSOBJ (*newLong)(void *prv, JSINT64 value);
+  JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
   JSOBJ (*newDouble)(void *prv, double value);
   void (*releaseObject)(void *prv, JSOBJ obj);
   JSPFN_MALLOC malloc;

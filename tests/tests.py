@@ -3,7 +3,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-from unittest import TestCase
 
 import ujson
 try:
@@ -38,7 +37,7 @@ def _python_ver(skip_major, skip_minor=None):
 json_unicode = (json.dumps if sys.version_info[0] >= 3
                 else partial(json.dumps, encoding="utf-8"))
 
-class UltraJSONTests(TestCase):
+class UltraJSONTests(unittest.TestCase):
 
     def test_encodeDecimal(self):
         sut = decimal.Decimal("1337.1337")

@@ -1,5 +1,7 @@
 UltraJSON
 =============
+.. image:: https://travis-ci.org/esnme/ultrajson.svg?branch=master
+    :target: https://travis-ci.org/esnme/ultrajson
 UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
 
 For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.

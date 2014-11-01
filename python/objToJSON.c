@@ -67,6 +67,7 @@ typedef struct __TypeContext
   PyObject *iterator;
 
   JSINT64 longValue;
+  PyObject *unicodeValue;
 } TypeContext;
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
@@ -145,6 +146,14 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 
   *_outLen = PyString_GET_SIZE(newObj);
   return PyString_AS_STRING(newObj);
+}
+
+static void *PyObjToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  PyObject *obj = GET_TC(tc)->unicodeValue;
+  void *retValue = PyUnicodeToUTF8(obj, tc, outValue, _outLen);
+  Py_DECREF(obj);
+  return retValue;
 }
 
 static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -486,7 +495,7 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc)
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
 {
-  PyObject *obj, *exc, *toDictFunc, *iter;
+  PyObject *obj, *exc, *iter;
   TypeContext *pc;
   PRINTMARK();
   if (!_obj) {
@@ -513,6 +522,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
   pc->index = 0;
   pc->size = 0;
   pc->longValue = 0;
+  pc->unicodeValue = NULL;
 
   if (PyIter_Check(obj))
   {
@@ -650,10 +660,9 @@ ISITERABLE:
   }
   */
 
-  toDictFunc = PyObject_GetAttrString(obj, "toDict");
-
-  if (toDictFunc)
+  if (PyObject_HasAttrString(obj, "toDict"))
   {
+    PyObject* toDictFunc = PyObject_GetAttrString(obj, "toDict");
     PyObject* tuple = PyTuple_New(0);
     PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
     Py_DECREF(tuple);
@@ -676,6 +685,23 @@ ISITERABLE:
     PRINTMARK();
     tc->type = JT_OBJECT;
     SetupDictIter(toDictResult, pc);
+    return;
+  } else if (PyObject_HasAttrString(obj, "__unicode__")) {
+    // Since __unicode__ will fall back to calling __repr__ if the object
+    // doesn't define it, we don't want to want to use it as the serialized
+    // value of the object unless the object explicitly defines it.
+    PyObject* unicodeResult = PyObject_Unicode(obj);
+
+    // If calling unicode throws an exception, we'll let python raise it.
+    if (unicodeResult == NULL)
+    {
+      goto INVALID;
+    }
+
+    // Set the JSON type and store the unicode result temporarily.
+    pc->PyTypeToJSON = PyObjToUTF8;
+    tc->type = JT_UTF8;
+    GET_TC(tc)->unicodeValue = unicodeResult;
     return;
   }
 

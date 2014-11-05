@@ -3,7 +3,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-from unittest import TestCase
 
 import ujson
 try:
@@ -16,13 +15,20 @@ import sys
 import time
 import datetime
 import calendar
-import StringIO
+
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO
+
 import re
 import random
 import decimal
 from functools import partial
 
 PY3 = (sys.version_info[0] >= 3)
+if PY3:
+    xrange = range
 
 def _python_ver(skip_major, skip_minor=None):
     major, minor = sys.version_info[:2]
@@ -31,7 +37,7 @@ def _python_ver(skip_major, skip_minor=None):
 json_unicode = (json.dumps if sys.version_info[0] >= 3
                 else partial(json.dumps, encoding="utf-8"))
 
-class UltraJSONTests(TestCase):
+class UltraJSONTests(unittest.TestCase):
 
     def test_encodeDecimal(self):
         sut = decimal.Decimal("1337.1337")
@@ -243,9 +249,11 @@ class UltraJSONTests(TestCase):
         self.assertEqual(s, decoded)
 
         # ujson outputs an UTF-8 encoded str object
-        encoded = ujson.dumps(s, ensure_ascii=False)
-        if not PY3:
-            encoded = encoded.decode("utf-8")
+        if PY3:
+            encoded = ujson.dumps(s, ensure_ascii=False)
+        else:
+            encoded = ujson.dumps(s, ensure_ascii=False).decode("utf-8")
+
         # json outputs an unicode object
         encoded_json = json.dumps(s, ensure_ascii=False)
         self.assertEqual(len(encoded), len(s) + 2) # original length + quotes
@@ -263,9 +271,10 @@ class UltraJSONTests(TestCase):
         self.assertEqual(s, decoded)
 
         # ujson outputs an UTF-8 encoded str object
-        encoded = ujson.dumps(s, ensure_ascii=False)
-        if not PY3:
-            encoded = encoded.decode("utf-8")
+        if PY3:
+            encoded = ujson.dumps(s, ensure_ascii=False)
+        else:
+            encoded = ujson.dumps(s, ensure_ascii=False).decode("utf-8")
 
         # json outputs an unicode object
         encoded_json = json.dumps(s, ensure_ascii=False)
@@ -611,9 +620,8 @@ class UltraJSONTests(TestCase):
         input = "-31337"
         self.assertEqual (-31337, ujson.decode(input))
 
-    @unittest.skipIf(_python_ver(3), "No exception in Python 3")
     def test_encodeUnicode4BytesUTF8Fail(self):
-        input = "\xfd\xbf\xbf\xbf\xbf\xbf"
+        input = b"\xfd\xbf\xbf\xbf\xbf\xbf"
         try:
             enc = ujson.encode(input)
             assert False, "Expected exception"
@@ -694,7 +702,7 @@ class UltraJSONTests(TestCase):
         self.assertEqual(output, json.loads(input))
 
     def test_dumpToFile(self):
-        f = StringIO.StringIO()
+        f = StringIO()
         ujson.dump([1, 2, 3], f)
         self.assertEqual("[1,2,3]", f.getvalue())
 
@@ -717,7 +725,7 @@ class UltraJSONTests(TestCase):
             assert False, 'expected TypeError'
 
     def test_loadFile(self):
-        f = StringIO.StringIO("[1,2,3,4]")
+        f = StringIO("[1,2,3,4]")
         self.assertEqual([1, 2, 3, 4], ujson.load(f))
 
     def test_loadFileLikeObject(self):
@@ -874,7 +882,7 @@ class UltraJSONTests(TestCase):
         try:
             input = "9223372036854775808"
             ujson.decode(input)
-        except ValueError, e:
+        except ValueError as e:
             pass
         else:
             assert False, "expected ValueError"
@@ -883,7 +891,7 @@ class UltraJSONTests(TestCase):
         try:
             input = "-90223372036854775809"
             ujson.decode(input)
-        except ValueError,e:
+        except ValueError as e:
             pass
         else:
             assert False, "expected ValueError"
@@ -1024,6 +1032,10 @@ class UltraJSONTests(TestCase):
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
 
+    @unittest.skipIf(not PY3, "Only raises on Python 3")
+    def test_encodingInvalidUnicodeCharacter(self):
+        s = "\udc7f"
+        self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
 
 """
 def test_decodeNumericIntFrcOverflow(self):

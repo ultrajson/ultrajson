@@ -26,6 +26,11 @@ import random
 import decimal
 from functools import partial
 
+try:
+    from UserDict import UserDict
+except ImportError:
+    from collections import UserDict
+
 PY3 = (sys.version_info[0] >= 3)
 if PY3:
     xrange = range
@@ -555,7 +560,7 @@ class UltraJSONTests(unittest.TestCase):
             try:
                 ujson.decode(input)
                 assert False, "Expected exception!"
-            except(ValueError) as e:
+            except(ValueError),e:
                 continue
 
             assert False, "Wrong exception"
@@ -1036,6 +1041,14 @@ class UltraJSONTests(unittest.TestCase):
     def test_encodingInvalidUnicodeCharacter(self):
         s = "\udc7f"
         self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
+
+    def test_encodeMapping(self):
+        d = {u"key": 31337}
+
+        ud = UserDict(d)
+        output = ujson.encode(ud)
+        dec = ujson.decode(output)
+        self.assertEqual(dec, d)
 
 """
 def test_decodeNumericIntFrcOverflow(self):

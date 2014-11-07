@@ -17,6 +17,7 @@ import time
 import datetime
 import calendar
 import StringIO
+import pytz
 import re
 import random
 import decimal
@@ -354,6 +355,22 @@ class UltraJSONTests(TestCase):
         expected = calendar.timegm(tup)
         self.assertEquals(int(expected), json.loads(output))
         self.assertEquals(int(expected), ujson.decode(output))
+
+    def test_encodeWithTimezone(self):
+        start_timestamp = 1383647400
+        a = datetime.datetime.utcfromtimestamp(start_timestamp)
+
+        a = a.replace(tzinfo=pytz.utc)
+        b = a.astimezone(pytz.timezone('America/New_York'))
+        c = b.astimezone(pytz.utc)
+
+        d = {'a':a, 'b':b, 'c':c}
+        json_string = ujson.encode(d)
+        json_dict = ujson.decode(json_string)
+
+        self.assertEqual(json_dict.get('a'),start_timestamp)
+        self.assertEqual(json_dict.get('b'),start_timestamp)
+        self.assertEqual(json_dict.get('c'),start_timestamp)
 
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"

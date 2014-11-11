@@ -641,9 +641,24 @@ class UltraJSONTests(TestCase):
         self.assertEquals(input, json.loads(output))
         self.assertEquals(input, ujson.decode(output))
 
+    def test_encodeListLongUnsignedConversion(self):
+        input = [18446744073709551615, 18446744073709551615, 18446744073709551615]
+        output = ujson.encode(input)
+
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(input, ujson.decode(output))
+
     def test_encodeLongConversion(self):
         input = 9223372036854775807
         output = ujson.encode(input)
+        self.assertEquals(input, json.loads(output))
+        self.assertEquals(output, json.dumps(input))
+        self.assertEquals(input, ujson.decode(output))
+
+    def test_encodeLongUnsignedConversion(self):
+        input = 18446744073709551615
+        output = ujson.encode(input)
+
         self.assertEquals(input, json.loads(output))
         self.assertEquals(output, json.dumps(input))
         self.assertEquals(input, ujson.decode(output))

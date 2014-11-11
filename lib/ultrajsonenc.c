@@ -510,6 +510,21 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
   enc->offset += (wstr - (enc->offset));
 }
 
+void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
+{
+  char* wstr;
+  JSUINT64 uvalue = value;
+
+  wstr = enc->offset;
+  // Conversion. Number is reversed.
+
+  do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
+
+  // Reverse string
+  strreverse(enc->offset,wstr - 1);
+  enc->offset += (wstr - (enc->offset));
+}
+
 int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
 {
   /* if input is larger than thres_max, revert to exponential */
@@ -783,6 +798,12 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
   case JT_LONG:
   {
     Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
+    break;
+  }
+
+  case JT_ULONG:
+  {
+    Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
     break;
   }
 

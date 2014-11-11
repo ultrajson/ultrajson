@@ -857,6 +857,10 @@ class UltraJSONTests(TestCase):
         input = "[31337]"
         ujson.decode(input)
 
+    def test_decodeLongUnsignedValue(self):
+        input = "18446744073709551615"
+        ujson.decode(input)
+
     def test_decodeBigValue(self):
         input = "9223372036854775807"
         ujson.decode(input)
@@ -867,7 +871,7 @@ class UltraJSONTests(TestCase):
 
     def test_decodeTooBigValue(self):
         try:
-            input = "9223372036854775808"
+            input = "18446744073709551616"
             ujson.decode(input)
         except ValueError, e:
             pass
@@ -885,7 +889,7 @@ class UltraJSONTests(TestCase):
 
     def test_decodeVeryTooBigValue(self):
         try:
-            input = "9223372036854775808"
+            input = "18446744073709551616"
             ujson.decode(input)
         except ValueError:
             pass
@@ -916,7 +920,7 @@ class UltraJSONTests(TestCase):
 
     def test_decodeArrayWithBigInt(self):
         try:
-            ujson.loads('[18446098363113800555]')
+            ujson.loads('[18446744073709551616]')
         except ValueError:
             pass
         else:
@@ -924,7 +928,7 @@ class UltraJSONTests(TestCase):
 
     def test_decodeArrayFaultyUnicode(self):
         try:
-            ujson.loads('[18446098363113800555]')
+            ujson.loads('[18446744073709551616]')
         except ValueError:
             pass
         else:

@@ -154,6 +154,7 @@ enum JSTYPES
   JT_ULONG,     // (JSUINT64 (unsigned 64-bit))
   JT_DOUBLE,    // (double)
   JT_UTF8,      // (char 8-bit)
+  JT_RAW,       // (raw char 8-bit)
   JT_ARRAY,     // Array structure
   JT_OBJECT,    // Key/Value structure
   JT_INVALID,   // Internal, do not return nor expect

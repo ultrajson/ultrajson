@@ -823,17 +823,87 @@ class UltraJSONTests(unittest.TestCase):
             input = quote + (base * 1024 * 1024 * 2) + quote
             output = ujson.decode(input)
 
+    def test_object_default(self):
+        # An object without toDict or __json__ defined should be serialized
+        # as an empty dict.
+        class ObjectTest:
+            pass
+
+        output = ujson.encode(ObjectTest())
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {})
+
     def test_toDict(self):
         d = {u"key": 31337}
 
         class DictTest:
             def toDict(self):
                 return d
+            def __json__(self):
+                return '"json defined"' # Fallback and shouldn't be called.
 
         o = DictTest()
         output = ujson.encode(o)
         dec = ujson.decode(output)
         self.assertEqual(dec, d)
+
+    def test_object_with_json(self):
+        # If __json__ returns a string, then that string
+        # will be used as a raw JSON snippet in the object.
+        output_text = 'this is the correct output'
+        class JSONTest:
+            def __json__(self):
+                return '"' + output_text + '"'
+
+        d = {u'key': JSONTest()}
+        output = ujson.encode(d)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {u'key': output_text})
+
+    def test_object_with_json_unicode(self):
+        # If __json__ returns a string, then that string
+        # will be used as a raw JSON snippet in the object.
+        output_text = u'this is the correct output'
+        class JSONTest:
+            def __json__(self):
+                return u'"' + output_text + u'"'
+
+        d = {u'key': JSONTest()}
+        output = ujson.encode(d)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {u'key': output_text})
+
+    def test_object_with_complex_json(self):
+        # If __json__ returns a string, then that string
+        # will be used as a raw JSON snippet in the object.
+        obj = {u'foo': [u'bar', u'baz']}
+        class JSONTest:
+            def __json__(self):
+                return ujson.encode(obj)
+
+        d = {u'key': JSONTest()}
+        output = ujson.encode(d)
+        dec = ujson.decode(output)
+        self.assertEquals(dec, {u'key': obj})
+
+    def test_object_with_json_type_error(self):
+        # __json__ must return a string, otherwise it should raise an error.
+        for return_value in (None, 1234, 12.34, True, {}):
+            class JSONTest:
+                def __json__(self):
+                    return return_value
+
+            d = {u'key': JSONTest()}
+            self.assertRaises(TypeError, ujson.encode, d)
+
+    def test_object_with_json_attribute_error(self):
+        # If __json__ raises an error, make sure python actually raises it.
+        class JSONTest:
+            def __json__(self):
+                raise AttributeError
+
+        d = {u'key': JSONTest()}
+        self.assertRaises(AttributeError, ujson.encode, d)
 
     def test_decodeArrayTrailingCommaFail(self):
         input = "[31337,]"

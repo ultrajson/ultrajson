@@ -145,6 +145,7 @@ static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
 static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
+  PyObject *newObj;
 #if (PY_VERSION_HEX >= 0x03030000)
   if(PyUnicode_IS_COMPACT_ASCII(obj))
   {
@@ -154,7 +155,7 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
     return data;
   }
 #endif
-  PyObject *newObj = PyUnicode_EncodeUTF8 (PyUnicode_AS_UNICODE(obj), PyUnicode_GET_SIZE(obj), NULL);
+  newObj = PyUnicode_AsUTF8String(obj);
   if(!newObj)
   {
     return NULL;

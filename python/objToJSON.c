@@ -597,16 +597,16 @@ char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
 {
   if (enc->sortKeys) {
-    pc->iterEnd = Dict_iterEnd;
-    pc->iterNext = Dict_iterNext;
-    pc->iterGetValue = Dict_iterGetValue;
-    pc->iterGetName = Dict_iterGetName;
-  }
-  else {
     pc->iterEnd = SortedDict_iterEnd;
     pc->iterNext = SortedDict_iterNext;
     pc->iterGetValue = SortedDict_iterGetValue;
     pc->iterGetName = SortedDict_iterGetName;
+  }
+  else {
+    pc->iterEnd = Dict_iterEnd;
+    pc->iterNext = Dict_iterNext;
+    pc->iterGetValue = Dict_iterGetValue;
+    pc->iterGetName = Dict_iterGetName;
   }
   pc->dictObj = dictObj;
   pc->index = 0;

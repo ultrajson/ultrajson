@@ -749,7 +749,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     }
 
     tc.encoder_prv = enc->prv;
-    enc->beginTypeContext(obj, &tc);
+    enc->beginTypeContext(obj, &tc, enc);
 
     switch (tc.type)
     {

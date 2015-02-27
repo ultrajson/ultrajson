@@ -818,7 +818,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "indent", NULL};
 
   char buffer[65536];
   char *ret;
@@ -848,13 +848,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars
+    0, //indent
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOi", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &encoder.indent))
   {
     return NULL;
   }

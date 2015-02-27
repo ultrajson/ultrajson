@@ -245,12 +245,17 @@ typedef struct __JSONObjectEncoder
   int encodeHTMLChars;
 
   /*
+<<<<<<< HEAD
   If true, '/' will be encoded as \/. If false, no escaping. */
   int escapeForwardSlashes;
 
   /*
   If true, dictionaries are iterated through in sorted key order. */
   int sortKeys;
+
+  /*
+  Configuration for spaces of indent */
+  int indent;
 
   /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */

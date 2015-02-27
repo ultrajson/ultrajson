@@ -498,6 +498,20 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end
   aux = *end, *end-- = *begin, *begin++ = aux;
 }
 
+void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
+{
+  if (enc->indent > 0) Buffer_AppendCharUnchecked(enc, '\n');
+}
+
+void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+{
+  int i;
+  if (enc->indent > 0)
+    while (value-- > 0)
+      for (i = 0; i < enc->indent; i++)
+        Buffer_AppendCharUnchecked(enc, ' ');
+}
+
 void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
   char* wstr;
@@ -763,6 +777,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
         count = 0;
 
         Buffer_AppendCharUnchecked (enc, '[');
+        Buffer_AppendIndentNewlineUnchecked (enc);
 
         while (enc->iterNext(obj, &tc))
         {
@@ -772,16 +787,20 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #ifndef JSON_NO_EXTRA_WHITESPACE
             Buffer_AppendCharUnchecked (buffer, ' ');
 #endif
+            Buffer_AppendIndentNewlineUnchecked (enc);
           }
 
           iterObj = enc->iterGetValue(obj, &tc);
 
           enc->level ++;
+          Buffer_AppendIndentUnchecked (enc, enc->level);
           encode (iterObj, enc, NULL, 0);
           count ++;
       }
 
       enc->iterEnd(obj, &tc);
+      Buffer_AppendIndentNewlineUnchecked (enc);
+      Buffer_AppendIndentUnchecked (enc, enc->level);
       Buffer_AppendCharUnchecked (enc, ']');
       break;
   }
@@ -791,6 +810,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     count = 0;
 
     Buffer_AppendCharUnchecked (enc, '{');
+    Buffer_AppendIndentNewlineUnchecked (enc);
 
     while (enc->iterNext(obj, &tc))
     {
@@ -800,17 +820,21 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #ifndef JSON_NO_EXTRA_WHITESPACE
         Buffer_AppendCharUnchecked (enc, ' ');
 #endif
+        Buffer_AppendIndentNewlineUnchecked (enc);
       }
 
       iterObj = enc->iterGetValue(obj, &tc);
       objName = enc->iterGetName(obj, &tc, &szlen);
 
       enc->level ++;
+      Buffer_AppendIndentUnchecked (enc, enc->level);
       encode (iterObj, enc, objName, szlen);
       count ++;
     }
 
     enc->iterEnd(obj, &tc);
+    Buffer_AppendIndentNewlineUnchecked (enc);
+    Buffer_AppendIndentUnchecked (enc, enc->level);
     Buffer_AppendCharUnchecked (enc, '}');
     break;
   }

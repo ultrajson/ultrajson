@@ -946,7 +946,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
 
   char buffer[65536];
   char *ret;
@@ -980,13 +980,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //encodeHTMLChars
     1, //escapeForwardSlashes
     0, //sortKeys
+    0, //indent
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOi", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
   {
     return NULL;
   }

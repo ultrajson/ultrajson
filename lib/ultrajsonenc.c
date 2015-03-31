@@ -184,7 +184,6 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
       }
       case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
       case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
-      case '/':  (*of++) = '\\'; (*of++) = '/'; break;
       case '\b': (*of++) = '\\'; (*of++) = 'b'; break;
       case '\f': (*of++) = '\\'; (*of++) = 'f'; break;
       case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
@@ -205,6 +204,19 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
           (*of++) = (*io);
           break;
         }
+      }
+      case '/':
+      {
+        if (enc->escapeForwardSlashes)
+        {
+          (*of++) = '\\'; (*of++) = '/';
+        }
+        else
+        {
+          // Same as default case below.
+          (*of++) = (*io);
+        }
+        break;
       }
       case 0x01:
       case 0x02:
@@ -423,9 +435,17 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
       case 22:
       case 24:
       {
-        *(of++) = *( (char *) (g_escapeChars + utflen + 0));
-        *(of++) = *( (char *) (g_escapeChars + utflen + 1));
-        io ++;
+        if (enc->escapeForwardSlashes)
+        {
+          *(of++) = *( (char *) (g_escapeChars + utflen + 0));
+          *(of++) = *( (char *) (g_escapeChars + utflen + 1));
+          io ++;
+        }
+        else
+        {
+          // Same as case 1 above.
+          *(of++) = (*io++);
+        }
         continue;
       }
       // This can never happen, it's here to make L4 VC++ happy

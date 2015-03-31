@@ -49,6 +49,7 @@ class UltraJSONTests(unittest.TestCase):
         input = "A string \\ / \b \f \n \r \t </script> &"
         not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
         html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"'
+        not_slashes_escaped = input
 
         def helper(expected_output, **encode_kwargs):
             output = ujson.encode(input, **encode_kwargs)
@@ -67,6 +68,9 @@ class UltraJSONTests(unittest.TestCase):
         # Make sure explicit encode_html_chars=True does the encoding.
         helper(html_encoded, ensure_ascii=True, encode_html_chars=True)
         helper(html_encoded, ensure_ascii=False, encode_html_chars=True)
+
+        # Do escape forward slashes if disabled.
+        helper(not_slashes_escaped, escape_forward_slashes=False)
 
     def testWriteEscapedString(self):
         self.assertEqual('"\\u003cimg src=\'\\u0026amp;\'\\/\\u003e"', ujson.dumps("<img src='&amp;'/>", encode_html_chars=True))

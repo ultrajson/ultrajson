@@ -242,6 +242,10 @@ typedef struct __JSONObjectEncoder
   int encodeHTMLChars;
 
   /*
+  Configuration for spaces of indent */
+  int indent;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

@@ -493,18 +493,136 @@ char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return PyString_AS_STRING(GET_TC(tc)->itemName);
 }
 
-
-void SetupDictIter(PyObject *dictObj, TypeContext *pc)
+int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-  pc->iterEnd = Dict_iterEnd;
-  pc->iterNext = Dict_iterNext;
-  pc->iterGetValue = Dict_iterGetValue;
-  pc->iterGetName = Dict_iterGetName;
+  PyObject *items = NULL, *item = NULL, *key = NULL, *value = NULL;
+  Py_ssize_t i, nitems;
+#if PY_MAJOR_VERSION >= 3
+  PyObject* keyTmp;
+#endif
+
+  // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
+  // stanard library's _json.c sort_keys handler.
+  if (GET_TC(tc)->newObj == NULL)
+  {
+    // Obtain the list of keys from the dictionary.
+    items = PyMapping_Keys(GET_TC(tc)->dictObj);
+    if (items == NULL)
+    {
+      goto error;
+    }
+    else if (!PyList_Check(items))
+    {
+      PyErr_SetString(PyExc_ValueError, "keys must return list");
+      goto error;
+    }
+
+    // Sort the list.
+    if (PyList_Sort(items) < 0)
+    {
+      goto error;
+    }
+
+    // Obtain the value for each key, and pack a list of (key, value) 2-tuples.
+    nitems = PyList_GET_SIZE(items);
+    for (i = 0; i < nitems; i++)
+    {
+      key = PyList_GET_ITEM(items, i);
+      value = PyDict_GetItem(GET_TC(tc)->dictObj, key);
+
+      // Subject the key to the same type restrictions and conversions as in Dict_iterGetValue.
+      if (PyUnicode_Check(key))
+      {
+        key = PyUnicode_AsUTF8String(key);
+      }
+      else if (!PyString_Check(key))
+      {
+        key = PyObject_Str(key);
+#if PY_MAJOR_VERSION >= 3
+        keyTmp = key;
+        key = PyUnicode_AsUTF8String(key);
+        Py_DECREF(keyTmp);
+#endif
+      }
+      else
+      {
+        Py_INCREF(key);
+      }
+
+      item = PyTuple_Pack(2, key, value);
+      if (item == NULL)
+      {
+        goto error;
+      }
+      PyList_SET_ITEM(items, i, item);
+      Py_DECREF(key);
+    }
+
+    // Store the sorted list of tuples in the newObj slot.
+    GET_TC(tc)->newObj = items;
+    GET_TC(tc)->size = nitems;
+  }
+
+  if (GET_TC(tc)->index >= GET_TC(tc)->size)
+  {
+    PRINTMARK();
+    return 0;
+  }
+
+  item = PyList_GET_ITEM(GET_TC(tc)->newObj, GET_TC(tc)->index);
+  GET_TC(tc)->itemName = PyTuple_GET_ITEM(item, 0);
+  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(item, 1);
+  GET_TC(tc)->index++;
+  return 1;
+
+error:
+  Py_XDECREF(item);
+  Py_XDECREF(key);
+  Py_XDECREF(value);
+  Py_XDECREF(items);
+  return -1;
+}
+
+void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+{
+  GET_TC(tc)->itemName = NULL;
+  GET_TC(tc)->itemValue = NULL;
+  Py_DECREF(GET_TC(tc)->newObj);
+  Py_DECREF(GET_TC(tc)->dictObj);
+  PRINTMARK();
+}
+
+JSOBJ SortedDict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+{
+  return GET_TC(tc)->itemValue;
+}
+
+char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+{
+  *outLen = PyString_GET_SIZE(GET_TC(tc)->itemName);
+  return PyString_AS_STRING(GET_TC(tc)->itemName);
+}
+
+
+void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
+{
+  if (enc->sortKeys) {
+    pc->iterEnd = SortedDict_iterEnd;
+    pc->iterNext = SortedDict_iterNext;
+    pc->iterGetValue = SortedDict_iterGetValue;
+    pc->iterGetName = SortedDict_iterGetName;
+  }
+  else {
+    pc->iterEnd = Dict_iterEnd;
+    pc->iterNext = Dict_iterNext;
+    pc->iterGetValue = Dict_iterGetValue;
+    pc->iterGetName = Dict_iterGetName;
+  }
   pc->dictObj = dictObj;
   pc->index = 0;
 }
 
-void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc)
+void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
   PyObject *obj, *exc, *toDictFunc, *iter;
   TypeContext *pc;
@@ -636,7 +754,7 @@ ISITERABLE:
   {
     PRINTMARK();
     tc->type = JT_OBJECT;
-    SetupDictIter(obj, pc);
+    SetupDictIter(obj, pc, enc);
     Py_INCREF(obj);
     return;
   }
@@ -708,7 +826,7 @@ ISITERABLE:
 
     PRINTMARK();
     tc->type = JT_OBJECT;
-    SetupDictIter(toDictResult, pc);
+    SetupDictIter(toDictResult, pc, enc);
     return;
   }
 
@@ -828,7 +946,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "sort_keys", NULL};
 
   char buffer[65536];
   char *ret;
@@ -836,6 +954,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
   PyObject *oencodeHTMLChars = NULL;
+  PyObject *osortKeys = NULL;
 
   JSONObjectEncoder encoder =
   {
@@ -858,13 +977,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars
+    0, //sortKeys
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &osortKeys))
   {
     return NULL;
   }
@@ -877,6 +997,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
   {
     encoder.encodeHTMLChars = 1;
+  }
+
+  if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
+  {
+    encoder.sortKeys = 1;
   }
 
   PRINTMARK();

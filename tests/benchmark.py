@@ -41,6 +41,24 @@ def yajlEnc():
 
 """=========================================================================="""
 
+def ujsonEncSorted():
+    x = ujson.encode(testObject, ensure_ascii=False, sort_keys=True)
+    #print "ujsonEnc", x
+
+def simplejsonEncSorted():
+    x = simplejson.dumps(testObject, sort_keys=True)
+    #print "simplejsonEnc", x
+
+def jsonEncSorted():
+    x = json.dumps(testObject, sort_keys=True)
+    #print "jsonEnc", x
+
+def yajlEncSorted():
+    x = yajl.dumps(testObject, sort_keys=True)
+    #print "yaylEnc", x
+
+"""=========================================================================="""
+
 def ujsonDec():
     x = ujson.decode(decodeData)
     #print "ujsonDec: ", x
@@ -212,3 +230,8 @@ print "ujson decode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonD
 print "simplejson decode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonDec()", "from __main__ import simplejsonDec", gettime,10, COUNT)), )
 print "yajl decode       : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlDec()", "from __main__ import yajlDec", gettime,10, COUNT)), )
 
+print "Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys:"
+
+print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEncSorted()", "from __main__ import ujsonEncSorted", gettime,10, COUNT)), )
+print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEncSorted()", "from __main__ import simplejsonEncSorted", gettime,10, COUNT)), )
+print "yajl  encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlEncSorted()", "from __main__ import yajlEncSorted", gettime, 10, COUNT)), )

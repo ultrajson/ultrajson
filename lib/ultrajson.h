@@ -242,6 +242,10 @@ typedef struct __JSONObjectEncoder
   int encodeHTMLChars;
 
   /*
+  If true, '/' will be encoded as \/. If false, no escaping. */
+  int escapeForwardSlashes;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

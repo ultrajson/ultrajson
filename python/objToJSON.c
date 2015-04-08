@@ -828,7 +828,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", NULL};
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", NULL };
 
   char buffer[65536];
   char *ret;
@@ -836,6 +836,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
   PyObject *oencodeHTMLChars = NULL;
+  PyObject *oescapeForwardSlashes = NULL;
 
   JSONObjectEncoder encoder =
   {
@@ -858,13 +859,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars
+    1, //escapeForwardSlashes
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes))
   {
     return NULL;
   }
@@ -877,6 +879,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
   {
     encoder.encodeHTMLChars = 1;
+  }
+
+  if (oescapeForwardSlashes != NULL && !PyObject_IsTrue(oescapeForwardSlashes))
+  {
+    encoder.escapeForwardSlashes = 0;
   }
 
   PRINTMARK();

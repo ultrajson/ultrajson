@@ -1060,6 +1060,11 @@ class UltraJSONTests(unittest.TestCase):
         s = "\udc7f"
         self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
 
+    def test_sortKeys(self):
+        data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
+        sortedKeys = ujson.dumps(data, sort_keys=True)
+        self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
+
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

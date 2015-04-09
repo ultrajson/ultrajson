@@ -64,10 +64,21 @@ escape_forward_slashes
 ----------------------
 Controls whether forward slashes (``/``) are escaped. Default is True::
 
-    >>> ujson.dumps('http://esn.me')
+    >>> ujson.dumps("http://esn.me")
     '"http:\/\/esn.me"'
-    >>> ujson.dumps('http://esn.me', escape_forward_slashes=False)
+    >>> ujson.dumps("http://esn.me", escape_forward_slashes=False)
     '"http://esn.me"'
+
+indent
+----------------------
+Controls whether indention ("pretty output") is enabled. Default is 0 (disabled)::
+
+    >>> ujson.dumps({"foo": "bar"})
+    '{"foo":"bar"}'
+    >>> ujson.dumps({"foo": "bar"}, indent=4)
+    {
+        "foo":"bar"
+    }
 
 ~~~~~~~~~~~~~~~~
 Decoders options

@@ -246,5 +246,6 @@ if not skip_lib_comparisons:
 print "Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys:"
 
 print "ujson encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("ujsonEncSorted()", "from __main__ import ujsonEncSorted", gettime,10, COUNT)), )
-print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEncSorted()", "from __main__ import simplejsonEncSorted", gettime,10, COUNT)), )
-print "yajl  encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlEncSorted()", "from __main__ import yajlEncSorted", gettime, 10, COUNT)), )
+if not skip_lib_comparisons:
+    print "simplejson encode : %.05f calls/sec" % (COUNT / min(timeit.repeat("simplejsonEncSorted()", "from __main__ import simplejsonEncSorted", gettime,10, COUNT)), )
+    print "yajl  encode      : %.05f calls/sec" % (COUNT / min(timeit.repeat("yajlEncSorted()", "from __main__ import yajlEncSorted", gettime, 10, COUNT)), )

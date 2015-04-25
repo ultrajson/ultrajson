@@ -785,11 +785,13 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
 ISITERABLE:
   if (PyDict_Check(obj))
   {
-    PRINTMARK();
-    tc->type = JT_OBJECT;
-    SetupDictIter(obj, pc, enc);
-    Py_INCREF(obj);
-    return;
+    if(!PyObject_HasAttrString(obj, "__json__") && !PyObject_HasAttrString(obj, "toDict")) {
+      PRINTMARK();
+      tc->type = JT_OBJECT;
+      SetupDictIter(obj, pc, enc);
+      Py_INCREF(obj);
+      return;
+    }
   }
   else
   if (PyList_Check(obj))

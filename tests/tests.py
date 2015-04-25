@@ -849,12 +849,15 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(dec, d)
 
     def test_sepcial__json__(self):
-        class TestObj:
+        class TestObj(dict):
             def __json__(self):
                 return {'hello_new': 'world_new'}
 
         json = ujson.encode(TestObj())
         self.assertEqual(json, '{"hello_new":"world_new"}')
+
+        json_list = ujson.encode([TestObj()])
+        self.assertEqual(json_list, '[{"hello_new":"world_new"}]')
 
     def test_decodeArrayTrailingCommaFail(self):
         input = "[31337,]"

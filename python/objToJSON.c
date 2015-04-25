@@ -167,6 +167,28 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
   return PyString_AS_STRING(newObj);
 }
 
+static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  JSONObjectEncoder *encoder = tc->encoder;
+  
+  PyObject *obj = (PyObject *) _obj;
+  
+  PyObject *arglist = Py_BuildValue("(O)", obj);
+  PyObject *result = PyEval_CallObject(encoder->encodeDate, arglist);
+
+  char* strResult = NULL;
+
+  if(result) {
+    *_outLen = PyString_GET_SIZE(result);
+    strResult = PyString_AS_STRING(result);
+  }
+
+  Py_XDECREF(result);
+  Py_DECREF(arglist);
+
+  return strResult;
+}
+
 static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
@@ -731,14 +753,25 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   if (PyDateTime_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+    if(enc->encodeDate) {
+      pc->PyTypeToJSON = PyDateToCustomEncode; tc->type = JT_UTF8;
+    }
+    else {
+      pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+    }
     return;
   }
   else
   if (PyDate_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+    if(enc->encodeDate) {
+      pc->PyTypeToJSON = PyDateToCustomEncode; tc->type = JT_UTF8;
+    }
+    else {
+      pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+    }
+
     return;
   }
   else
@@ -949,7 +982,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "encode_date", NULL };
 
   char buffer[65536];
   char *ret;
@@ -959,6 +992,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oencodeHTMLChars = NULL;
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
+  PyObject *oencodeDate = NULL;
 
   JSONObjectEncoder encoder =
   {
@@ -984,13 +1018,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     1, //escapeForwardSlashes
     0, //sortKeys
     0, //indent
+    NULL, //encodeDate
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOi", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &oencodeDate))
   {
     return NULL;
   }
@@ -1013,6 +1048,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (oencodeDate != NULL && PyCallable_Check(oencodeDate))
+  {
+    encoder.encodeDate = oencodeDate;
   }
 
   PRINTMARK();

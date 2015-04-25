@@ -53,6 +53,7 @@ tree doesn't have cyclic references.
 #ifndef __ULTRAJSON_H__
 #define __ULTRAJSON_H__
 
+#include "py_defines.h"
 #include <stdio.h>
 #include <wchar.h>
 
@@ -167,6 +168,7 @@ typedef struct __JSONTypeContext
   int type;
   void *prv;
   void *encoder_prv;
+  void *encoder;
 } JSONTypeContext;
 
 /*
@@ -256,6 +258,10 @@ typedef struct __JSONObjectEncoder
   /*
   Configuration for spaces of indent */
   int indent;
+
+  /*
+  Configuration for a function that can encode a date */
+  PyObject *encodeDate;
 
   /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */

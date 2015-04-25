@@ -801,7 +801,10 @@ ISITERABLE:
   }
   */
 
-  toDictFunc = PyObject_GetAttrString(obj, "toDict");
+  if(PyObject_HasAttrString(obj, "__json__"))
+      toDictFunc = PyObject_GetAttrString(obj, "__json__");
+  else
+      toDictFunc = PyObject_GetAttrString(obj, "toDict");
 
   if (toDictFunc)
   {

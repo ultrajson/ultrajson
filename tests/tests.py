@@ -242,12 +242,12 @@ class UltraJSONTests(unittest.TestCase):
         s = u'\U0001f42e\U0001f42e\U0001F42D\U0001F42D' # 🐮🐮🐭🐭
         encoded = ujson.dumps(s)
         encoded_json = json.dumps(s)
-		
+
         if len(s) == 4:
             self.assertEqual(len(encoded), len(s) * 12 + 2)
         else:
-            self.assertEqual(len(encoded), len(s) * 6 + 2) 
-          
+            self.assertEqual(len(encoded), len(s) * 6 + 2)
+
         self.assertEqual(encoded, encoded_json)
         decoded = ujson.loads(encoded)
         self.assertEqual(s, decoded)
@@ -372,6 +372,15 @@ class UltraJSONTests(unittest.TestCase):
         expected = calendar.timegm(tup)
         self.assertEqual(int(expected), json.loads(output))
         self.assertEqual(int(expected), ujson.decode(output))
+
+    def test_customDateEncoder(self):
+        def custom_date_encode(date):
+            return date.strftime('%d/%m/%y')
+
+        input = datetime.date(2015, 1, 1)
+        output = ujson.encode(input,
+                              encode_date=custom_date_encode)
+        self.assertEqual(output, '"01\\/01\\/15"')
 
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"
@@ -839,6 +848,17 @@ class UltraJSONTests(unittest.TestCase):
         dec = ujson.decode(output)
         self.assertEqual(dec, d)
 
+    def test_sepcial__json__(self):
+        class TestObj(dict):
+            def __json__(self):
+                return {'hello_new': 'world_new'}
+
+        json = ujson.encode(TestObj())
+        self.assertEqual(json, '{"hello_new":"world_new"}')
+
+        json_list = ujson.encode([TestObj()])
+        self.assertEqual(json_list, '[{"hello_new":"world_new"}]')
+
     def test_decodeArrayTrailingCommaFail(self):
         input = "[31337,]"
         try:
@@ -1064,6 +1084,7 @@ class UltraJSONTests(unittest.TestCase):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
         sortedKeys = ujson.dumps(data, sort_keys=True)
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
+
 
 """
 def test_decodeNumericIntFrcOverflow(self):

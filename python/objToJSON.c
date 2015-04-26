@@ -178,13 +178,17 @@ static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValu
 
   char* strResult = NULL;
 
-  if(result) {
+  if(result && PyString_Check(result)) {
     *_outLen = PyString_GET_SIZE(result);
     strResult = PyString_AS_STRING(result);
   }
 
   Py_XDECREF(result);
   Py_DECREF(arglist);
+
+  if(strResult == NULL) {
+      PyErr_SetString(PyExc_ValueError, "Invalid encoding of date");
+  }
 
   return strResult;
 }

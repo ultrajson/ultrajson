@@ -374,13 +374,22 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(int(expected), ujson.decode(output))
 
     def test_customDateEncoder(self):
-        def custom_date_encode(date):
-            return date.strftime('%d/%m/%y')
+        # Valid encoding
+        date = datetime.date(2015, 1, 1)
 
-        input = datetime.date(2015, 1, 1)
-        output = ujson.encode(input,
-                              encode_date=custom_date_encode)
+        output = ujson.encode(date,
+                              encode_date=lambda d: d.strftime('%d/%m/%y'))
         self.assertEqual(output, '"01\\/01\\/15"')
+
+        # Invalid encoding
+        error_seen = False
+        try:
+            output = ujson.encode(date,
+                                  encode_date=lambda x: None)
+        except ValueError:
+            error_seen = True
+        self.assertTrue(error_seen)
+
 
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"

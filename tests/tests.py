@@ -390,6 +390,10 @@ class UltraJSONTests(unittest.TestCase):
             error_seen = True
         self.assertTrue(error_seen)
 
+        # Just a string format
+        output = ujson.encode(date, encode_date='%d/%m/%y')
+        self.assertEqual(output, '"01\\/01\\/15"')
+
 
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"

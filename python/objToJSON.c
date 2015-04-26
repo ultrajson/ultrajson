@@ -172,9 +172,21 @@ static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValu
   JSONObjectEncoder *encoder = tc->encoder;
   
   PyObject *obj = (PyObject *) _obj;
+
+  PyObject *encodeDate = encoder->encodeDate;
   
-  PyObject *arglist = Py_BuildValue("(O)", obj);
-  PyObject *result = PyEval_CallObject(encoder->encodeDate, arglist);
+  PyObject *arglist = NULL;
+  PyObject *result = NULL;
+  if(PyCallable_Check(encodeDate)) {
+      // It's a function
+      arglist = Py_BuildValue("(O)", obj);
+      result = PyEval_CallObject(encodeDate, arglist);
+  }
+  else {
+      // It's just a strftime format
+      char* format = PyString_AS_STRING(encodeDate);
+      result = PyObject_CallMethod(obj, "strftime", "s", format);
+  }
 
   char* strResult = NULL;
 
@@ -183,8 +195,10 @@ static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValu
     strResult = PyString_AS_STRING(result);
   }
 
-  Py_XDECREF(result);
-  Py_DECREF(arglist);
+  if(result)
+    Py_XDECREF(result);
+  if(arglist)
+    Py_DECREF(arglist);
 
   if(strResult == NULL) {
       PyErr_SetString(PyExc_ValueError, "Invalid encoding of date");
@@ -1056,7 +1070,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     encoder.sortKeys = 1;
   }
 
-  if (oencodeDate != NULL && PyCallable_Check(oencodeDate))
+  if (oencodeDate != NULL)
   {
     encoder.encodeDate = oencodeDate;
   }

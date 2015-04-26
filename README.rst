@@ -83,9 +83,12 @@ Controls whether indention ("pretty output") is enabled. Default is 0 (disabled)
 encode_date
 -------------
 
-Supply a custom function to encode a date. Will be encoded as as string::
+Supply a custom function or format to encode a date. Will be encoded as as string::
 
     >>> ujson.dumps(datetime.utcnow(), encode_date=lambda d: d.strftime('%d-%m-%y'))
+    '"25-04-15"'
+
+    >>> ujson.dumps(datetime.utcnow(), encode_date='%d-%m-%y')
     '"25-04-15"'
 
 ~~~~~~~~~~~~~~~~

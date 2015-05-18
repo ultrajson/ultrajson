@@ -381,23 +381,23 @@ class UltraJSONTests(unittest.TestCase):
                               encode_date=lambda d: d.strftime('%d/%m/%y'))
         self.assertEqual(output, '"01\\/01\\/15"')
 
-        # Invalid encoding
-        error_seen = False
-        try:
-            output = ujson.encode(date,
-                                  encode_date=lambda x: None)
-        except ValueError:
-            error_seen = True
-        self.assertTrue(error_seen)
+    def test_customDateEncoder_invalid_function_result(self):
+        date = datetime.date(2015, 1, 1)
+        with self.assertRaises(ValueError):
+            ujson.encode(date, encode_date=lambda x: None)
 
-        # Just a string format
-        output = ujson.encode(date, encode_date='%d/%m/%y')
-        self.assertEqual(output, '"01\\/01\\/15"')
+    def test_customDateEncoder_function_raises_exception(self):
+        def encode_date(value):
+            raise RuntimeError('ooops')
+        date = datetime.date(2015, 1, 1)
+        with self.assertRaises(RuntimeError):
+            ujson.encode(date, encode_date=encode_date)
 
+    def test_customDateEncoder_invalid_date(self):
         # Test invalid date
-        output = ujson.encode(datetime.date(1230, 1, 1),
-                              encode_date='%d/%m/%Y')
-        self.assertEqual(output, '""')
+        with self.assertRaises(ValueError):
+            # ValueError: year=1230 is before 1900; the datetime strftime() methods require year >= 1900
+            ujson.encode(datetime.date(1230, 1, 1), encode_date='%d/%m/%Y')
 
     def test_encodeToUTF8(self):
         input = "\xe6\x97\xa5\xd1\x88"

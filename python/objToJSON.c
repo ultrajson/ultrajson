@@ -1,5 +1,5 @@
 /*
-Developed by ESN, an Electronic Arts Inc. studio. 
+Developed by ESN, an Electronic Arts Inc. studio.
 Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
@@ -17,7 +17,7 @@ derived from this software without specific prior written permission.
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -170,13 +170,14 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   JSONObjectEncoder *encoder = tc->encoder;
-  
+
   PyObject *obj = (PyObject *) _obj;
 
   PyObject *encodeDate = encoder->encodeDate;
-  
+
   PyObject *arglist = NULL;
   PyObject *result = NULL;
+
   if(PyCallable_Check(encodeDate)) {
       // It's a function
       arglist = Py_BuildValue("(O)", obj);
@@ -195,15 +196,17 @@ static void *PyDateToCustomEncode(JSOBJ _obj, JSONTypeContext *tc, void *outValu
     strResult = PyString_AS_STRING(result);
   }
 
-  if(result)
-    Py_XDECREF(result);
-  if(arglist)
-    Py_DECREF(arglist);
 
-  if(strResult == NULL) {
-    PyErr_SetString(PyExc_ValueError, "Invalid encoding of date");
+  if(strResult == NULL && !PyErr_Occurred()) {
+    // Everything is okay at first sight, but the encoder doesn't return
+    // a string. We have to raise our own exception
+    PyObject *err = Py_BuildValue("(sOO)", "JSON encoder doesn't return a string", obj, result);
+    PyErr_SetObject(PyExc_ValueError, err);
+    Py_XDECREF(err);
   }
 
+  Py_XDECREF(result);
+  Py_XDECREF(arglist);
   return strResult;
 }
 
@@ -909,7 +912,7 @@ ISITERABLE:
   PRINTMARK();
   tc->type = JT_OBJECT;
   GET_TC(tc)->attrList = PyObject_Dir(obj);
-  
+
   if (GET_TC(tc)->attrList == NULL)
   {
     PyErr_Clear();
@@ -919,7 +922,7 @@ ISITERABLE:
   GET_TC(tc)->index = 0;
   GET_TC(tc)->size = PyList_GET_SIZE(GET_TC(tc)->attrList);
   PRINTMARK();
-  
+
   pc->iterEnd = Dir_iterEnd;
   pc->iterNext = Dir_iterNext;
   pc->iterGetValue = Dir_iterGetValue;

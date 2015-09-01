@@ -39,6 +39,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include "py_defines.h"
 #include <stdio.h>
 #include <datetime.h>
+#include <Python.h>
 #include <ultrajson.h>
 
 #define EPOCH_ORD 719163
@@ -167,12 +168,13 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
   return PyString_AS_STRING(newObj);
 }
 
-static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateTimeToISO(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
-  PyObject *date, *ord;
+  PyObject *date_str;
   int y, m, d, h, mn, s, days;
 
+  // ISO format YYYY-MM-DDTHH:MM:SS
   y = PyDateTime_GET_YEAR(obj);
   m = PyDateTime_GET_MONTH(obj);
   d = PyDateTime_GET_DAY(obj);
@@ -180,33 +182,23 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
   mn = PyDateTime_DATE_GET_MINUTE(obj);
   s = PyDateTime_DATE_GET_SECOND(obj);
 
-  date = PyDate_FromDate(y, m, 1);
-  ord = PyObject_CallMethod(date, "toordinal", NULL);
-  days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
-  Py_DECREF(date);
-  Py_DECREF(ord);
-  *( (JSINT64 *) outValue) = (((JSINT64) ((days * 24 + h) * 60 + mn)) * 60 + s);
-  return NULL;
+  date_str = PyString_FromFormat("%d-%d-%dT%d:%d:%d", y, m, d, h, mn, s);
+  return PyStringToUTF8(date_str, tc, outValue, _outLen);
 }
 
-static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateToISO(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
-  PyObject *date, *ord;
+  PyObject *date_str;
   int y, m, d, days;
 
   y = PyDateTime_GET_YEAR(obj);
   m = PyDateTime_GET_MONTH(obj);
   d = PyDateTime_GET_DAY(obj);
 
-  date = PyDate_FromDate(y, m, 1);
-  ord = PyObject_CallMethod(date, "toordinal", NULL);
-  days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
-  Py_DECREF(date);
-  Py_DECREF(ord);
-  *( (JSINT64 *) outValue) = ((JSINT64) days * 86400);
+  date_str = PyString_FromFormat("%d-%d-%d", y, m, d);
+  return PyStringToUTF8(date_str, tc, outValue, _outLen);
 
-  return NULL;
 }
 
 int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
@@ -731,14 +723,14 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   if (PyDateTime_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_LONG;
+    pc->PyTypeToJSON = PyDateTimeToISO; tc->type = JT_UTF8;
     return;
   }
   else
   if (PyDate_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
+    pc->PyTypeToJSON = PyDateToISO; tc->type = JT_UTF8;
     return;
   }
   else

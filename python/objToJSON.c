@@ -168,7 +168,7 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
   return PyString_AS_STRING(newObj);
 }
 
-static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateTimeToISO(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
   PyObject *date_str;
@@ -186,7 +186,7 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
   return PyStringToUTF8(date_str, tc, outValue, _outLen);
 }
 
-static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyDateToISO(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
   PyObject *date_str;
@@ -723,14 +723,14 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   if (PyDateTime_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateTimeToINT64; tc->type = JT_UTF8;
+    pc->PyTypeToJSON = PyDateTimeToISO; tc->type = JT_UTF8;
     return;
   }
   else
   if (PyDate_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_UTF8;
+    pc->PyTypeToJSON = PyDateToISO; tc->type = JT_UTF8;
     return;
   }
   else

@@ -146,16 +146,17 @@ typedef int64_t JSLONG;
 
 enum JSTYPES
 {
-  JT_NULL,        // NULL
-  JT_TRUE,        //boolean true
-  JT_FALSE,       //boolean false
-  JT_INT,         //(JSINT32 (signed 32-bit))
-  JT_LONG,        //(JSINT64 (signed 64-bit))
-  JT_DOUBLE,    //(double)
-  JT_UTF8,        //(char 8-bit)
-  JT_ARRAY,       // Array structure
+  JT_NULL,      // NULL
+  JT_TRUE,      // boolean true
+  JT_FALSE,     // boolean false
+  JT_INT,       // (JSINT32 (signed 32-bit))
+  JT_LONG,      // (JSINT64 (signed 64-bit))
+  JT_ULONG,     // (JSUINT64 (unsigned 64-bit))
+  JT_DOUBLE,    // (double)
+  JT_UTF8,      // (char 8-bit)
+  JT_ARRAY,     // Array structure
   JT_OBJECT,    // Key/Value structure
-  JT_INVALID,    // Internal, do not return nor expect
+  JT_INVALID,   // Internal, do not return nor expect
 };
 
 typedef void * JSOBJ;
@@ -178,12 +179,16 @@ typedef void *(*JSPFN_MALLOC)(size_t size);
 typedef void (*JSPFN_FREE)(void *pptr);
 typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
+
+struct __JSONObjectEncoder;
+
 typedef struct __JSONObjectEncoder
 {
-  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc);
+  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
   void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
   const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
   JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
+  JSUINT64 (*getUnsignedLongValue)(JSOBJ obj, JSONTypeContext *tc);
   JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
   double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 
@@ -240,6 +245,19 @@ typedef struct __JSONObjectEncoder
   int encodeHTMLChars;
 
   /*
+<<<<<<< HEAD
+  If true, '/' will be encoded as \/. If false, no escaping. */
+  int escapeForwardSlashes;
+
+  /*
+  If true, dictionaries are iterated through in sorted key order. */
+  int sortKeys;
+
+  /*
+  Configuration for spaces of indent */
+  int indent;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 
@@ -293,6 +311,7 @@ typedef struct __JSONObjectDecoder
   JSOBJ (*newArray)(void *prv);
   JSOBJ (*newInt)(void *prv, JSINT32 value);
   JSOBJ (*newLong)(void *prv, JSINT64 value);
+  JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
   JSOBJ (*newDouble)(void *prv, double value);
   void (*releaseObject)(void *prv, JSOBJ obj);
   JSPFN_MALLOC malloc;

@@ -184,7 +184,6 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
       }
       case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
       case '\\': (*of++) = '\\'; (*of++) = '\\'; break;
-      case '/':  (*of++) = '\\'; (*of++) = '/'; break;
       case '\b': (*of++) = '\\'; (*of++) = 'b'; break;
       case '\f': (*of++) = '\\'; (*of++) = 'f'; break;
       case '\n': (*of++) = '\\'; (*of++) = 'n'; break;
@@ -205,6 +204,19 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
           (*of++) = (*io);
           break;
         }
+      }
+      case '/':
+      {
+        if (enc->escapeForwardSlashes)
+        {
+          (*of++) = '\\'; (*of++) = '/';
+        }
+        else
+        {
+          // Same as default case below.
+          (*of++) = (*io);
+        }
+        break;
       }
       case 0x01:
       case 0x02:
@@ -423,9 +435,17 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char 
       case 22:
       case 24:
       {
-        *(of++) = *( (char *) (g_escapeChars + utflen + 0));
-        *(of++) = *( (char *) (g_escapeChars + utflen + 1));
-        io ++;
+        if (enc->escapeForwardSlashes)
+        {
+          *(of++) = *( (char *) (g_escapeChars + utflen + 0));
+          *(of++) = *( (char *) (g_escapeChars + utflen + 1));
+          io ++;
+        }
+        else
+        {
+          // Same as case 1 above.
+          *(of++) = (*io++);
+        }
         continue;
       }
       // This can never happen, it's here to make L4 VC++ happy
@@ -478,6 +498,20 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end
   aux = *end, *end-- = *begin, *begin++ = aux;
 }
 
+void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
+{
+  if (enc->indent > 0) Buffer_AppendCharUnchecked(enc, '\n');
+}
+
+void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+{
+  int i;
+  if (enc->indent > 0)
+    while (value-- > 0)
+      for (i = 0; i < enc->indent; i++)
+        Buffer_AppendCharUnchecked(enc, ' ');
+}
+
 void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
   char* wstr;
@@ -504,6 +538,21 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 
   do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
   if (value < 0) *wstr++ = '-';
+
+  // Reverse string
+  strreverse(enc->offset,wstr - 1);
+  enc->offset += (wstr - (enc->offset));
+}
+
+void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
+{
+  char* wstr;
+  JSUINT64 uvalue = value;
+
+  wstr = enc->offset;
+  // Conversion. Number is reversed.
+
+  do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
 
   // Reverse string
   strreverse(enc->offset,wstr - 1);
@@ -714,7 +763,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     }
 
     tc.encoder_prv = enc->prv;
-    enc->beginTypeContext(obj, &tc);
+    enc->beginTypeContext(obj, &tc, enc);
 
     switch (tc.type)
     {
@@ -728,6 +777,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
         count = 0;
 
         Buffer_AppendCharUnchecked (enc, '[');
+        Buffer_AppendIndentNewlineUnchecked (enc);
 
         while (enc->iterNext(obj, &tc))
         {
@@ -737,16 +787,20 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #ifndef JSON_NO_EXTRA_WHITESPACE
             Buffer_AppendCharUnchecked (buffer, ' ');
 #endif
+            Buffer_AppendIndentNewlineUnchecked (enc);
           }
 
           iterObj = enc->iterGetValue(obj, &tc);
 
           enc->level ++;
+          Buffer_AppendIndentUnchecked (enc, enc->level);
           encode (iterObj, enc, NULL, 0);
           count ++;
       }
 
       enc->iterEnd(obj, &tc);
+      Buffer_AppendIndentNewlineUnchecked (enc);
+      Buffer_AppendIndentUnchecked (enc, enc->level);
       Buffer_AppendCharUnchecked (enc, ']');
       break;
   }
@@ -756,6 +810,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     count = 0;
 
     Buffer_AppendCharUnchecked (enc, '{');
+    Buffer_AppendIndentNewlineUnchecked (enc);
 
     while (enc->iterNext(obj, &tc))
     {
@@ -765,17 +820,21 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #ifndef JSON_NO_EXTRA_WHITESPACE
         Buffer_AppendCharUnchecked (enc, ' ');
 #endif
+        Buffer_AppendIndentNewlineUnchecked (enc);
       }
 
       iterObj = enc->iterGetValue(obj, &tc);
       objName = enc->iterGetName(obj, &tc, &szlen);
 
       enc->level ++;
+      Buffer_AppendIndentUnchecked (enc, enc->level);
       encode (iterObj, enc, objName, szlen);
       count ++;
     }
 
     enc->iterEnd(obj, &tc);
+    Buffer_AppendIndentNewlineUnchecked (enc);
+    Buffer_AppendIndentUnchecked (enc, enc->level);
     Buffer_AppendCharUnchecked (enc, '}');
     break;
   }
@@ -783,6 +842,12 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
   case JT_LONG:
   {
     Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
+    break;
+  }
+
+  case JT_ULONG:
+  {
+    Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
     break;
   }
 

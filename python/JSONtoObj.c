@@ -98,6 +98,11 @@ JSOBJ Object_newLong(void *prv, JSINT64 value)
   return PyLong_FromLongLong (value);
 }
 
+JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
+{
+  return PyLong_FromUnsignedLongLong (value);
+}
+
 JSOBJ Object_newDouble(void *prv, double value)
 {
   return PyFloat_FromDouble(value);
@@ -128,6 +133,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_newArray,
     Object_newInteger,
     Object_newLong,
+    Object_newUnsignedLong,
     Object_newDouble,
     Object_releaseObject,
     PyObject_Malloc,

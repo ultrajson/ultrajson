@@ -150,8 +150,8 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 
 void Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
  {
-   *(outputOffset++) = g_hexChars[(value & 0xf000) >> 12];
-   *(outputOffset++) = g_hexChars[(value & 0x0f00) >> 8];
+  *(outputOffset++) = g_hexChars[(value & 0xf000) >> 12];
+  *(outputOffset++) = g_hexChars[(value & 0x0f00) >> 8];
   *(outputOffset++) = g_hexChars[(value & 0x00f0) >> 4];
   *(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
 }

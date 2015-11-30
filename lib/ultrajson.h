@@ -245,7 +245,6 @@ typedef struct __JSONObjectEncoder
   int encodeHTMLChars;
 
   /*
-<<<<<<< HEAD
   If true, '/' will be encoded as \/. If false, no escaping. */
   int escapeForwardSlashes;
 

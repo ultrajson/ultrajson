@@ -65,7 +65,7 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
 
   if (decode_datetime && start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
   {
-    buff = malloc(end - start);
+    buff = malloc(end - start + 1);
     for (i = 0; i < end - start; i++) {
       buff[i] = start[i];
     }

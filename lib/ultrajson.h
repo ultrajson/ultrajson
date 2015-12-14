@@ -322,6 +322,7 @@ typedef struct __JSONObjectDecoder
   char *errorStr;
   char *errorOffset;
   int preciseFloat;
+  int dateTimeToString;
   void *prv;
 } JSONObjectDecoder;
 

@@ -38,7 +38,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #include "py_defines.h"
 #include <ultrajson.h>
-
+#include <datetime.h>
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
@@ -60,7 +60,82 @@ void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 
 JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
-  return PyUnicode_FromWideChar (start, (end - start));
+  int i, year, month, day, hour, minutes, seconds, microseconds;
+  char *p, *array[3], *buff;
+  PyObject *dateTime = NULL;
+
+  if (start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
+  {
+    buff = malloc(end - start);
+    for (i = 0; i < end - start; i++) {
+      buff[i] = start[i];
+    }
+    i = 0;
+    p = strtok(buff, " ");
+    while (p != NULL) /*split the string into 2015-12-14 and 16:59:51:333*/
+    {
+      array[i++] = p;
+      p = strtok(NULL, " ");
+    }
+
+    p = strtok(array[0], "-");
+    i = 0;  year = 0; month = 0; day = 0;
+    while (p != NULL)/* parse 2015-12-14 */
+    {
+      switch (i) {
+
+      case 0:
+        year = atoi(p);
+        break;
+
+      case 1:
+        month = atoi(p);
+        break;
+      case 2:
+        day = atoi(p);
+        break;
+
+      }
+
+      p = strtok(NULL, "-");
+      i++;
+    }
+
+    p = strtok(array[1], ":");
+    i = 0; hour = 0; minutes = 0; seconds = 0; microseconds = 0;
+    while (p != NULL) /* parse 16:59:51:333 */
+    {
+      switch (i) {
+
+      case 0:
+        hour = atoi(p);
+        break;
+      case 1:
+        minutes = atoi(p);
+        break;
+      case 2:
+        seconds = atoi(p);
+        break;
+      case 3:
+        microseconds = atoi(p);
+        break;
+
+      }
+      p = strtok(NULL, ":");
+      i++;
+    }
+    free(buff);
+
+    /* the problem is here we convert the datetime.time to datetime.datetime. We have
+     * to do it, because we may have a datetime 2015-12-12 0:0:0:0
+     */
+    if (year!=0 && day != 0)
+    {
+      dateTime = PyDateTime_FromDateAndTime(year, month, day, hour, minutes,seconds, microseconds);
+      return dateTime;
+    }
+  }
+  return PyUnicode_FromWideChar(start, (end - start));
 }
 
 JSOBJ Object_newTrue(void *prv)
@@ -113,7 +188,7 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", "precise_float", NULL};
+static char *g_kwlist[] = {"obj", "precise_float", "encode_datetime", NULL};
 
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
@@ -121,6 +196,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *sarg;
   PyObject *arg;
   PyObject *opreciseFloat = NULL;
+  PyObject *oencodeDatetimeToString = NULL;
   JSONObjectDecoder decoder =
   {
     Object_newString,
@@ -140,11 +216,12 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Free,
     PyObject_Realloc
   };
-
+  PyDateTime_IMPORT;
   decoder.preciseFloat = 0;
+  decoder.dateTimeToString = 0;
   decoder.prv = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", g_kwlist, &arg, &opreciseFloat))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", g_kwlist, &arg, &opreciseFloat, &oencodeDatetimeToString))
   {
       return NULL;
   }
@@ -152,6 +229,11 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   if (opreciseFloat && PyObject_IsTrue(opreciseFloat))
   {
       decoder.preciseFloat = 1;
+  }
+
+  if (oencodeDatetimeToString != NULL && PyObject_IsTrue(oencodeDatetimeToString))
+  {
+    decoder.dateTimeToString = 1;
   }
 
   if (PyString_Check(arg))

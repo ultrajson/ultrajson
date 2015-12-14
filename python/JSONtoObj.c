@@ -62,7 +62,6 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
 {
   int i, year, month, day, hour, minutes, seconds, microseconds;
   char *p, *array[3], *buff;
-  PyObject *dateTime = NULL;
 
   if (decode_datetime && start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
   {
@@ -131,8 +130,7 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
      */
     if (year!=0 && day != 0)
     {
-      dateTime = PyDateTime_FromDateAndTime(year, month, day, hour, minutes,seconds, microseconds);
-      return dateTime;
+      return PyDateTime_FromDateAndTime(year, month, day, hour, minutes,seconds, microseconds);
     }
   }
   return PyUnicode_FromWideChar(start, (end - start));

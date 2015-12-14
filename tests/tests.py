@@ -1069,10 +1069,11 @@ class UltraJSONTests(unittest.TestCase):
         input = datetime.datetime.now()
         print 'Input', input
         output = ujson.encode(input,encode_datetime=True)
-        print 'output', output
-        print '??', ujson.decode(output)
-        #self.assertEqual(ujson.decode(output), json.loads(output))
-        #self.assertEqual(input, ujson.decode(output, decode_datetime=True))
+        print 'output', output,json.loads(output)
+        expected = ujson.decode(output)
+        self.assertEqual(expected, json.loads(output))
+        print 'dd',ujson.decode(output, decode_datetime=True)
+        self.assertEqual(input, ujson.decode(output, decode_datetime=True))
     '''
     def test_encodeDateToStringConversion(self):
       

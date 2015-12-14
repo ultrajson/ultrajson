@@ -1064,6 +1064,22 @@ class UltraJSONTests(unittest.TestCase):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
         sortedKeys = ujson.dumps(data, sort_keys=True)
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
+    
+    def test_encodeDatetimeToStringConversion(self):
+        input = datetime.datetime.now()
+        output = ujson.encode(input,encode_datetime=True)
+        
+        self.assertEqual(ujson.decode(output), json.loads(output))
+        self.assertEqual(input, ujson.decode(output, decode_datetime=True))
+
+    def test_encodeDateToStringConversion(self):
+      
+        input = datetime.date.today()
+
+        output = ujson.encode(input, encode_datetime=True)
+        
+        self.assertEqual(ujson.decode(output), json.loads(output))
+        self.assertEqual(datetime.datetime(year=input.year, month=input.month, day=input.day), ujson.decode(output, decode_datetime=True))
 
 """
 def test_decodeNumericIntFrcOverflow(self):

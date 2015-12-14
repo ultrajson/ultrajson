@@ -214,7 +214,7 @@ static void *PyDateTimeToSTRING(JSOBJ _obj, JSONTypeContext *tc, void *outValue,
   PyObject *obj = (PyObject *) _obj;
   PyObject *dateTimeString;
   int y, m, d, h, mn, s, ms;
-  char data[30];
+  char data[35];
 
   y = PyDateTime_GET_YEAR(obj);
   m = PyDateTime_GET_MONTH(obj);

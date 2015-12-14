@@ -69,6 +69,7 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
     for (i = 0; i < end - start; i++) {
       buff[i] = start[i];
     }
+    start[i++] = '\0';
     i = 0;
     p = strtok(buff, " ");
     while (p != NULL) /*split the string into 2015-12-14 and 16:59:51:333*/

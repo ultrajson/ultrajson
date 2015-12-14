@@ -1070,19 +1070,20 @@ class UltraJSONTests(unittest.TestCase):
         output = ujson.encode(input,encode_datetime=True)
         expected1 = ujson.decode(output)
         expected2 = ujson.decode(output, decode_datetime=True)
+        
         self.assertEqual(expected1, json.loads(output))
         self.assertEqual(input, expected2)
         
-    '''
     def test_encodeDateToStringConversion(self):
       
         input = datetime.date.today()
-
         output = ujson.encode(input, encode_datetime=True)
+        expected1 = ujson.decode(output)
+        expected2 = datetime.datetime(year=input.year, month=input.month, day=input.day)
         
-        self.assertEqual(ujson.decode(output), json.loads(output))
-        self.assertEqual(datetime.datetime(year=input.year, month=input.month, day=input.day), ujson.decode(output, decode_datetime=True))
-     '''
+        self.assertEqual(expected1, json.loads(output))
+        self.assertEqual(expected2, ujson.decode(output, decode_datetime=True))
+    
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

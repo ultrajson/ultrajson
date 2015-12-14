@@ -256,6 +256,9 @@ typedef struct __JSONObjectEncoder
   Configuration for spaces of indent */
   int indent;
 
+  /*Configuration for datetime */
+  int dateTimeToString;
+
   /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;

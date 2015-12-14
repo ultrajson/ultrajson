@@ -58,13 +58,13 @@ void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
   return;
 }
 
-JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
+JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datetime)
 {
   int i, year, month, day, hour, minutes, seconds, microseconds;
   char *p, *array[3], *buff;
   PyObject *dateTime = NULL;
 
-  if (start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
+  if (decode_datetime && start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
   {
     buff = malloc(end - start);
     for (i = 0; i < end - start; i++) {
@@ -188,7 +188,7 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", "precise_float", "encode_datetime", NULL};
+static char *g_kwlist[] = {"obj", "precise_float", "decode_datetime", NULL};
 
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
@@ -196,7 +196,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *sarg;
   PyObject *arg;
   PyObject *opreciseFloat = NULL;
-  PyObject *oencodeDatetimeToString = NULL;
+  PyObject *odecodeDatetimeToString = NULL;
   JSONObjectDecoder decoder =
   {
     Object_newString,
@@ -218,10 +218,10 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   };
   PyDateTime_IMPORT;
   decoder.preciseFloat = 0;
-  decoder.dateTimeToString = 0;
+  decoder.stringToDatetime = 0;
   decoder.prv = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", g_kwlist, &arg, &opreciseFloat, &oencodeDatetimeToString))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", g_kwlist, &arg, &opreciseFloat, &odecodeDatetimeToString))
   {
       return NULL;
   }
@@ -231,9 +231,9 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
       decoder.preciseFloat = 1;
   }
 
-  if (oencodeDatetimeToString != NULL && PyObject_IsTrue(oencodeDatetimeToString))
+  if (odecodeDatetimeToString != NULL && PyObject_IsTrue(odecodeDatetimeToString))
   {
-    decoder.dateTimeToString = 1;
+    decoder.stringToDatetime = 1;
   }
 
   if (PyString_Check(arg))

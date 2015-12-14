@@ -303,7 +303,7 @@ EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *
 
 typedef struct __JSONObjectDecoder
 {
-  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end);
+  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end, int encode_datetime);
   void (*objectAddKey)(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
   void (*arrayAddItem)(void *prv, JSOBJ obj, JSOBJ value);
   JSOBJ (*newTrue)(void *prv);
@@ -322,7 +322,7 @@ typedef struct __JSONObjectDecoder
   char *errorStr;
   char *errorOffset;
   int preciseFloat;
-  int dateTimeToString;
+  int stringToDatetime;
   void *prv;
 } JSONObjectDecoder;
 

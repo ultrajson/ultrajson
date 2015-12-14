@@ -1076,7 +1076,7 @@ class UltraJSONTests(unittest.TestCase):
         
     def test_encodeDateToStringConversion(self):
       
-        input = datetime.date.today()
+        input = datetime.date(2015,12,14)
         output = ujson.encode(input, encode_datetime=True)
         expected1 = ujson.decode(output)
         expected2 = datetime.datetime(year=input.year, month=input.month, day=input.day)

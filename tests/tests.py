@@ -1070,10 +1070,9 @@ class UltraJSONTests(unittest.TestCase):
         output = ujson.encode(input,encode_datetime=True)
         expected1 = ujson.decode(output)
         expected2 = ujson.decode(output, decode_datetime=True)
-        
         self.assertEqual(expected1, json.loads(output))
         self.assertEqual(input, expected2)
-        
+       
     def test_encodeDateToStringConversion(self):
       
         input = datetime.date(2015,12,14)

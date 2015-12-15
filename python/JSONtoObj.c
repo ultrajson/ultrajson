@@ -70,6 +70,10 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
       buff[i] = start[i];
     }
     start[i++] = '\0';
+    for(i=0; i<3; i++)
+    {
+      array[i] = NULL;
+    }
     i = 0;
     p = strtok(buff, " ");
     while (p != NULL) /*split the string into 2015-12-14 and 16:59:51:333*/
@@ -77,7 +81,6 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
       array[i++] = p;
       p = strtok(NULL, " ");
     }
-
     p = strtok(array[0], "-");
     i = 0;  year = 0; month = 0; day = 0;
     while (p != NULL)/* parse 2015-12-14 */

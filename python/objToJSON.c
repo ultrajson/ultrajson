@@ -226,8 +226,13 @@ static void *PyDateTimeToSTRING(JSOBJ _obj, JSONTypeContext *tc, void *outValue,
 
   /*the format of the datetime is ISO format.*/
   sprintf(data, "%d-%d-%d %d:%d:%d:%d", y, m, d, h, mn, s, ms);
+  dateTimeString = PyBytes_FromString(data);
+  #if (PY_VERSION_HEX >= 0x03030000)
+    dateTimeString = PyBytes_FromString(data);
+    *_outLen = PyBytes_GET_SIZE(dateTimeString);
+    return PyBytes_AS_STRING(dateTimeString);
+  #endif
 
-  dateTimeString = PyString_FromString(data);
   *_outLen = PyString_GET_SIZE(dateTimeString);
   Py_DECREF(dateTimeString);
 
@@ -247,13 +252,16 @@ static void *PyDateToSTRING(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
 
   /*the format of the date is ISO format.*/
   sprintf(data, "%d-%d-%d", y, m, d);
+  dateString = PyBytes_FromString(data);
+  #if (PY_VERSION_HEX >= 0x03030000)
+  dateString = PyBytes_FromString(data);
+   *_outLen = PyBytes_GET_SIZE(dateString);
+   return PyBytes_AS_STRING(dateString);
+  #endif
 
-  dateString = PyString_FromString(data);
   *_outLen = PyString_GET_SIZE(dateString);
   Py_DECREF(dateString);
-
   return PyString_AS_STRING(dateString);
-
 }
 
 int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)

@@ -60,7 +60,7 @@ void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 
 JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datetime)
 {
-  int i, year, month, day, hour, minutes, seconds, microseconds;
+  int i, year, month, day, hour, minutes, seconds, microseconds, isfulldatetime;
   char *p, *array[3], *buff;
 
   if (decode_datetime && start[4] == '-')/*we know that the format of the date datetime is 2015-12-14 16:59:51:333*/
@@ -83,6 +83,7 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
     }
     p = strtok(array[0], "-");
     i = 0;  year = 0; month = 0; day = 0;
+    isfulldatetime = 0;
     while (p != NULL)/* parse 2015-12-14 */
     {
       switch (i) {
@@ -111,16 +112,20 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
       switch (i) {
 
       case 0:
+        isfulldatetime = 1;
         hour = atoi(p);
         break;
       case 1:
         minutes = atoi(p);
+        isfulldatetime = 1;
         break;
       case 2:
         seconds = atoi(p);
+        isfulldatetime = 1;
         break;
       case 3:
         microseconds = atoi(p);
+        isfulldatetime = 1;
         break;
 
       }
@@ -132,9 +137,13 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end, int decode_datet
     /* the problem is here we convert the datetime.time to datetime.datetime. We have
      * to do it, because we may have a datetime 2015-12-12 0:0:0:0
      */
-    if (year!=0 && day != 0)
+    if (isfulldatetime)
     {
       return PyDateTime_FromDateAndTime(year, month, day, hour, minutes,seconds, microseconds);
+    }
+    else
+    {
+      return PyDateTime_FromDateAndTime(year, month, day, 0, 0,0, 0);
     }
   }
   return PyUnicode_FromWideChar(start, (end - start));

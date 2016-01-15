@@ -554,7 +554,10 @@ int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       {
         goto error;
       }
-      PyList_SET_ITEM(items, i, item);
+      if (PyList_SetItem(items, i, item))
+      {
+        goto error;
+      }
       Py_DECREF(key);
     }
 

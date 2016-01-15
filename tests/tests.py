@@ -102,7 +102,7 @@ class UltraJSONTests(unittest.TestCase):
         sut = {u'a': 4.56}
         encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
-        self.assertNotEqual(sut, decoded)
+        self.assertAlmostEqual(sut[u'a'], decoded[u'a'])
 
     def test_decimalDecodeTestPrecise(self):
         sut = {u'a': 4.56}
@@ -973,7 +973,7 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(-1.4567893, ujson.loads("-1.4567893"))
         self.assertEqual(-1.567893, ujson.loads("-1.567893"))
         self.assertEqual(-1.67893, ujson.loads("-1.67893"))
-        self.assertEqual(-1.7893, ujson.loads("-1.7893"))
+        self.assertEqual(-1.7893, ujson.loads("-1.7893", precise_float=True))
         self.assertEqual(-1.893, ujson.loads("-1.893"))
         self.assertEqual(-1.3, ujson.loads("-1.3"))
 
@@ -983,7 +983,7 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(1.4567893, ujson.loads("1.4567893"))
         self.assertEqual(1.567893, ujson.loads("1.567893"))
         self.assertEqual(1.67893, ujson.loads("1.67893"))
-        self.assertEqual(1.7893, ujson.loads("1.7893"))
+        self.assertEqual(1.7893, ujson.loads("1.7893", precise_float=True))
         self.assertEqual(1.893, ujson.loads("1.893"))
         self.assertEqual(1.3, ujson.loads("1.3"))
 

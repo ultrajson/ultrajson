@@ -49,7 +49,7 @@ class UltraJSONTests(unittest.TestCase):
         input = "A string \\ / \b \f \n \r \t </script> &"
         not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
         html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t \\u003c\\/script\\u003e \\u0026"'
-        not_slashes_escaped = input
+        not_slashes_escaped = '"A string \\\\ / \\b \\f \\n \\r \\t </script> &"'
 
         def helper(expected_output, **encode_kwargs):
             output = ujson.encode(input, **encode_kwargs)

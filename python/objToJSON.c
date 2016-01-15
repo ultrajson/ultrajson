@@ -627,7 +627,7 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
-  PyObject *obj, *exc, *toDictFunc, *iter;
+  PyObject *obj, *exc, *toDictFunc, *iter, *attrList;
   TypeContext *pc;
   PRINTMARK();
   if (!_obj) {
@@ -855,14 +855,18 @@ ISITERABLE:
 
   PRINTMARK();
   tc->type = JT_OBJECT;
-  GET_TC(tc)->attrList = PyObject_Dir(obj);
-  
-  if (GET_TC(tc)->attrList == NULL)
+  attrList = PyObject_GetAttrString(obj, "__slots__");
+  if (attrList == NULL) {
+    PyErr_Clear();
+    attrList = PyObject_Dir(obj);
+  }
+
+  if (attrList == NULL)
   {
     PyErr_Clear();
     goto INVALID;
   }
-
+  GET_TC(tc)->attrList = attrList;
   GET_TC(tc)->index = 0;
   GET_TC(tc)->size = PyList_GET_SIZE(GET_TC(tc)->attrList);
   PRINTMARK();

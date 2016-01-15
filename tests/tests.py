@@ -26,6 +26,11 @@ import random
 import decimal
 from functools import partial
 
+try:
+    from UserDict import UserDict
+except ImportError:
+    from collections import UserDict
+
 PY3 = (sys.version_info[0] >= 3)
 if PY3:
     xrange = range
@@ -1130,6 +1135,14 @@ class UltraJSONTests(unittest.TestCase):
         s = "\udc7f"
         self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
 
+    def test_encodeMapping(self):
+        d = {u"key": 31337}
+
+        ud = UserDict(d)
+        output = ujson.encode(ud)
+        dec = ujson.decode(output)
+        self.assertEqual(dec, d)
+    
     def test_sortKeys(self):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
         sortedKeys = ujson.dumps(data, sort_keys=True)

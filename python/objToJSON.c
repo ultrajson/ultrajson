@@ -194,7 +194,7 @@ static void *PyDateTimeToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, 
 
   date = PyDate_FromDate(y, m, 1);
   ord = PyObject_CallMethod(date, "toordinal", NULL);
-  days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
+  days = (int)(PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1);
   Py_DECREF(date);
   Py_DECREF(ord);
   *( (JSINT64 *) outValue) = (((JSINT64) ((days * 24 + h) * 60 + mn)) * 60 + s);
@@ -213,7 +213,7 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
 
   date = PyDate_FromDate(y, m, 1);
   ord = PyObject_CallMethod(date, "toordinal", NULL);
-  days = PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1;
+  days = (int)(PyInt_AS_LONG(ord) - EPOCH_ORD + d - 1);
   Py_DECREF(date);
   Py_DECREF(ord);
   *( (JSINT64 *) outValue) = ((JSINT64) days * 86400);
@@ -442,12 +442,35 @@ char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 // itemValue is borrowed from object (which is dict). No refCounting
 //=============================================================================
 
-int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+PyObject* Dict_ConvertItemName(PyObject* itemName)
 {
 #if PY_MAJOR_VERSION >= 3
   PyObject* itemNameTmp;
 #endif
 
+  if (PyUnicode_Check(itemName))
+  {
+    itemName = PyUnicode_AsUTF8String(itemName);
+  }
+  else
+  if (!PyString_Check(itemName))
+  {
+    itemName = PyObject_Str(itemName);
+#if PY_MAJOR_VERSION >= 3
+    itemNameTmp = itemName;
+    itemName = PyUnicode_AsUTF8String(itemName);
+    Py_DECREF(itemNameTmp);
+#endif
+  }
+  else
+  {
+    Py_INCREF(itemName);
+  }
+  return itemName;
+}
+
+int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+{
   if (GET_TC(tc)->itemName)
   {
     Py_DECREF(GET_TC(tc)->itemName);
@@ -461,26 +484,9 @@ int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  if (PyUnicode_Check(GET_TC(tc)->itemName))
-  {
-    GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
-  }
-  else
-    if (!PyString_Check(GET_TC(tc)->itemName))
-    {
-      GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
-#if PY_MAJOR_VERSION >= 3
-      itemNameTmp = GET_TC(tc)->itemName;
-      GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
-      Py_DECREF(itemNameTmp);
-#endif
-    }
-    else
-    {
-      Py_INCREF(GET_TC(tc)->itemName);
-    }
-    PRINTMARK();
-    return 1;
+  GET_TC(tc)->itemName = Dict_ConvertItemName(GET_TC(tc)->itemName);
+  PRINTMARK();
+  return 1;
 }
 
 void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
@@ -618,8 +624,69 @@ char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return PyString_AS_STRING(GET_TC(tc)->itemName);
 }
 
+//=============================================================================
+// Mapping protocol iteration functions
+//=============================================================================
 
-void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
+int Mapping_iterNext(JSOBJ obj, JSONTypeContext *tc)
+{
+  PyObject* item;
+
+  if (GET_TC(tc)->itemName)
+  {
+    Py_DECREF(GET_TC(tc)->itemName);
+    GET_TC(tc)->itemName = NULL;
+  }
+
+  if (GET_TC(tc)->itemValue)
+  {
+    Py_DECREF(GET_TC(tc)->itemValue);
+    GET_TC(tc)->itemValue = NULL;
+  }
+
+  if (!(item = PyIter_Next(GET_TC(tc)->iterator)))
+  {
+    PRINTMARK();
+    return 0;
+  }
+
+  GET_TC(tc)->itemName = Dict_ConvertItemName(PyTuple_GET_ITEM(item, 0));
+  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(item, 1);
+  Py_INCREF(GET_TC(tc)->itemValue);
+  Py_DECREF(item);
+  PRINTMARK();
+  return 1;
+}
+
+void Mapping_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+{
+  if (GET_TC(tc)->itemName)
+  {
+    Py_DECREF(GET_TC(tc)->itemName);
+    GET_TC(tc)->itemName = NULL;
+  }
+  if (GET_TC(tc)->itemValue)
+  {
+    Py_DECREF(GET_TC(tc)->itemValue);
+    GET_TC(tc)->itemValue = NULL;
+  }
+  Py_DECREF(GET_TC(tc)->iterator);
+  GET_TC(tc)->iterator = NULL;
+  PRINTMARK();
+}
+
+JSOBJ Mapping_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+{
+  return GET_TC(tc)->itemValue;
+}
+
+char *Mapping_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+{
+  *outLen = PyString_GET_SIZE(GET_TC(tc)->itemName);
+  return PyString_AS_STRING(GET_TC(tc)->itemName);
+}
+
+int SetupMappingIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
 {
   if (enc->sortKeys) {
     pc->iterEnd = SortedDict_iterEnd;
@@ -627,15 +694,37 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
     pc->iterGetValue = SortedDict_iterGetValue;
     pc->iterGetName = SortedDict_iterGetName;
   }
-  else {
+  else
+  if (PyDict_Check(dictObj)) {
     pc->iterEnd = Dict_iterEnd;
     pc->iterNext = Dict_iterNext;
     pc->iterGetValue = Dict_iterGetValue;
     pc->iterGetName = Dict_iterGetName;
   }
+  else {
+    pc->iterEnd = Mapping_iterEnd;
+    pc->iterNext = Mapping_iterNext;
+    pc->iterGetValue = Mapping_iterGetValue;
+    pc->iterGetName = Mapping_iterGetName;
+    PyObject* itemsView = PyObject_CallMethod(dictObj, "items", NULL);
+    if (!itemsView)
+    {
+      return 1;
+    }
+    pc->iterator = PyObject_GetIter(itemsView);
+    Py_DECREF(itemsView);
+    if (!pc->iterator)
+    {
+      return 1;
+    }
+    pc->size = PyMapping_Size(dictObj);
+  }
+
   pc->dictObj = dictObj;
   pc->index = 0;
+  return 0;
 }
+
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
@@ -686,7 +775,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
     PRINTMARK();
     pc->PyTypeToJSON = PyLongToINT64;
     tc->type = JT_LONG;
-    GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+    pc->longValue = PyLong_AsLongLong(obj);
 
     exc = PyErr_Occurred();
     if (!exc)
@@ -766,15 +855,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   }
 
 ISITERABLE:
-  if (PyDict_Check(obj))
-  {
-    PRINTMARK();
-    tc->type = JT_OBJECT;
-    SetupDictIter(obj, pc, enc);
-    Py_INCREF(obj);
-    return;
-  }
-  else
   if (PyList_Check(obj))
   {
     PRINTMARK();
@@ -783,8 +863,7 @@ ISITERABLE:
     pc->iterNext = List_iterNext;
     pc->iterGetValue = List_iterGetValue;
     pc->iterGetName = List_iterGetName;
-    GET_TC(tc)->index =  0;
-    GET_TC(tc)->size = PyList_GET_SIZE( (PyObject *) obj);
+    pc->size = PyList_GET_SIZE( (PyObject *) obj);
     return;
   }
   else
@@ -796,10 +875,20 @@ ISITERABLE:
     pc->iterNext = Tuple_iterNext;
     pc->iterGetValue = Tuple_iterGetValue;
     pc->iterGetName = Tuple_iterGetName;
-    GET_TC(tc)->index = 0;
-    GET_TC(tc)->size = PyTuple_GET_SIZE( (PyObject *) obj);
-    GET_TC(tc)->itemValue = NULL;
+    pc->size = PyTuple_GET_SIZE( (PyObject *) obj);
 
+    return;
+  }
+  else
+  if (PyMapping_Check(obj))
+  {
+    PRINTMARK();
+    tc->type = JT_OBJECT;
+    if (SetupMappingIter(obj, pc, enc))
+    {
+      goto INVALID;
+    }
+    Py_INCREF(obj);
     return;
   }
   /*
@@ -839,7 +928,10 @@ ISITERABLE:
 
     PRINTMARK();
     tc->type = JT_OBJECT;
-    SetupDictIter(toDictResult, pc, enc);
+    if (SetupMappingIter(toDictResult, pc, enc))
+    {
+      goto INVALID;
+    }
     return;
   }
   else

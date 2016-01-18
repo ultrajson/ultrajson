@@ -55,7 +55,7 @@ try:
 finally:
     f.close()    
     
-requires = ['nose', 'six', 'blist', 'pytz']
+requires = ['nose', 'unittest2', 'six', 'blist', 'pytz']
 
 setup (name = 'ujson',
        version = get_version(),

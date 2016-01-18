@@ -10,6 +10,7 @@ import decimal
 import json
 import math
 import time
+import pytz
 if six.PY2:
     import unittest2 as unittest
 else:
@@ -360,6 +361,22 @@ class UltraJSONTests(unittest.TestCase):
         expected = calendar.timegm(tup)
         self.assertEqual(int(expected), json.loads(output))
         self.assertEqual(int(expected), ujson.decode(output))
+
+    def test_encodeWithTimezone(self):
+        start_timestamp = 1383647400
+        a = datetime.datetime.utcfromtimestamp(start_timestamp)
+
+        a = a.replace(tzinfo=pytz.utc)
+        b = a.astimezone(pytz.timezone('America/New_York'))
+        c = b.astimezone(pytz.utc)
+
+        d = {'a':a, 'b':b, 'c':c}
+        json_string = ujson.encode(d)
+        json_dict = ujson.decode(json_string)
+
+        self.assertEqual(json_dict.get('a'),start_timestamp)
+        self.assertEqual(json_dict.get('b'),start_timestamp)
+        self.assertEqual(json_dict.get('c'),start_timestamp)
 
     def test_encodeToUTF8(self):
         input = b"\xe6\x97\xa5\xd1\x88"

@@ -68,10 +68,3 @@ setup (name = 'ujson',
        url="http://www.esn.me",
        classifiers=CLASSIFIERS,
        )
-
-if sys.version_info[0] >= 3:
-    print( "*" * 100)
-    print("If you want to run the tests be sure to run 2to3 on them first, "
-          "e.g. `2to3 -w tests/tests.py`.")
-    print("*" * 100)
-

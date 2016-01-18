@@ -190,7 +190,21 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
       case '\r': (*of++) = '\\'; (*of++) = 'r'; break;
       case '\t': (*of++) = '\\'; (*of++) = 't'; break;
 
-      case 0x26: // '/'
+      case '/':
+      {
+        if (enc->escapeForwardSlashes)
+        {
+          (*of++) = '\\';
+          (*of++) = '/';
+        }
+        else
+        {
+          // Same as default case below.
+          (*of++) = (*io);
+        }
+        break;
+      }
+      case 0x26: // '&'
       case 0x3c: // '<'
       case 0x3e: // '>'
       {
@@ -204,19 +218,6 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
           (*of++) = (*io);
           break;
         }
-      }
-      case '/':
-      {
-        if (enc->escapeForwardSlashes)
-        {
-          (*of++) = '\\'; (*of++) = '/';
-        }
-        else
-        {
-          // Same as default case below.
-          (*of++) = (*io);
-        }
-        break;
       }
       case 0x01:
       case 0x02:

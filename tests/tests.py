@@ -662,8 +662,8 @@ class UltraJSONTests(unittest.TestCase):
         input = [18446744073709551615, 18446744073709551615, 18446744073709551615]
         output = ujson.encode(input)
 
-        self.assertEquals(input, json.loads(output))
-        self.assertEquals(input, ujson.decode(output))
+        self.assertEqual(input, json.loads(output))
+        self.assertEqual(input, ujson.decode(output))
 
     def test_encodeLongConversion(self):
         input = 9223372036854775807
@@ -676,9 +676,9 @@ class UltraJSONTests(unittest.TestCase):
         input = 18446744073709551615
         output = ujson.encode(input)
 
-        self.assertEquals(input, json.loads(output))
-        self.assertEquals(output, json.dumps(input))
-        self.assertEquals(input, ujson.decode(output))
+        self.assertEqual(input, json.loads(output))
+        self.assertEqual(output, json.dumps(input))
+        self.assertEqual(input, ujson.decode(output))
 
     def test_numericIntExp(self):
         input = "1337E40"
@@ -1124,17 +1124,35 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
-
+    
     @unittest.skipIf(not PY3, "Only raises on Python 3")
     def test_encodingInvalidUnicodeCharacter(self):
         s = "\udc7f"
         self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
-
+    
     def test_sortKeys(self):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
         sortedKeys = ujson.dumps(data, sort_keys=True)
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
-
+    
+    def test_encodeDatetimeToStringConversion(self):
+        input = datetime.datetime.now()
+        output = ujson.encode(input,encode_datetime=True)
+        expected1 = ujson.decode(output)
+        expected2 = ujson.decode(output, decode_datetime=True)
+        self.assertEqual(expected1, json.loads(output))
+        self.assertEqual(input, expected2)
+       
+    def test_encodeDateToStringConversion(self):
+      
+        input = datetime.date(2015,12,14)
+        output = ujson.encode(input, encode_datetime=True)
+        expected1 = ujson.decode(output)
+        expected2 = datetime.datetime(year=input.year, month=input.month, day=input.day)
+        
+        self.assertEqual(expected1, json.loads(output))
+        self.assertEqual(expected2, ujson.decode(output, decode_datetime=True))
+    
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

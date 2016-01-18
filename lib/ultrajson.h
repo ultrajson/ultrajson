@@ -257,6 +257,9 @@ typedef struct __JSONObjectEncoder
   Configuration for spaces of indent */
   int indent;
 
+  /*Configuration for datetime */
+  int dateTimeToString;
+
   /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
@@ -295,13 +298,12 @@ Life cycle of the provided buffer must still be handled by caller.
 If the return value doesn't equal the specified buffer caller must release the memory using
 JSONObjectEncoder.free or free() as specified when calling this function.
 */
+
 EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer);
-
-
 
 typedef struct __JSONObjectDecoder
 {
-  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end);
+  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end, int encode_datetime);
   void (*objectAddKey)(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
   void (*arrayAddItem)(void *prv, JSOBJ obj, JSOBJ value);
   JSOBJ (*newTrue)(void *prv);
@@ -320,6 +322,7 @@ typedef struct __JSONObjectDecoder
   char *errorStr;
   char *errorOffset;
   int preciseFloat;
+  int stringToDatetime;
   void *prv;
 } JSONObjectDecoder;
 

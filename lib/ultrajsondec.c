@@ -66,7 +66,7 @@ struct DecoderState
   JSONObjectDecoder *dec;
 };
 
-JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
+JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds ) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 
 static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
@@ -489,7 +489,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
         ds->lastType = JT_UTF8;
         inputOffset ++;
         ds->start += ( (char *) inputOffset - (ds->start));
-        return ds->dec->newString(ds->prv, ds->escStart, escOffset);
+        return ds->dec->newString(ds->prv, ds->escStart, escOffset, ds->dec->stringToDatetime);
       }
       case DS_UTFLENERROR:
       {

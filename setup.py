@@ -55,8 +55,6 @@ try:
 finally:
     f.close()    
     
-requires = ['nose2', 'unittest2', 'six', 'blist', 'pytz']
-
 setup (name = 'ujson',
        version = get_version(),
        description = "Ultra fast JSON encoder and decoder for Python",
@@ -69,6 +67,4 @@ setup (name = 'ujson',
        platforms=['any'],      
        url="http://www.esn.me",
        classifiers=CLASSIFIERS,
-       tests_require=requires,
-       test_suite="nose2.collector.collector"
        )

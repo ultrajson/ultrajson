@@ -39,11 +39,29 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include "py_defines.h"
 #include <ultrajson.h>
 
-
+/*
+ * The DecoderParams contains some Python-specific decoder parameters.
+ * It is accessible via the JSONObjectDecoder->prv field.
+ */
 typedef struct __DecoderParams
 {
+  /*
+   * These hooks are Python functions (callable objects) provided by the user
+   * via keyword parameters of JSONToObj(). They allow to decode JSON entities
+   * into specific Python class instances (instead of generic dictionaries
+   * and strings).
+   *
+   * The objectHook is called when a JSON object is decoded. It takes the object
+   * (as dictionary) and may transform it into an arbitrary object (instanciate
+   * a class, etc).
+   *
+   * The stringHook is called for every decoded string. It may replace the string
+   * with an arbitrary object. Useful for deserializing things like dates from
+   * their textual representations into native Python types.
+   */
   PyObject *objectHook;
   PyObject *stringHook;
+
 } DecoderParams;
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)

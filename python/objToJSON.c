@@ -76,8 +76,24 @@ typedef struct __TypeContext
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
 
+/*
+ * The EncoderParams contains some private Python-specific encoder parameters.
+ * It is accessible via the JSONObjectEncoder->prv field,
+ * or via the GET_EP() macro.
+ */
 typedef struct __EncoderParams
 {
+  /*
+   * The preEncodeHook is a Python function (callable object) provided by the
+   * user via the corresponding keyword parameter for objToJSON() function.
+   *
+   * The hook is called for every encoded Python object. It may replace the
+   * object with another object (a more generic one, like dictionary or list or
+   * string) and thus define a custom serialization format.
+   *
+   * This is useful for serializing objects when you don't own their source code
+   * and can't implement a __json__() or toDict() method (e.g., datetime objects).
+   */
   PyObject *preEncodeHook;
 } EncoderParams;
 

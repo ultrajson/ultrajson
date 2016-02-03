@@ -28,6 +28,12 @@ json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding
 
 class UltraJSONTests(unittest.TestCase):
     def test_hooks_representDatetimeAsString(self):
+        # In this test, we define a custom JSON representation for datetime objects.
+        # Here they are represented as strings. E.g., "1990-01-01 00:00:00".
+        
+        # Note that this also overrides the default ujson's behavior
+        # (the ujson translates datetime objects into timestamps).
+        
         dt_fmt = '__DT: %Y-%m-%d %H:%M:%S'
         
         def enchook_dtAsStr(obj_being_encoded):
@@ -52,6 +58,13 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(input, decoded_obj)
     
     def test_hooks_representDatetimeAsJsObject(self):
+        # In this test, datetime objects are split into components and represented
+        # as hash-like JSON objects.
+        #
+        # The enchook_dtAsObj() replaces a datetime object with a dictionary,
+        # and the dechook_dtFromObj() does the reverse by passing the dictionary
+        # as keyword parameters to the datetime() constructor.
+        
         def enchook_dtAsObj(obj_being_encoded):
             if isinstance(obj_being_encoded, datetime.datetime):
                 dt = obj_being_encoded

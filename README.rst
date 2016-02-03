@@ -80,6 +80,34 @@ Controls whether indention ("pretty output") is enabled. Default is 0 (disabled)
         "foo":"bar"
     }
 
+pre_encode_hook
+---------------
+Allows to provide a custom function which is called for every encoded Python object.
+
+The hook function semantics is similar to the standard JSONEncoder.default() method,
+but the pre_encode_hook() is called before any other serialization attempts, while
+the default() is called when all other options didn't work.
+
+That allows to override already exsiting behavior and define custom serialization
+formats for things like dates. For example::
+
+    # Default behavior: datetime is converted to timestamp
+    >>> ujson.dumps({"a": "foo", "b": datetime.now()})
+    '{"a":"foo","b":1454523657}'
+    
+    # Hook is involved: the datetime object is replaced with the .isoformat() string
+    >>> def hook(obj):
+            return obj.isoformat() if hasattr(obj, 'isoformat') else obj
+    
+    >>> ujson.dumps({"a": "foo", "b": datetime.now()}, pre_encode_hook=hook)
+    '{"a":"foo","b":"2016-02-03T18:21:55.351081"}'
+
+The hook may be used to replace any object with any other arbitrary object before
+encoding it. However, it doesn't cancel all further encoding transformations.
+For example, if you return a `datetime` object from the hook instead of a string,
+it will be transformed to a timestamp.
+
+
 ~~~~~~~~~~~~~~~~
 Decoders options
 ~~~~~~~~~~~~~~~~
@@ -91,6 +119,38 @@ Set to enable usage of higher precision (strtod) function when decoding string t
     4.5600000000000005
     >>> ujson.loads("4.56", precise_float=True)
     4.5599999999999996
+
+object_hook
+-----------
+A custom Python function which is called after a JSON object is decoded.
+
+The hook semantics is similar to the standard JSONDecoder.object_hook() behavior.
+You may use it to transform a dictionary (the decoded JSON object) into a more
+specific object.
+
+For example::
+
+    >>> def hook(obj):
+            if '__complex__' in obj:
+                return complex(obj['real'], obj['imag'])
+            return obj
+    
+    >>> ujson.loads('{"__complex__": true, "real": 1, "imag": 2}', object_hook=hook)
+    (1+2j)
+
+string_hook
+-----------
+Similar to `object_hook`, but called for every decoded string.
+
+Useful for deserializing objects like dates from their textual representations, e.g.::
+
+    >>> def hook(s):
+            if s.startswith('__DATE'):
+                return datetime.strptime(s, '__DATE: %Y-%m-%d')
+            return s
+    
+    >>> ujson.loads('{"a": "foo", "b": "__DATE: 2016-01-01"}', string_hook=hook)
+    {'a': 'foo', 'b': datetime.datetime(2016, 1, 1, 0, 0)}
 
 ~~~~~~~~~~~~~
 Test machine:

@@ -48,7 +48,7 @@ class UltraJSONTests(unittest.TestCase):
          
         input = {
             'a': 'dummy',
-            'b': datetime.datetime(2016, 02, 03, 02, 31, 01),
+            'b': datetime.datetime(2016, 2, 3, 2, 31, 1),
         }
         expected_json = '{"a":"dummy","b":"__DT: 2016-02-03 02:31:01"}'
         encoded_json = ujson.encode(input, sort_keys=True, pre_encode_hook=enchook_dtAsStr)
@@ -89,7 +89,7 @@ class UltraJSONTests(unittest.TestCase):
         
         input = {
             'a': 'dummy',
-            'b': datetime.datetime(2016, 02, 03, 02, 31, 01)
+            'b': datetime.datetime(2016, 2, 3, 2, 31, 1)
         }
         expected_json = """
         {

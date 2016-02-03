@@ -185,6 +185,7 @@ struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder
 {
+  JSOBJ (*callPreEncodeHook)(JSOBJ obj, struct __JSONObjectEncoder *enc);
   void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
   void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
   const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
@@ -313,6 +314,7 @@ typedef struct __JSONObjectDecoder
   JSOBJ (*newLong)(void *prv, JSINT64 value);
   JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
   JSOBJ (*newDouble)(void *prv, double value);
+  JSOBJ (*callObjectHook)(JSOBJ obj, void *prv);
   void (*releaseObject)(void *prv, JSOBJ obj);
   JSPFN_MALLOC malloc;
   JSPFN_FREE free;

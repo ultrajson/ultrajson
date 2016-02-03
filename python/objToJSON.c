@@ -76,6 +76,13 @@ typedef struct __TypeContext
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
 
+typedef struct __EncoderParams
+{
+  PyObject *preEncodeHook;
+} EncoderParams;
+
+#define GET_EP(__ptrenc) ((EncoderParams *)((__ptrenc)->prv))
+
 struct PyDictIterState
 {
   PyObject *keys;
@@ -642,6 +649,21 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
   pc->index = 0;
 }
 
+JSOBJ Object_callPreEncodeHook(JSOBJ _obj, JSONObjectEncoder *enc)
+{
+  EncoderParams *ep;
+  PyObject *obj, *newobj;
+
+  ep = GET_EP(enc);
+  if (!ep->preEncodeHook)
+    return _obj;
+
+  obj = (PyObject*) _obj;
+  newobj = PyObject_CallFunctionObjArgs(ep->preEncodeHook, obj, NULL);
+
+  return newobj;
+}
+
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
   PyObject *obj, *exc, *iter;
@@ -997,7 +1019,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "pre_encode_hook", NULL };
 
   char buffer[65536];
   char *ret;
@@ -1007,9 +1029,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oencodeHTMLChars = NULL;
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
+  PyObject *opreEncodeHook = NULL;
 
   JSONObjectEncoder encoder =
   {
+    Object_callPreEncodeHook,
     Object_beginTypeContext,
     Object_endTypeContext,
     Object_getStringValue,
@@ -1035,10 +1059,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     NULL, //prv
   };
 
+  EncoderParams ep = {
+      NULL //preEncodeHook
+  };
+  encoder.prv = &ep;
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOi", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &opreEncodeHook))
   {
     return NULL;
   }
@@ -1061,6 +1089,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (opreEncodeHook != NULL && PyCallable_Check(opreEncodeHook))
+  {
+    ep.preEncodeHook = opreEncodeHook;
   }
 
   PRINTMARK();

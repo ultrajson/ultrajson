@@ -40,6 +40,12 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <ultrajson.h>
 
 
+typedef struct __DecoderParams
+{
+  PyObject *objectHook;
+  PyObject *stringHook;
+} DecoderParams;
+
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
@@ -60,7 +66,20 @@ void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 
 JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
-  return PyUnicode_FromWideChar (start, (end - start));
+  PyObject *strobj, *newobj;
+  DecoderParams *dp = prv;
+
+  strobj = PyUnicode_FromWideChar (start, (end - start));
+
+  if (!dp->stringHook)
+    return strobj;
+
+  newobj = PyObject_CallFunctionObjArgs(dp->stringHook, strobj, NULL);
+
+  if (newobj != strobj)
+    Py_DECREF(strobj);
+
+  return newobj;
 }
 
 JSOBJ Object_newTrue(void *prv)
@@ -108,12 +127,29 @@ JSOBJ Object_newDouble(void *prv, double value)
   return PyFloat_FromDouble(value);
 }
 
+JSOBJ Object_callObjectHook(JSOBJ _obj, void *prv)
+{
+  PyObject *obj, *newobj;
+  DecoderParams *dp = prv;
+
+  if (!dp->objectHook)
+    return _obj;
+
+  obj = (PyObject *)_obj;
+  newobj = PyObject_CallFunctionObjArgs(dp->objectHook, obj, NULL);
+
+  if (obj != newobj)
+    Py_DECREF(obj);
+
+  return newobj;
+}
+
 static void Object_releaseObject(void *prv, JSOBJ obj)
 {
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", "precise_float", NULL};
+static char *g_kwlist[] = {"obj", "precise_float", "object_hook", "string_hook", NULL};
 
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
@@ -121,6 +157,9 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *sarg;
   PyObject *arg;
   PyObject *opreciseFloat = NULL;
+  PyObject *oobjectHook = NULL;
+  PyObject *ostringHook = NULL;
+
   JSONObjectDecoder decoder =
   {
     Object_newString,
@@ -135,6 +174,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_newLong,
     Object_newUnsignedLong,
     Object_newDouble,
+    Object_callObjectHook,
     Object_releaseObject,
     PyObject_Malloc,
     PyObject_Free,
@@ -142,9 +182,14 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   };
 
   decoder.preciseFloat = 0;
-  decoder.prv = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", g_kwlist, &arg, &opreciseFloat))
+  DecoderParams dp = {
+      NULL, //objectHook
+      NULL, //stringHook
+  };
+  decoder.prv = &dp;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOO", g_kwlist, &arg, &opreciseFloat, &oobjectHook, &ostringHook))
   {
       return NULL;
   }
@@ -152,6 +197,16 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   if (opreciseFloat && PyObject_IsTrue(opreciseFloat))
   {
       decoder.preciseFloat = 1;
+  }
+
+  if (oobjectHook && PyCallable_Check(oobjectHook))
+  {
+    dp.objectHook = oobjectHook;
+  }
+
+  if (ostringHook && PyCallable_Check(ostringHook))
+  {
+    dp.stringHook = ostringHook;
   }
 
   if (PyString_Check(arg))

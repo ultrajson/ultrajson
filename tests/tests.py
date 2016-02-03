@@ -27,6 +27,77 @@ json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding
 
 
 class UltraJSONTests(unittest.TestCase):
+    def test_hooks_representDatetimeAsString(self):
+        dt_fmt = '__DT: %Y-%m-%d %H:%M:%S'
+        
+        def enchook_dtAsStr(obj_being_encoded):
+            if isinstance(obj_being_encoded, datetime.datetime):
+                return obj_being_encoded.strftime(dt_fmt)
+            return obj_being_encoded
+        
+        def dechook_dtFromStr(decoded_str):
+            if decoded_str.startswith('__DT: '):
+                return datetime.datetime.strptime(decoded_str, dt_fmt)
+            return decoded_str
+         
+        input = {
+            'a': 'dummy',
+            'b': datetime.datetime(2016, 02, 03, 02, 31, 01),
+        }
+        expected_json = '{"a":"dummy","b":"__DT: 2016-02-03 02:31:01"}'
+        encoded_json = ujson.encode(input, sort_keys=True, pre_encode_hook=enchook_dtAsStr)
+        self.assertEqual(expected_json, encoded_json)
+        
+        decoded_obj = ujson.decode(encoded_json, string_hook=dechook_dtFromStr)
+        self.assertEqual(input, decoded_obj)
+    
+    def test_hooks_representDatetimeAsJsObject(self):
+        def enchook_dtAsObj(obj_being_encoded):
+            if isinstance(obj_being_encoded, datetime.datetime):
+                dt = obj_being_encoded
+                return {
+                    '__type__' : 'datetime',
+                    'year' : dt.year,
+                    'month' : dt.month,
+                    'day' : dt.day,
+                    'hour' : dt.hour,
+                    'minute' : dt.minute,
+                    'second' : dt.second,
+                }
+            return obj_being_encoded
+        
+        def dechook_dtFromObj(decoded_obj_dict):
+            if decoded_obj_dict.get('__type__') == 'datetime':
+                dt_kwargs = decoded_obj_dict
+                del dt_kwargs['__type__']
+                dt = datetime.datetime(**dt_kwargs)
+                return dt
+            return decoded_obj_dict
+        
+        input = {
+            'a': 'dummy',
+            'b': datetime.datetime(2016, 02, 03, 02, 31, 01)
+        }
+        expected_json = """
+        {
+            "a": "dummy",
+            "b": {
+                "__type__" : "datetime",
+                "day" : 3,
+                "hour" : 2,
+                "minute" : 31,
+                "month" : 2,
+                "second" : 1,
+                "year" : 2016
+            }
+        }
+        """.replace(" ", "").replace("\n", "")
+        encoded_json = ujson.encode(input, sort_keys=True, pre_encode_hook=enchook_dtAsObj)
+        self.assertEqual(expected_json, encoded_json)
+        
+        decoded_obj = ujson.decode(encoded_json, object_hook=dechook_dtFromObj)
+        self.assertEqual(input, decoded_obj)
+    
     def test_encodeDecimal(self):
         sut = decimal.Decimal("1337.1337")
         encoded = ujson.encode(sut, double_precision=100)

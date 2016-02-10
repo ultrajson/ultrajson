@@ -27,6 +27,62 @@ json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding
 
 
 class UltraJSONTests(unittest.TestCase):
+    
+    def test_hooks_exceptionHandling(self):
+        class TestHookException(Exception):
+            pass
+        
+        call_counters = {
+            'pre_encode_hook': 0,
+            'string_hook': 0,
+            'object_hook': 0,
+        }
+        
+        def pre_encode_hook(_unused_obj):
+            call_counters['pre_encode_hook'] += 1
+            raise TestHookException()
+        
+        def string_hook(_unused_obj):
+            call_counters['string_hook'] += 1
+            raise TestHookException()
+        
+        def object_hook(_unused_obj):
+            call_counters['object_hook'] += 1
+            raise TestHookException()
+        
+        input = {
+            'foo': 1,
+            'bar': {
+                'a': 'a',
+                'b': 'b',
+            },
+        }
+        json = """
+        {
+            "foo": 1,
+            "bar": {
+                "a": "a",
+                "b": "b"
+            }
+        }
+        """
+        
+        with self.assertRaises(TestHookException):
+            ujson.encode(input, pre_encode_hook=pre_encode_hook)
+        
+        with self.assertRaises(TestHookException):
+            ujson.decode(json, string_hook=string_hook)
+        
+        with self.assertRaises(TestHookException):
+            ujson.decode(json, object_hook=object_hook)
+        
+        # Test not only that the exception is raised, but also that the hook
+        # is called only once. I.e. that the low-level code detects the error
+        # and stops the iteration process after the first call.    
+        self.assertEqual(call_counters['pre_encode_hook'], 1)
+        self.assertEqual(call_counters['string_hook'], 1)
+        self.assertEqual(call_counters['object_hook'], 1)
+
     def test_hooks_representDatetimeAsString(self):
         # In this test, we define a custom JSON representation for datetime objects.
         # Here they are represented as strings. E.g., "1990-01-01 00:00:00".

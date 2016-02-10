@@ -150,9 +150,6 @@ JSOBJ Object_callObjectHook(JSOBJ _obj, void *prv)
   PyObject *obj, *newobj;
   DecoderParams *dp = prv;
 
-  if (!dp->objectHook)
-    return _obj;
-
   obj = (PyObject *)_obj;
   newobj = PyObject_CallFunctionObjArgs(dp->objectHook, obj, NULL);
 
@@ -192,7 +189,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_newLong,
     Object_newUnsignedLong,
     Object_newDouble,
-    Object_callObjectHook,
+    NULL, //callObjectHook (optional, initialized below if passed as the keyword parameter)
     Object_releaseObject,
     PyObject_Malloc,
     PyObject_Free,
@@ -219,6 +216,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (oobjectHook && PyCallable_Check(oobjectHook))
   {
+    decoder.callObjectHook = Object_callObjectHook;
     dp.objectHook = oobjectHook;
   }
 

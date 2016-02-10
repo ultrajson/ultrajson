@@ -78,8 +78,7 @@ typedef struct __TypeContext
 
 /*
  * The EncoderParams contains some private Python-specific encoder parameters.
- * It is accessible via the JSONObjectEncoder->prv field,
- * or via the GET_EP() macro.
+ * It is accessible via the JSONObjectEncoder->prv field.
  */
 typedef struct __EncoderParams
 {
@@ -97,7 +96,6 @@ typedef struct __EncoderParams
   PyObject *preEncodeHook;
 } EncoderParams;
 
-#define GET_EP(__ptrenc) ((EncoderParams *)((__ptrenc)->prv))
 
 struct PyDictIterState
 {
@@ -667,17 +665,10 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
 
 JSOBJ Object_callPreEncodeHook(JSOBJ _obj, JSONObjectEncoder *enc)
 {
-  EncoderParams *ep;
-  PyObject *obj, *newobj;
+  EncoderParams *ep = enc->prv;
+  PyObject *obj = (PyObject*) _obj;
 
-  ep = GET_EP(enc);
-  if (!ep->preEncodeHook)
-    return _obj;
-
-  obj = (PyObject*) _obj;
-  newobj = PyObject_CallFunctionObjArgs(ep->preEncodeHook, obj, NULL);
-
-  return newobj;
+  return PyObject_CallFunctionObjArgs(ep->preEncodeHook, obj, NULL);
 }
 
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
@@ -1049,7 +1040,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   JSONObjectEncoder encoder =
   {
-    Object_callPreEncodeHook,
+    NULL, //callPreEncodeHook (optional, initialized below if passed as the keyword parameter)
     Object_beginTypeContext,
     Object_endTypeContext,
     Object_getStringValue,
@@ -1109,6 +1100,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (opreEncodeHook != NULL && PyCallable_Check(opreEncodeHook))
   {
+    encoder.callPreEncodeHook = Object_callPreEncodeHook;
     ep.preEncodeHook = opreEncodeHook;
   }
 

@@ -108,6 +108,19 @@ For example, if you return a `datetime` object from the hook instead of a string
 it will be transformed to a timestamp.
 
 
+pre_encode_primitive
+---------------
+The boolean flag that indicates that pre_encode_hook() should also be called
+for Python objects that serialized to primitive JSON types (Number, String,
+Boolean, null).
+
+Usually you don't need to define any special serialization format for these
+types, so the flag is false by default.
+
+Enabling this flag may produce huge amount of pre_encode_hook() calls (the
+hook will be called for every single JSON value) and thus affect the performance.
+
+
 ~~~~~~~~~~~~~~~~
 Decoders options
 ~~~~~~~~~~~~~~~~

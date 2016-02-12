@@ -94,6 +94,13 @@ typedef struct __EncoderParams
    * and can't implement a __json__() or toDict() method (e.g., datetime objects).
    */
   PyObject *preEncodeHook;
+
+  /*
+   * The boolean flag that indicates that pre_encode_hook() should also be
+   * called for Python objects that serialized to primitive JSON types (Number,
+   * String, Boolean, null).
+   */
+  int preEncodePrimitive;
 } EncoderParams;
 
 
@@ -668,6 +675,19 @@ JSOBJ Object_callPreEncodeHook(JSOBJ _obj, JSONObjectEncoder *enc)
   EncoderParams *ep = enc->prv;
   PyObject *obj = (PyObject*) _obj;
 
+  if (!ep->preEncodePrimitive)
+  {
+    if (obj == Py_None ||
+        PyInt_Check(obj) ||
+        PyLong_Check(obj) ||
+        PyFloat_Check(obj) ||
+        PyString_Check(obj) ||
+        PyUnicode_Check(obj))
+    {
+      return obj;
+    }
+  }
+
   return PyObject_CallFunctionObjArgs(ep->preEncodeHook, obj, NULL);
 }
 
@@ -1026,7 +1046,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "pre_encode_hook", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "pre_encode_hook", "pre_encode_primitive", NULL };
 
   char buffer[65536];
   char *ret;
@@ -1037,6 +1057,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   PyObject *opreEncodeHook = NULL;
+  PyObject *opreEncodePrimitive = NULL;
 
   JSONObjectEncoder encoder =
   {
@@ -1073,7 +1094,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOiO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &opreEncodeHook))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOiOO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &opreEncodeHook, &opreEncodePrimitive))
   {
     return NULL;
   }
@@ -1102,6 +1123,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     encoder.callPreEncodeHook = Object_callPreEncodeHook;
     ep.preEncodeHook = opreEncodeHook;
+  }
+
+  if (opreEncodePrimitive != NULL && PyObject_IsTrue(opreEncodePrimitive))
+  {
+    ep.preEncodePrimitive = 1;
   }
 
   PRINTMARK();

@@ -76,6 +76,34 @@ typedef struct __TypeContext
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
 
+/*
+ * The EncoderParams contains some private Python-specific encoder parameters.
+ * It is accessible via the JSONObjectEncoder->prv field.
+ */
+typedef struct __EncoderParams
+{
+  /*
+   * The preEncodeHook is a Python function (callable object) provided by the
+   * user via the corresponding keyword parameter for objToJSON() function.
+   *
+   * The hook is called for every encoded Python object. It may replace the
+   * object with another object (a more generic one, like dictionary or list or
+   * string) and thus define a custom serialization format.
+   *
+   * This is useful for serializing objects when you don't own their source code
+   * and can't implement a __json__() or toDict() method (e.g., datetime objects).
+   */
+  PyObject *preEncodeHook;
+
+  /*
+   * The boolean flag that indicates that pre_encode_hook() should also be
+   * called for Python objects that serialized to primitive JSON types (Number,
+   * String, Boolean, null).
+   */
+  int preEncodePrimitive;
+} EncoderParams;
+
+
 struct PyDictIterState
 {
   PyObject *keys;
@@ -642,6 +670,27 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
   pc->index = 0;
 }
 
+JSOBJ Object_callPreEncodeHook(JSOBJ _obj, JSONObjectEncoder *enc)
+{
+  EncoderParams *ep = enc->prv;
+  PyObject *obj = (PyObject*) _obj;
+
+  if (!ep->preEncodePrimitive)
+  {
+    if (obj == Py_None ||
+        PyInt_Check(obj) ||
+        PyLong_Check(obj) ||
+        PyFloat_Check(obj) ||
+        PyString_Check(obj) ||
+        PyUnicode_Check(obj))
+    {
+      return obj;
+    }
+  }
+
+  return PyObject_CallFunctionObjArgs(ep->preEncodeHook, obj, NULL);
+}
+
 void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
   PyObject *obj, *exc, *iter;
@@ -997,7 +1046,7 @@ char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "double_precision", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "pre_encode_hook", "pre_encode_primitive", NULL };
 
   char buffer[65536];
   char *ret;
@@ -1007,9 +1056,12 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oencodeHTMLChars = NULL;
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
+  PyObject *opreEncodeHook = NULL;
+  PyObject *opreEncodePrimitive = NULL;
 
   JSONObjectEncoder encoder =
   {
+    NULL, //callPreEncodeHook (optional, initialized below if passed as the keyword parameter)
     Object_beginTypeContext,
     Object_endTypeContext,
     Object_getStringValue,
@@ -1035,10 +1087,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     NULL, //prv
   };
 
+  EncoderParams ep = {
+      NULL //preEncodeHook
+  };
+  encoder.prv = &ep;
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOi", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OiOOOiOO", kwlist, &oinput, &oensureAscii, &encoder.doublePrecision, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &opreEncodeHook, &opreEncodePrimitive))
   {
     return NULL;
   }
@@ -1061,6 +1117,17 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (opreEncodeHook != NULL && PyCallable_Check(opreEncodeHook))
+  {
+    encoder.callPreEncodeHook = Object_callPreEncodeHook;
+    ep.preEncodeHook = opreEncodeHook;
+  }
+
+  if (opreEncodePrimitive != NULL && PyObject_IsTrue(opreEncodePrimitive))
+  {
+    ep.preEncodePrimitive = 1;
   }
 
   PRINTMARK();

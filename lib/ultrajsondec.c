@@ -807,6 +807,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
       case '}':
       {
         ds->objDepth--;
+
+        if (ds->dec->callObjectHook)
+          /* Note: the hook may return NULL (and thus signal an error). */
+          newObj = ds->dec->callObjectHook(newObj, ds->prv);
+
         return newObj;
       }
       case ',':

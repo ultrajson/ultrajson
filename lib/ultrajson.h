@@ -185,6 +185,15 @@ struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder
 {
+  /*
+   The pre-encode hook is called for each object, right before the beginTypeContext().
+   Its purpose is to allow to define an arbitrary serialization format by replacing objects on the fly during the encoding process.
+   So this hook takes an object (which is being encoded), and returns a new object.
+   After the hook is executed, the caller must completely forget the old object (since it may be already deallocated by the hook),
+   and use only the new object returned by this hook. The new object is also passed then to the beginTypeContext().
+   */
+  JSOBJ (*callPreEncodeHook)(JSOBJ obj, struct __JSONObjectEncoder *enc);
+  
   void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
   void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
   const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
@@ -313,6 +322,15 @@ typedef struct __JSONObjectDecoder
   JSOBJ (*newLong)(void *prv, JSINT64 value);
   JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
   JSOBJ (*newDouble)(void *prv, double value);
+  
+  /*
+   * The callObjectHook() is executed after a whole JSON object (the thing surrounded by curly {} braces) is decoded.
+   * Its purpose is to transform generic hash-like objects into more specific entities defined by the user (structures, classes, etc).
+   * The hook takes the decoded obj, and returns a new object.
+   * After the hook is executed, the caller should use only the new returned object, and completely forget the old object (since the old object may be deallocated by the hook).
+   */
+  JSOBJ (*callObjectHook)(JSOBJ obj, void *prv);
+  
   void (*releaseObject)(void *prv, JSOBJ obj);
   JSPFN_MALLOC malloc;
   JSPFN_FREE free;

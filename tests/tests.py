@@ -27,6 +27,146 @@ json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding
 
 
 class UltraJSONTests(unittest.TestCase):
+    
+    def test_hooks_exceptionHandling(self):
+        class TestHookException(Exception):
+            pass
+        
+        call_counters = {
+            'pre_encode_hook': 0,
+            'string_hook': 0,
+            'object_hook': 0,
+        }
+        
+        def pre_encode_hook(_unused_obj):
+            call_counters['pre_encode_hook'] += 1
+            raise TestHookException()
+        
+        def string_hook(_unused_obj):
+            call_counters['string_hook'] += 1
+            raise TestHookException()
+        
+        def object_hook(_unused_obj):
+            call_counters['object_hook'] += 1
+            raise TestHookException()
+        
+        input = {
+            'foo': 1,
+            'bar': {
+                'a': 'a',
+                'b': 'b',
+            },
+        }
+        json = """
+        {
+            "foo": 1,
+            "bar": {
+                "a": "a",
+                "b": "b"
+            }
+        }
+        """
+        
+        with self.assertRaises(TestHookException):
+            ujson.encode(input, pre_encode_hook=pre_encode_hook)
+        
+        with self.assertRaises(TestHookException):
+            ujson.decode(json, string_hook=string_hook)
+        
+        with self.assertRaises(TestHookException):
+            ujson.decode(json, object_hook=object_hook)
+        
+        # Test not only that the exception is raised, but also that the hook
+        # is called only once. I.e. that the low-level code detects the error
+        # and stops the iteration process after the first call.    
+        self.assertEqual(call_counters['pre_encode_hook'], 1)
+        self.assertEqual(call_counters['string_hook'], 1)
+        self.assertEqual(call_counters['object_hook'], 1)
+
+    def test_hooks_representDatetimeAsString(self):
+        # In this test, we define a custom JSON representation for datetime objects.
+        # Here they are represented as strings. E.g., "1990-01-01 00:00:00".
+        
+        # Note that this also overrides the default ujson's behavior
+        # (the ujson translates datetime objects into timestamps).
+        
+        dt_fmt = '__DT: %Y-%m-%d %H:%M:%S'
+        
+        def enchook_dtAsStr(obj_being_encoded):
+            if isinstance(obj_being_encoded, datetime.datetime):
+                return obj_being_encoded.strftime(dt_fmt)
+            return obj_being_encoded
+        
+        def dechook_dtFromStr(decoded_str):
+            if decoded_str.startswith('__DT: '):
+                return datetime.datetime.strptime(decoded_str, dt_fmt)
+            return decoded_str
+         
+        input = {
+            'a': 'dummy',
+            'b': datetime.datetime(2016, 2, 3, 2, 31, 1),
+        }
+        expected_json = '{"a":"dummy","b":"__DT: 2016-02-03 02:31:01"}'
+        encoded_json = ujson.encode(input, sort_keys=True, pre_encode_hook=enchook_dtAsStr)
+        self.assertEqual(expected_json, encoded_json)
+        
+        decoded_obj = ujson.decode(encoded_json, string_hook=dechook_dtFromStr)
+        self.assertEqual(input, decoded_obj)
+    
+    def test_hooks_representDatetimeAsJsObject(self):
+        # In this test, datetime objects are split into components and represented
+        # as hash-like JSON objects.
+        #
+        # The enchook_dtAsObj() replaces a datetime object with a dictionary,
+        # and the dechook_dtFromObj() does the reverse by passing the dictionary
+        # as keyword parameters to the datetime() constructor.
+        
+        def enchook_dtAsObj(obj_being_encoded):
+            if isinstance(obj_being_encoded, datetime.datetime):
+                dt = obj_being_encoded
+                return {
+                    '__type__' : 'datetime',
+                    'year' : dt.year,
+                    'month' : dt.month,
+                    'day' : dt.day,
+                    'hour' : dt.hour,
+                    'minute' : dt.minute,
+                    'second' : dt.second,
+                }
+            return obj_being_encoded
+        
+        def dechook_dtFromObj(decoded_obj_dict):
+            if decoded_obj_dict.get('__type__') == 'datetime':
+                dt_kwargs = decoded_obj_dict
+                del dt_kwargs['__type__']
+                dt = datetime.datetime(**dt_kwargs)
+                return dt
+            return decoded_obj_dict
+        
+        input = {
+            'a': 'dummy',
+            'b': datetime.datetime(2016, 2, 3, 2, 31, 1)
+        }
+        expected_json = """
+        {
+            "a": "dummy",
+            "b": {
+                "__type__" : "datetime",
+                "day" : 3,
+                "hour" : 2,
+                "minute" : 31,
+                "month" : 2,
+                "second" : 1,
+                "year" : 2016
+            }
+        }
+        """.replace(" ", "").replace("\n", "")
+        encoded_json = ujson.encode(input, sort_keys=True, pre_encode_hook=enchook_dtAsObj)
+        self.assertEqual(expected_json, encoded_json)
+        
+        decoded_obj = ujson.decode(encoded_json, object_hook=dechook_dtFromObj)
+        self.assertEqual(input, decoded_obj)
+    
     def test_encodeDecimal(self):
         sut = decimal.Decimal("1337.1337")
         encoded = ujson.encode(sut, double_precision=100)

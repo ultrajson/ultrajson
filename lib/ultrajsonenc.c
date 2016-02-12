@@ -769,6 +769,17 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 #endif
     }
 
+    if (enc->callPreEncodeHook) {
+      JSOBJ newobj = enc->callPreEncodeHook(obj, enc);
+
+      if (!newobj) {
+        SetError(obj, enc, "error signalled by the pre-encode hook");
+        return;
+      }
+
+      obj = newobj;
+    }
+
     tc.encoder_prv = enc->prv;
     enc->beginTypeContext(obj, &tc, enc);
 

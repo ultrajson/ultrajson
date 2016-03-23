@@ -125,7 +125,7 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 
   if (enc->heap)
   {
-    enc->start = (char *) enc->realloc (enc->start, newSize);
+    enc->start = (char *) ujencode_realloc (enc->start, newSize);
     if (!enc->start)
     {
       SetError (NULL, enc, "Could not reserve memory block");
@@ -136,7 +136,7 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
   {
     char *oldStart = enc->start;
     enc->heap = 1;
-    enc->start = (char *) enc->malloc (newSize);
+    enc->start = (char *) ujencode_malloc (newSize);
     if (!enc->start)
     {
       SetError (NULL, enc, "Could not reserve memory block");
@@ -770,7 +770,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     }
 
     tc.encoder_prv = enc->prv;
-    enc->beginTypeContext(obj, &tc, enc);
+    ujencode_beginTypeContext(obj, &tc, enc);
 
     switch (tc.type)
     {
@@ -786,7 +786,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
         Buffer_AppendCharUnchecked (enc, '[');
         Buffer_AppendIndentNewlineUnchecked (enc);
 
-        while (enc->iterNext(obj, &tc))
+        while (ujencode_iterNext(obj, &tc))
         {
           if (count > 0)
           {
@@ -797,7 +797,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
             Buffer_AppendIndentNewlineUnchecked (enc);
           }
 
-          iterObj = enc->iterGetValue(obj, &tc);
+          iterObj = ujencode_iterGetValue(obj, &tc);
 
           enc->level ++;
           Buffer_AppendIndentUnchecked (enc, enc->level);
@@ -805,7 +805,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
           count ++;
       }
 
-      enc->iterEnd(obj, &tc);
+      ujencode_iterEnd(obj, &tc);
       Buffer_AppendIndentNewlineUnchecked (enc);
       Buffer_AppendIndentUnchecked (enc, enc->level);
       Buffer_AppendCharUnchecked (enc, ']');
@@ -819,7 +819,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     Buffer_AppendCharUnchecked (enc, '{');
     Buffer_AppendIndentNewlineUnchecked (enc);
 
-    while (enc->iterNext(obj, &tc))
+    while (ujencode_iterNext(obj, &tc))
     {
       if (count > 0)
       {
@@ -830,8 +830,8 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
         Buffer_AppendIndentNewlineUnchecked (enc);
       }
 
-      iterObj = enc->iterGetValue(obj, &tc);
-      objName = enc->iterGetName(obj, &tc, &szlen);
+      iterObj = ujencode_iterGetValue(obj, &tc);
+      objName = ujencode_iterGetName(obj, &tc, &szlen);
 
       enc->level ++;
       Buffer_AppendIndentUnchecked (enc, enc->level);
@@ -839,7 +839,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       count ++;
     }
 
-    enc->iterEnd(obj, &tc);
+    ujencode_iterEnd(obj, &tc);
     Buffer_AppendIndentNewlineUnchecked (enc);
     Buffer_AppendIndentUnchecked (enc, enc->level);
     Buffer_AppendCharUnchecked (enc, '}');
@@ -848,19 +848,19 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
   case JT_LONG:
   {
-    Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
+    Buffer_AppendLongUnchecked (enc, ujencode_getLongValue(obj, &tc));
     break;
   }
 
   case JT_ULONG:
   {
-    Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
+    Buffer_AppendUnsignedLongUnchecked (enc, ujencode_getUnsignedLongValue(obj, &tc));
     break;
   }
 
   case JT_INT:
   {
-    Buffer_AppendIntUnchecked (enc, enc->getIntValue(obj, &tc));
+    Buffer_AppendIntUnchecked (enc, ujencode_getIntValue(obj, &tc));
     break;
   }
 
@@ -895,9 +895,9 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
   case JT_DOUBLE:
   {
-    if (!Buffer_AppendDoubleUnchecked (obj, enc, enc->getDoubleValue(obj, &tc)))
+    if (!Buffer_AppendDoubleUnchecked (obj, enc, ujencode_getDoubleValue(obj, &tc)))
     {
-      enc->endTypeContext(obj, &tc);
+      ujencode_endTypeContext(obj, &tc);
       enc->level --;
       return;
     }
@@ -906,7 +906,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
   case JT_UTF8:
   {
-      value = enc->getStringValue(obj, &tc, &szlen);
+      value = ujencode_getStringValue(obj, &tc, &szlen);
       if(!value)
       {
         SetError(obj, enc, "utf-8 encoding error");
@@ -916,7 +916,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
       if (enc->errorMsg)
       {
-        enc->endTypeContext(obj, &tc);
+        ujencode_endTypeContext(obj, &tc);
         return;
       }
       Buffer_AppendCharUnchecked (enc, '\"');
@@ -925,7 +925,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       {
         if (!Buffer_EscapeStringValidated(obj, enc, value, value + szlen))
         {
-          enc->endTypeContext(obj, &tc);
+          ujencode_endTypeContext(obj, &tc);
           enc->level --;
           return;
         }
@@ -934,7 +934,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       {
         if (!Buffer_EscapeStringUnvalidated(enc, value, value + szlen))
         {
-          enc->endTypeContext(obj, &tc);
+          ujencode_endTypeContext(obj, &tc);
           enc->level --;
           return;
         }
@@ -946,7 +946,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 
   case JT_RAW:
   {
-      value = enc->getStringValue(obj, &tc, &szlen);
+      value = ujencode_getStringValue(obj, &tc, &szlen);
       if(!value)
       {
         SetError(obj, enc, "utf-8 encoding error");
@@ -956,7 +956,7 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
       if (enc->errorMsg)
       {
-        enc->endTypeContext(obj, &tc);
+        ujencode_endTypeContext(obj, &tc);
         return;
       }
 
@@ -967,15 +967,12 @@ void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
     }
   }
 
-  enc->endTypeContext(obj, &tc);
+  ujencode_endTypeContext(obj, &tc);
   enc->level --;
 }
 
 char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer)
 {
-  enc->malloc = enc->malloc ? enc->malloc : malloc;
-  enc->free =  enc->free ? enc->free : free;
-  enc->realloc = enc->realloc ? enc->realloc : realloc;
   enc->errorMsg = NULL;
   enc->errorObj = NULL;
   enc->level = 0;
@@ -994,7 +991,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
   if (_buffer == NULL)
   {
     _cbBuffer = 32768;
-    enc->start = (char *) enc->malloc (_cbBuffer);
+    enc->start = (char *) ujencode_malloc (_cbBuffer);
     if (!enc->start)
     {
       SetError(obj, enc, "Could not reserve memory block");

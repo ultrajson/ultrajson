@@ -185,50 +185,6 @@ struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder
 {
-  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
-  void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
-  const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
-  JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
-  JSUINT64 (*getUnsignedLongValue)(JSOBJ obj, JSONTypeContext *tc);
-  JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
-  double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
-
-  /*
-  Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items.
-  Implementor is responsible for keeping state of the iteration. Use ti->prv fields for this
-  */
-  JSPFN_ITERNEXT iterNext;
-
-  /*
-  Ends the iteration of an iteratable object.
-  Any iteration state stored in ti->prv can be freed here
-  */
-  JSPFN_ITEREND iterEnd;
-
-  /*
-  Returns a reference to the value object of an iterator
-  The is responsible for the life-cycle of the returned string. Use iterNext/iterEnd and ti->prv to keep track of current object
-  */
-  JSPFN_ITERGETVALUE iterGetValue;
-
-  /*
-  Return name of iterator.
-  The is responsible for the life-cycle of the returned string. Use iterNext/iterEnd and ti->prv to keep track of current object
-  */
-  JSPFN_ITERGETNAME iterGetName;
-
-  /*
-  Release a value as indicated by setting ti->release = 1 in the previous getValue call.
-  The ti->prv array should contain the necessary context to release the value
-  */
-  void (*releaseObject)(JSOBJ obj);
-
-  /* Library functions
-  Set to NULL to use STDLIB malloc,realloc,free */
-  JSPFN_MALLOC malloc;
-  JSPFN_REALLOC realloc;
-  JSPFN_FREE free;
-
   /*
   Configuration for max recursion, set to 0 to use default (see JSON_MAX_RECURSION_DEPTH)*/
   int recursionMax;
@@ -301,28 +257,48 @@ EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *
 
 typedef struct __JSONObjectDecoder
 {
-  JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end);
-  void (*objectAddKey)(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
-  void (*arrayAddItem)(void *prv, JSOBJ obj, JSOBJ value);
-  JSOBJ (*newTrue)(void *prv);
-  JSOBJ (*newFalse)(void *prv);
-  JSOBJ (*newNull)(void *prv);
-  JSOBJ (*newObject)(void *prv);
-  JSOBJ (*newArray)(void *prv);
-  JSOBJ (*newInt)(void *prv, JSINT32 value);
-  JSOBJ (*newLong)(void *prv, JSINT64 value);
-  JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
-  JSOBJ (*newDouble)(void *prv, double value);
-  void (*releaseObject)(void *prv, JSOBJ obj);
-  JSPFN_MALLOC malloc;
-  JSPFN_FREE free;
-  JSPFN_REALLOC realloc;
   char *errorStr;
   char *errorOffset;
   int preciseFloat;
   void *prv;
 } JSONObjectDecoder;
 
+
+
+
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
+
+JSOBJ ujdecode_newString(void *prv, wchar_t *start, wchar_t *end);
+void ujdecode_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
+void ujdecode_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value);
+JSOBJ ujdecode_newTrue(void *prv);
+JSOBJ ujdecode_newFalse(void *prv);
+JSOBJ ujdecode_newNull(void *prv);
+JSOBJ ujdecode_newObject(void *prv);
+JSOBJ ujdecode_newArray(void *prv);
+JSOBJ ujdecode_newInt(void *prv, JSINT32 value);
+JSOBJ ujdecode_newLong(void *prv, JSINT64 value);
+JSOBJ ujdecode_newUnsignedLong(void *prv, JSUINT64 value);
+JSOBJ ujdecode_newDouble(void *prv, double value);
+void ujdecode_releaseObject(void *prv, JSOBJ obj);
+void *ujdecode_malloc(size_t size);
+void ujdecode_free(void *pptr);
+void *ujdecode_realloc(void *base, size_t size);
+
+void ujencode_beginTypeContext(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
+void ujencode_endTypeContext(JSOBJ obj, JSONTypeContext *tc);
+const char *ujencode_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
+JSINT64 ujencode_getLongValue(JSOBJ obj, JSONTypeContext *tc);
+JSUINT64 ujencode_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc);
+JSINT32 ujencode_getIntValue(JSOBJ obj, JSONTypeContext *tc);
+double ujencode_getDoubleValue(JSOBJ obj, JSONTypeContext *tc);
+void ujencode_releaseObject(JSOBJ obj);
+int ujencode_iterNext(JSOBJ obj, JSONTypeContext *tc);
+void ujencode_iterEnd(JSOBJ obj, JSONTypeContext *tc);
+JSOBJ ujencode_iterGetValue(JSOBJ obj, JSONTypeContext *tc);
+char *ujencode_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen);
+void *ujencode_malloc(size_t size);
+void ujencode_free(void *pptr);
+void *ujencode_realloc(void *base, size_t size);
 
 #endif

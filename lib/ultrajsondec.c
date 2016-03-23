@@ -96,7 +96,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   }
 
   ds->start = end;
-  return ds->dec->newDouble(ds->prv, value);
+  return ujdecode_newDouble(ds->prv, value);
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
@@ -187,15 +187,15 @@ BREAK_INT_LOOP:
 
   if (intNeg == 1 && (intValue & 0x8000000000000000ULL) != 0)
   {
-    return ds->dec->newUnsignedLong(ds->prv, intValue);
+    return ujdecode_newUnsignedLong(ds->prv, intValue);
   }
   else if ((intValue >> 31))
   {
-    return ds->dec->newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
+    return ujdecode_newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
   }
   else
   {
-    return ds->dec->newInt(ds->prv, (JSINT32) (intValue * intNeg));
+    return ujdecode_newInt(ds->prv, (JSINT32) (intValue * intNeg));
   }
 
 DECODE_FRACTION:
@@ -250,7 +250,7 @@ BREAK_FRC_LOOP:
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
-  return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
+  return ujdecode_newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
 
 DECODE_EXPONENT:
   if (ds->dec->preciseFloat)
@@ -306,7 +306,7 @@ BREAK_EXP_LOOP:
   //FIXME: Check for arithemtic overflow here
   ds->lastType = JT_DOUBLE;
   ds->start = offset;
-  return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
+  return ujdecode_newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
 }
 
 FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
@@ -323,7 +323,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 
   ds->lastType = JT_TRUE;
   ds->start = offset;
-  return ds->dec->newTrue(ds->prv);
+  return ujdecode_newTrue(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
@@ -345,7 +345,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 
   ds->lastType = JT_FALSE;
   ds->start = offset;
-  return ds->dec->newFalse(ds->prv);
+  return ujdecode_newFalse(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
@@ -365,7 +365,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 
   ds->lastType = JT_NULL;
   ds->start = offset;
-  return ds->dec->newNull(ds->prv);
+  return ujdecode_newNull(ds->prv);
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
@@ -446,10 +446,10 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
-      escStart = (wchar_t *)ds->dec->realloc(ds->escStart, newSize * sizeof(wchar_t));
+      escStart = (wchar_t *)ujdecode_realloc(ds->escStart, newSize * sizeof(wchar_t));
       if (!escStart)
       {
-        ds->dec->free(ds->escStart);
+        ujdecode_free(ds->escStart);
         return SetError(ds, -1, "Could not reserve memory block");
       }
       ds->escStart = escStart;
@@ -461,7 +461,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
-      ds->escStart = (wchar_t *) ds->dec->malloc(newSize * sizeof(wchar_t));
+      ds->escStart = (wchar_t *) ujdecode_malloc(newSize * sizeof(wchar_t));
       if (!ds->escStart)
       {
         return SetError(ds, -1, "Could not reserve memory block");
@@ -489,7 +489,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
         ds->lastType = JT_UTF8;
         inputOffset ++;
         ds->start += ( (char *) inputOffset - (ds->start));
-        return ds->dec->newString(ds->prv, ds->escStart, escOffset);
+        return ujdecode_newString(ds->prv, ds->escStart, escOffset);
       }
       case DS_UTFLENERROR:
       {
@@ -682,7 +682,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newArray(ds->prv);
+  newObj = ujdecode_newArray(ds->prv);
   len = 0;
 
   ds->lastType = JT_INVALID;
@@ -701,7 +701,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
         return newObj;
       }
 
-      ds->dec->releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (1)");
     }
 
@@ -709,11 +709,11 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, newObj);
       return NULL;
     }
 
-    ds->dec->arrayAddItem (ds->prv, newObj, itemValue);
+    ujdecode_arrayAddItem (ds->prv, newObj, itemValue);
 
     SkipWhitespace(ds);
 
@@ -728,7 +728,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
       break;
 
     default:
-      ds->dec->releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
     }
 
@@ -747,7 +747,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newObject(ds->prv);
+  newObj = ujdecode_newObject(ds->prv);
 
   ds->start ++;
 
@@ -767,14 +767,14 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemName == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, newObj);
       return NULL;
     }
 
     if (ds->lastType != JT_UTF8)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      ujdecode_releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, itemName);
       return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
     }
 
@@ -782,8 +782,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (*(ds->start++) != ':')
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      ujdecode_releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, itemName);
       return SetError(ds, -1, "No ':' found when decoding object value");
     }
 
@@ -793,12 +793,12 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      ujdecode_releaseObject(ds->prv, newObj);
+      ujdecode_releaseObject(ds->prv, itemName);
       return NULL;
     }
 
-    ds->dec->objectAddKey (ds->prv, newObj, itemName, itemValue);
+    ujdecode_objectAddKey (ds->prv, newObj, itemName, itemValue);
 
     SkipWhitespace(ds);
 
@@ -813,7 +813,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
         break;
 
       default:
-        ds->dec->releaseObject(ds->prv, newObj);
+        ujdecode_releaseObject(ds->prv, newObj);
         return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
   }
@@ -886,7 +886,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 
   if (ds.escHeap)
   {
-    dec->free(ds.escStart);
+    ujdecode_free(ds.escStart);
   }
 
   if (!(dec->errorStr))
@@ -898,7 +898,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 
     if (ds.start != ds.end && ret)
     {
-      dec->releaseObject(ds.prv, ret);
+      ujdecode_releaseObject(ds.prv, ret);
       return SetError(&ds, -1, "Trailing data");
     }
   }

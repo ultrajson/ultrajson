@@ -86,6 +86,21 @@ struct PyDictIterState
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
+void *ujencode_malloc(size_t size)
+{
+  return PyObject_Malloc(size);
+}
+
+void ujencode_free(void *pptr)
+{
+  return PyObject_Free(pptr);
+}
+
+void *ujencode_realloc(void *base, size_t size)
+{
+  return PyObject_Realloc(base, size);
+}
+
 void initObjToJSON(void)
 {
   PyObject* mod_decimal = PyImport_ImportModule("decimal");
@@ -642,7 +657,7 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
   pc->index = 0;
 }
 
-void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
+void ujencode_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
   PyObject *obj, *exc, *iter;
   TypeContext *pc;
@@ -929,7 +944,7 @@ INVALID:
   return;
 }
 
-void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
+void ujencode_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
 
@@ -937,60 +952,60 @@ void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
   tc->prv = NULL;
 }
 
-const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
+const char *ujencode_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
 {
   return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
 }
 
-JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
+JSINT64 ujencode_getLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
   JSINT64 ret;
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
 }
 
-JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
+JSUINT64 ujencode_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
 {
   JSUINT64 ret;
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
 }
 
-JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
+JSINT32 ujencode_getIntValue(JSOBJ obj, JSONTypeContext *tc)
 {
   JSINT32 ret;
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
 }
 
-double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
+double ujencode_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
 {
   double ret;
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
 }
 
-static void Object_releaseObject(JSOBJ _obj)
+static void ujencode_releaseObject(JSOBJ _obj)
 {
   Py_DECREF( (PyObject *) _obj);
 }
 
-int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
+int ujencode_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->iterNext(obj, tc);
 }
 
-void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+void ujencode_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
   GET_TC(tc)->iterEnd(obj, tc);
 }
 
-JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+JSOBJ ujencode_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->iterGetValue(obj, tc);
 }
 
-char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+char *ujencode_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
@@ -1010,21 +1025,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   JSONObjectEncoder encoder =
   {
-    Object_beginTypeContext,
-    Object_endTypeContext,
-    Object_getStringValue,
-    Object_getLongValue,
-    Object_getUnsignedLongValue,
-    Object_getIntValue,
-    Object_getDoubleValue,
-    Object_iterNext,
-    Object_iterEnd,
-    Object_iterGetValue,
-    Object_iterGetName,
-    Object_releaseObject,
-    PyObject_Malloc,
-    PyObject_Realloc,
-    PyObject_Free,
     -1, //recursionMax
     10,  // default double precision setting
     1, //forceAscii
@@ -1076,7 +1076,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     if (ret != buffer)
     {
-      encoder.free (ret);
+      ujencode_free (ret);
     }
 
     PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
@@ -1087,7 +1087,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (ret != buffer)
   {
-    encoder.free (ret);
+    ujencode_free (ret);
   }
 
   PRINTMARK();

@@ -53,26 +53,13 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define NULL 0
 #endif
 
-struct DecoderState
-{
-  char *start;
-  char *end;
-  wchar_t *escStart;
-  wchar_t *escEnd;
-  int escHeap;
-  int lastType;
-  JSUINT32 objDepth;
-  void *prv;
-  JSONObjectDecoder *dec;
-};
+JSOBJ FASTCALL_MSVC decode_any( JSONObjectDecoder *ds) FASTCALL_ATTR;
+typedef JSOBJ (*PFN_DECODER)( JSONObjectDecoder *ds);
 
-JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
-typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
-
-static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
+static JSOBJ SetError( JSONObjectDecoder *ds, int offset, const char *message)
 {
-  ds->dec->errorOffset = ds->start + offset;
-  ds->dec->errorStr = (char *) message;
+  ds->errorOffset = ds->start + offset;
+  ds->errorStr = (char *) message;
   return NULL;
 }
 
@@ -82,7 +69,7 @@ double createDouble(double intNeg, double intValue, double frcValue, int frcDeci
   return (intValue + (frcValue * g_pow10[frcDecimalCount])) * intNeg;
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(JSONObjectDecoder *ds)
 {
   char *end;
   double value;
@@ -99,7 +86,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   return ujdecode_newDouble(ds->prv, value);
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (JSONObjectDecoder *ds)
 {
   int intNeg = 1;
   int mantSize = 0;
@@ -200,7 +187,7 @@ BREAK_INT_LOOP:
 
 DECODE_FRACTION:
 
-  if (ds->dec->preciseFloat)
+  if (ds->preciseFloat)
   {
     return decodePreciseFloat(ds);
   }
@@ -253,7 +240,7 @@ BREAK_FRC_LOOP:
   return ujdecode_newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue, frcValue, decimalCount));
 
 DECODE_EXPONENT:
-  if (ds->dec->preciseFloat)
+  if (ds->preciseFloat)
   {
     return decodePreciseFloat(ds);
   }
@@ -309,7 +296,7 @@ BREAK_EXP_LOOP:
   return ujdecode_newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( JSONObjectDecoder *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -329,7 +316,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( JSONObjectDecoder *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -351,7 +338,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( JSONObjectDecoder *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -371,7 +358,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
+FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(JSONObjectDecoder *ds)
 {
   char *offset = ds->start;
 
@@ -422,7 +409,7 @@ static const JSUINT8 g_decoderLookup[256] =
   /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
 };
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( JSONObjectDecoder *ds)
 {
   JSUTF16 sur[2] = { 0 };
   int iSur = 0;
@@ -672,7 +659,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(JSONObjectDecoder *ds)
 {
   JSOBJ itemValue;
   JSOBJ newObj;
@@ -736,7 +723,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( JSONObjectDecoder *ds)
 {
   JSOBJ itemName;
   JSOBJ itemValue;
@@ -819,7 +806,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
+FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(JSONObjectDecoder *ds)
 {
   for (;;)
   {
@@ -860,46 +847,41 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
   }
 }
 
-JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer)
+JSOBJ JSON_DecodeObject(JSONObjectDecoder *ds, const char *buffer, size_t cbBuffer)
 {
   /*
   FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time */
-  struct DecoderState ds;
   wchar_t escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t))];
   JSOBJ ret;
 
-  ds.start = (char *) buffer;
-  ds.end = ds.start + cbBuffer;
+  ds->start = (char *) buffer;
+  ds->end = ds->start + cbBuffer;
 
-  ds.escStart = escBuffer;
-  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t));
-  ds.escHeap = 0;
-  ds.prv = dec->prv;
-  ds.dec = dec;
-  ds.dec->errorStr = NULL;
-  ds.dec->errorOffset = NULL;
-  ds.objDepth = 0;
+  ds->escStart = escBuffer;
+  ds->escEnd = ds->escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t));
+  ds->escHeap = 0;
+  ds->errorStr = NULL;
+  ds->errorOffset = NULL;
+  ds->objDepth = 0;
 
-  ds.dec = dec;
+  ret = decode_any (ds);
 
-  ret = decode_any (&ds);
-
-  if (ds.escHeap)
+  if (ds->escHeap)
   {
-    ujdecode_free(ds.escStart);
+    ujdecode_free(ds->escStart);
   }
 
-  if (!(dec->errorStr))
+  if (!(ds->errorStr))
   {
-    if ((ds.end - ds.start) > 0)
+    if ((ds->end - ds->start) > 0)
     {
-      SkipWhitespace(&ds);
+      SkipWhitespace(ds);
     }
 
-    if (ds.start != ds.end && ret)
+    if (ds->start != ds->end && ret)
     {
-      ujdecode_releaseObject(ds.prv, ret);
-      return SetError(&ds, -1, "Trailing data");
+      ujdecode_releaseObject(ds->prv, ret);
+      return SetError(ds, -1, "Trailing data");
     }
   }
 

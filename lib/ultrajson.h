@@ -185,6 +185,22 @@ struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder
 {
+  /* Buffer stuff */
+  char *offset;
+  char *start;
+  char *end;
+  int heap;
+  int level;
+
+  /*
+  Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
+  void *prv;
+
+  /*
+  Set to an error message if error occured */
+  const char *errorMsg;
+  JSOBJ errorObj;
+
   /*
   Configuration for max recursion, set to 0 to use default (see JSON_MAX_RECURSION_DEPTH)*/
   int recursionMax;
@@ -213,22 +229,6 @@ typedef struct __JSONObjectEncoder
   Configuration for spaces of indent */
   int indent;
 
-  /*
-  Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
-  void *prv;
-
-  /*
-  Set to an error message if error occured */
-  const char *errorMsg;
-  JSOBJ errorObj;
-
-  /* Buffer stuff */
-  char *start;
-  char *offset;
-  char *end;
-  int heap;
-  int level;
-
 } JSONObjectEncoder;
 
 
@@ -253,18 +253,20 @@ JSONObjectEncoder.free or free() as specified when calling this function.
 */
 EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer);
 
-
-
 typedef struct __JSONObjectDecoder
 {
+  char *start;
+  char *end;
+  void *prv;
+  int lastType;
+  JSUINT32 objDepth;
+  wchar_t *escStart;
+  wchar_t *escEnd;
+  int escHeap;
   char *errorStr;
   char *errorOffset;
   int preciseFloat;
-  void *prv;
-} JSONObjectDecoder;
-
-
-
+ } JSONObjectDecoder;
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
 

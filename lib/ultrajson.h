@@ -115,7 +115,11 @@ typedef uint32_t JSUINT32;
 #define FASTCALL_ATTR
 #endif
 
+#ifdef __GNUC__
+#define INLINE_PREFIX __attribute__((always_inline)) inline
+#else
 #define INLINE_PREFIX inline
+#endif
 
 typedef uint8_t JSUINT8;
 typedef uint16_t JSUTF16;

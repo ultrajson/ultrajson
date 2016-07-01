@@ -686,7 +686,14 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
     return;
   }
   else
-  if (PyNumber_Check(obj) && PyNumber_Long(obj) && !PyFloat_Check(obj)){
+  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
+    return;
+  }
+  else
+  if (PyNumber_Check(obj) && PyNumber_Long(obj)){
     PRINTMARK();
     pc->PyTypeToJSON = PyLongToINT64;
     tc->type = JT_LONG;
@@ -738,13 +745,6 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyUnicodeToUTF8; tc->type = JT_UTF8;
-    return;
-  }
-  else
-  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
-  {
-    PRINTMARK();
-    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
     return;
   }
   else

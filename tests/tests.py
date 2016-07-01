@@ -410,7 +410,7 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_encodeDoubleNan(self):
         input = float('nan')
-        self.assertRaises(OverflowError, ujson.encode, input)
+        self.assertRaises(ValueError, ujson.encode, input)
 
     def test_encodeDoubleInf(self):
         input = float('inf')

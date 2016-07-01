@@ -119,13 +119,17 @@ static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_
 
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  *((JSINT64 *) outValue) = GET_TC(tc)->longValue;
+  /**((JSINT64 *) outValue) = GET_TC(tc)->longValue;*/
+  PyObject *obj = (PyObject *) _obj;
+  *((JSINT64 *) outValue) = PyInt_AS_LONG (PyNumber_Long(obj));
   return NULL;
 }
 
 static void *PyLongToUINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  *((JSUINT64 *) outValue) = GET_TC(tc)->unsignedLongValue;
+  /**((JSUINT64 *) outValue) = GET_TC(tc)->unsignedLongValue;*/
+  PyObject *obj = (PyObject *) _obj;
+  *((JSINT64 *) outValue) = PyInt_AS_LONG (PyNumber_Long(obj));
   return NULL;
 }
 
@@ -686,12 +690,11 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
     return;
   }
   else
-  if (PyLong_Check(obj))
-  {
+  if (PyNumber_Check(obj) && PyNumber_Long(obj) && !PyFloat_Check(obj)){
     PRINTMARK();
     pc->PyTypeToJSON = PyLongToINT64;
     tc->type = JT_LONG;
-    GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+    GET_TC(tc)->longValue = PyLong_AsLongLong(PyNumber_Long(obj));
 
     exc = PyErr_Occurred();
     if (!exc)
@@ -704,7 +707,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
       PyErr_Clear();
       pc->PyTypeToJSON = PyLongToUINT64;
       tc->type = JT_ULONG;
-      GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
+      GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(PyNumber_Long(obj));
 
       exc = PyErr_Occurred();
       if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
@@ -1025,7 +1028,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Malloc,
     PyObject_Realloc,
     PyObject_Free,
-    -1, //recursionMax
+    0, //recursionMax
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars

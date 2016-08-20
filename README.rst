@@ -92,6 +92,11 @@ Set to enable usage of higher precision (strtod) function when decoding string t
     >>> ujson.loads("4.56", precise_float=True)
     4.5599999999999996
 
+============		
+Benchmarks		
+============		
+*UltraJSON* calls/sec compared to three other popular JSON parsers with performance gain specified below each.
+
 ~~~~~~~~~~~~~
 Test machine:
 ~~~~~~~~~~~~~

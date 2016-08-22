@@ -22,10 +22,10 @@ Programming Language :: Python :: 3.2
 """.splitlines()))
 
 module1 = Extension('ujson',
-                    sources = ['./python/ujson.c', 
-                               './python/objToJSON.c', 
-                               './python/JSONtoObj.c', 
-                               './lib/ultrajsonenc.c', 
+                    sources = ['./python/ujson.c',
+                               './python/objToJSON.c',
+                               './python/JSONtoObj.c',
+                               './lib/ultrajsonenc.c',
                                './lib/ultrajsondec.c'],
                     include_dirs = ['./python', './lib'],
                     extra_compile_args=['-D_GNU_SOURCE'])
@@ -43,22 +43,15 @@ def get_version():
     assert m, "version.h must contain UJSON_VERSION macro"
     return m.group(1)
 
-f = open('README.rst')
-try:
-    README = f.read()
-finally:
-    f.close()    
-    
 setup (name = 'ujson',
        version = get_version(),
        description = "Ultra fast JSON encoder and decoder for Python",
-       long_description = README,
        ext_modules = [module1],
        author="Jonas Tarnstrom",
        author_email="jonas.tarnstrom@esn.me",
        download_url="http://github.com/esnme/ultrajson",
        license="BSD License",
-       platforms=['any'],      
+       platforms=['any'],
        url="http://www.esn.me",
        classifiers=CLASSIFIERS,
        )

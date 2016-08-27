@@ -66,7 +66,7 @@ struct DecoderState
   JSONObjectDecoder *dec;
 };
 
-JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
+static JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 
 static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
@@ -76,13 +76,13 @@ static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
   return NULL;
 }
 
-double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
+static double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
 {
   static const double g_pow10[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001,0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001};
   return (intValue + (frcValue * g_pow10[frcDecimalCount])) * intNeg;
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
 {
   char *end;
   double value;
@@ -99,7 +99,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
   return ds->dec->newDouble(ds->prv, value);
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
   int mantSize = 0;
@@ -309,7 +309,7 @@ BREAK_EXP_LOOP:
   return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -329,7 +329,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -351,7 +351,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -371,7 +371,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
 }
 
-FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
+static FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
 {
   char *offset = ds->start;
 
@@ -422,7 +422,7 @@ static const JSUINT8 g_decoderLookup[256] =
   /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
 };
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
   JSUTF16 sur[2] = { 0 };
   int iSur = 0;
@@ -672,7 +672,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 {
   JSOBJ itemValue;
   JSOBJ newObj;
@@ -736,7 +736,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
   JSOBJ itemName;
   JSOBJ itemValue;
@@ -819,7 +819,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   }
 }
 
-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
+static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
 {
   for (;;)
   {

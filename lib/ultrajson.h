@@ -297,8 +297,6 @@ JSONObjectEncoder.free or free() as specified when calling this function.
 */
 EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer);
 
-
-
 typedef struct __JSONObjectDecoder
 {
   JSOBJ (*newString)(void *prv, wchar_t *start, wchar_t *end);

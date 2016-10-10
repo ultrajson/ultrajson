@@ -496,6 +496,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
         return SetError (ds, -1, "Invalid UTF-8 sequence length when decoding 'string'");
       }
       case DS_ISESCAPE:
+      {
         inputOffset ++;
         switch (*inputOffset)
         {
@@ -581,13 +582,14 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 #endif
               iSur = 0;
             }
-          break;
-        }
+            break;
+          }
 
-        case '\0': return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
-        default: return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
+          case '\0': return SetError(ds, -1, "Unterminated escape sequence when decoding 'string'");
+          default: return SetError(ds, -1, "Unrecognized escape sequence when decoding 'string'");
+        }
+        break;
       }
-      break;
 
       case 1:
       {
@@ -732,7 +734,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
       return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
     }
 
-    len ++;
+    len++;
   }
 }
 
@@ -743,7 +745,8 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   JSOBJ newObj;
 
   ds->objDepth++;
-  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
+  if (ds->objDepth > JSON_MAX_OBJECT_DEPTH)
+  {
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 

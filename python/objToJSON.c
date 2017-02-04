@@ -537,6 +537,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     // Sort the list.
     if (PyList_Sort(items) < 0)
     {
+      PyErr_SetString(PyExc_ValueError, "unorderable keys");
       goto error;
     }
 
@@ -607,7 +608,6 @@ static void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
   GET_TC(tc)->itemName = NULL;
   GET_TC(tc)->itemValue = NULL;
-  Py_DECREF(GET_TC(tc)->newObj);
   Py_DECREF(GET_TC(tc)->dictObj);
   PRINTMARK();
 }

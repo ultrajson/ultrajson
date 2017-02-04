@@ -488,6 +488,12 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   else
   if (!PyString_Check(GET_TC(tc)->itemName))
   {
+    if (UNLIKELY(GET_TC(tc)->itemName == Py_None))
+    {
+      GET_TC(tc)->itemName = PyString_FromString("null");
+      return 1;
+    }
+
     GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
 #if PY_MAJOR_VERSION >= 3
     itemNameTmp = GET_TC(tc)->itemName;
@@ -743,7 +749,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyString_Check(obj) && !PyHasAttrStringPreserveErr(obj, "__json__"))
+  if (PyString_Check(obj) && LIKELY(!PyHasAttrStringPreserveErr(obj, "__json__")))
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
@@ -837,7 +843,7 @@ ISITERABLE:
   }
   */
 
-  if (PyObject_HasAttrString(obj, "toDict"))
+  if (UNLIKELY(PyObject_HasAttrString(obj, "toDict")))
   {
     PyObject* toDictFunc = PyObject_GetAttrString(obj, "toDict");
     PyObject* tuple = PyTuple_New(0);
@@ -863,7 +869,7 @@ ISITERABLE:
     return;
   }
   else
-  if (PyObject_HasAttrString(obj, "__json__"))
+  if (UNLIKELY(PyObject_HasAttrString(obj, "__json__")))
   {
     PyObject* toJSONFunc = PyObject_GetAttrString(obj, "__json__");
     PyObject* tuple = PyTuple_New(0);

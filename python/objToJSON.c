@@ -1,5 +1,5 @@
 /*
-Developed by ESN, an Electronic Arts Inc. studio. 
+Developed by ESN, an Electronic Arts Inc. studio.
 Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
@@ -17,7 +17,7 @@ derived from this software without specific prior written permission.
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -701,12 +701,18 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyLong_Check(obj))
+  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
   {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
+    return;
+  }
+  else
+  if (PyNumber_Check(obj) && PyNumber_Long(obj)){
     PRINTMARK();
     pc->PyTypeToJSON = PyLongToINT64;
     tc->type = JT_LONG;
-    GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
+    GET_TC(tc)->longValue = PyLong_AsLongLong(PyNumber_Long(obj));
 
     exc = PyErr_Occurred();
     if (!exc)
@@ -719,7 +725,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
       PyErr_Clear();
       pc->PyTypeToJSON = PyLongToUINT64;
       tc->type = JT_ULONG;
-      GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
+      GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(PyNumber_Long(obj));
 
       exc = PyErr_Occurred();
       if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
@@ -754,13 +760,6 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyUnicodeToUTF8; tc->type = JT_UTF8;
-    return;
-  }
-  else
-  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
-  {
-    PRINTMARK();
-    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
     return;
   }
   else
@@ -919,7 +918,7 @@ ISITERABLE:
   PRINTMARK();
   tc->type = JT_OBJECT;
   GET_TC(tc)->attrList = PyObject_Dir(obj);
-  
+
   if (GET_TC(tc)->attrList == NULL)
   {
     PyErr_Clear();
@@ -929,7 +928,7 @@ ISITERABLE:
   GET_TC(tc)->index = 0;
   GET_TC(tc)->size = PyList_GET_SIZE(GET_TC(tc)->attrList);
   PRINTMARK();
-  
+
   pc->iterEnd = Dir_iterEnd;
   pc->iterNext = Dir_iterNext;
   pc->iterGetValue = Dir_iterGetValue;
@@ -1040,7 +1039,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Malloc,
     PyObject_Realloc,
     PyObject_Free,
-    -1, //recursionMax
+    0, //recursionMax
     10,  // default double precision setting
     1, //forceAscii
     0, //encodeHTMLChars

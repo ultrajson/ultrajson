@@ -226,6 +226,21 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
   return NULL;
 }
 
+static int PyHasAttrStringPreserveErr(PyObject *obj, const char *attr)
+{
+  int res;
+  PyObject *excType = NULL, *excValue, *excTraceback;
+
+  if (!PyErr_Occurred())
+    return PyObject_HasAttrString(obj, "__json__");
+
+  PyErr_Fetch(&excType, &excValue, &excTraceback);
+  res = PyObject_HasAttrString(obj, "__json__");
+  PyErr_Restore(excType, excValue, excTraceback);
+
+  return res;
+}
+
 static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject *item;
@@ -471,21 +486,21 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
   }
   else
-    if (!PyString_Check(GET_TC(tc)->itemName))
-    {
-      GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
+  if (!PyString_Check(GET_TC(tc)->itemName))
+  {
+    GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
 #if PY_MAJOR_VERSION >= 3
-      itemNameTmp = GET_TC(tc)->itemName;
-      GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
-      Py_DECREF(itemNameTmp);
+    itemNameTmp = GET_TC(tc)->itemName;
+    GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
 #endif
-    }
-    else
-    {
-      Py_INCREF(GET_TC(tc)->itemName);
-    }
-    PRINTMARK();
-    return 1;
+  }
+  else
+  {
+    Py_INCREF(GET_TC(tc)->itemName);
+  }
+  PRINTMARK();
+  return 1;
 }
 
 static void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
@@ -728,7 +743,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyString_Check(obj) && !PyObject_HasAttrString(obj, "__json__"))
+  if (PyString_Check(obj) && !PyHasAttrStringPreserveErr(obj, "__json__"))
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;

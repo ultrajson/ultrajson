@@ -17,11 +17,6 @@ else:
 
 import ujson
 
-try:
-    from blist import blist
-except ImportError:
-    blist = None
-
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 
 
@@ -810,17 +805,6 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(1.7893, ujson.loads("1.7893", precise_float=True))
         self.assertEqual(1.893, ujson.loads("1.893"))
         self.assertEqual(1.3, ujson.loads("1.3"))
-
-    @unittest.skipIf(blist is None, "This test tests functionality with the blist library")
-    def test_encodeBlist(self):
-        b = blist(list(range(10)))
-        c = ujson.dumps(b)
-        d = ujson.loads(c)
-
-        self.assertEqual(10, len(d))
-
-        for x in range(10):
-            self.assertEqual(x, d[x])
 
     def test_ReadBadObjectSyntax(self):
         input = '{"age", 44}'

@@ -4,7 +4,6 @@ import six
 from six.moves import range, zip
 
 import calendar
-import datetime
 import functools
 import decimal
 import json
@@ -343,41 +342,6 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(output, json.dumps(input))
         self.assertEqual(input, ujson.decode(output))
 
-    def test_encodeDatetimeConversion(self):
-        ts = time.time()
-        input = datetime.datetime.fromtimestamp(ts)
-        output = ujson.encode(input)
-        expected = calendar.timegm(input.utctimetuple())
-        self.assertEqual(int(expected), json.loads(output))
-        self.assertEqual(int(expected), ujson.decode(output))
-
-    def test_encodeDateConversion(self):
-        ts = time.time()
-        input = datetime.date.fromtimestamp(ts)
-
-        output = ujson.encode(input)
-        tup = (input.year, input.month, input.day, 0, 0, 0)
-
-        expected = calendar.timegm(tup)
-        self.assertEqual(int(expected), json.loads(output))
-        self.assertEqual(int(expected), ujson.decode(output))
-
-    def test_encodeWithTimezone(self):
-        start_timestamp = 1383647400
-        a = datetime.datetime.utcfromtimestamp(start_timestamp)
-
-        a = a.replace(tzinfo=pytz.utc)
-        b = a.astimezone(pytz.timezone('America/New_York'))
-        c = b.astimezone(pytz.utc)
-
-        d = {'a':a, 'b':b, 'c':c}
-        json_string = ujson.encode(d)
-        json_dict = ujson.decode(json_string)
-
-        self.assertEqual(json_dict.get('a'),start_timestamp)
-        self.assertEqual(json_dict.get('b'),start_timestamp)
-        self.assertEqual(json_dict.get('c'),start_timestamp)
-
     def test_encodeToUTF8(self):
         input = b"\xe6\x97\xa5\xd1\x88"
         if six.PY3:
@@ -397,11 +361,15 @@ class UltraJSONTests(unittest.TestCase):
         # 8 is the max recursion depth
         class O2:
             member = 0
-            pass
+
+            def toDict(self):
+                return {"member": self.member}
 
         class O1:
             member = 0
-            pass
+
+            def toDict(self):
+                return {"member": self.member}
 
         input = O1()
         input.member = O2()
@@ -647,14 +615,6 @@ class UltraJSONTests(unittest.TestCase):
     def test_encodeNumericOverflow(self):
         self.assertRaises(OverflowError, ujson.encode, 12839128391289382193812939)
 
-    def test_encodeNumericOverflowNested(self):
-        for n in range(0, 100):
-            class Nested:
-                x = 12839128391289382193812939
-
-            nested = Nested()
-            self.assertRaises(OverflowError, ujson.encode, nested)
-
     def test_decodeNumberWith32bitSignBit(self):
         #Test that numbers that fit within 32 bits but would have the
         # sign bit set (2**31 <= x < 2**32) are decoded properly.
@@ -687,16 +647,6 @@ class UltraJSONTests(unittest.TestCase):
                 quote = "\""
             input = quote + (base * 1024 * 1024 * 2) + quote
             ujson.decode(input)
-
-    def test_object_default(self):
-        # An object without toDict or __json__ defined should be serialized
-        # as an empty dict.
-        class ObjectTest:
-            pass
-
-        output = ujson.encode(ObjectTest())
-        dec = ujson.decode(output)
-        self.assertEquals(dec, {})
 
     def test_toDict(self):
         d = {"key": 31337}
@@ -861,12 +811,6 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(1.893, ujson.loads("1.893"))
         self.assertEqual(1.3, ujson.loads("1.3"))
 
-    def test_encodeBigSet(self):
-        s = set()
-        for x in range(0, 100000):
-            s.add(x)
-        ujson.encode(s)
-
     @unittest.skipIf(blist is None, "This test tests functionality with the blist library")
     def test_encodeBlist(self):
         b = blist(list(range(10)))
@@ -877,18 +821,6 @@ class UltraJSONTests(unittest.TestCase):
 
         for x in range(10):
             self.assertEqual(x, d[x])
-
-    def test_encodeEmptySet(self):
-        s = set()
-        self.assertEqual("[]", ujson.encode(s))
-
-    def test_encodeSet(self):
-        s = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        enc = ujson.encode(s)
-        dec = ujson.decode(enc)
-
-        for v in dec:
-            self.assertTrue(v in s)
 
     def test_ReadBadObjectSyntax(self):
         input = '{"age", 44}'

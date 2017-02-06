@@ -10,6 +10,7 @@ import json
 import math
 import time
 import pytz
+import mock
 if six.PY2:
     import unittest2 as unittest
 else:
@@ -836,6 +837,26 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
+
+    def test_load_with_split_unicode(self):
+        # These together produce JSON-encoded 'ü'
+        first, second = '"\\u00', 'fc"'
+        self.assertEqual('ü', ujson.loads(first + second))
+
+        # This is the content split over two successive reads
+        fin = mock.MagicMock()
+        fin.read.side_effect = [first, second]
+        self.assertEqual('ü', ujson.load(fin))
+
+    def test_load_with_split_utf8(self):
+        # These together produce JSON-encoded 'ü'
+        first, second = '"\xC3', '\xBC"'
+        self.assertEqual('ü', ujson.loads(first + second))
+
+        # This is the content split over two successive reads
+        fin = mock.MagicMock()
+        fin.read.side_effect = [first, second]
+        self.assertEqual('ü', ujson.load(fin))
 
     @unittest.skipIf(not six.PY3, "Only raises on Python 3")
     def test_encodingInvalidUnicodeCharacter(self):

@@ -229,21 +229,6 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
   return NULL;
 }
 
-static int PyHasAttrStringPreserveErr(PyObject *obj, const char *attr)
-{
-  int res;
-  PyObject *excType = NULL, *excValue, *excTraceback;
-
-  if (!PyErr_Occurred())
-    return PyObject_HasAttrString(obj, "__json__");
-
-  PyErr_Fetch(&excType, &excValue, &excTraceback);
-  res = PyObject_HasAttrString(obj, "__json__");
-  PyErr_Restore(excType, excValue, excTraceback);
-
-  return res;
-}
-
 static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject *item;
@@ -593,7 +578,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyString_Check(obj) && LIKELY(!PyHasAttrStringPreserveErr(obj, "__json__")))
+  if (PyString_Check(obj))
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;

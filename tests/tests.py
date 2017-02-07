@@ -10,6 +10,8 @@ import json
 import math
 import time
 import pytz
+from collections import OrderedDict
+
 if six.PY2:
     import unittest2 as unittest
 else:
@@ -383,6 +385,10 @@ class UltraJSONTests(unittest.TestCase):
         input = -float('inf')
         self.assertRaises(OverflowError, ujson.encode, input)
 
+    def test_encodeOrderedDict(self):
+        input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])
+        self.assertEqual('{"1":1,"0":0,"8":8,"2":2}', ujson.encode(input))
+
     def test_decodeJibberish(self):
         input = "fdsa sda v9sa fdsa"
         self.assertRaises(ValueError, ujson.decode, input)
@@ -668,7 +674,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': output_text})
+        self.assertEqual(dec, {u'key': output_text})
 
     def test_object_with_json_unicode(self):
         # If __json__ returns a string, then that string
@@ -681,7 +687,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': output_text})
+        self.assertEqual(dec, {u'key': output_text})
 
     def test_object_with_complex_json(self):
         # If __json__ returns a string, then that string
@@ -694,7 +700,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': obj})
+        self.assertEqual(dec, {u'key': obj})
 
     def test_object_with_json_type_error(self):
         # __json__ must return a string, otherwise it should raise an error.

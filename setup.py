@@ -4,6 +4,7 @@ except ImportError:
   from distutils.core import setup, Extension
 import distutils.sysconfig
 import os.path
+import platform
 import re
 import sys
 
@@ -21,14 +22,17 @@ Programming Language :: Python :: 3
 Programming Language :: Python :: 3.2
 """.splitlines()))
 
-module1 = Extension('ujson',
-                    sources = ['./python/ujson.c', 
-                               './python/objToJSON.c', 
-                               './python/JSONtoObj.c', 
-                               './lib/ultrajsonenc.c', 
-                               './lib/ultrajsondec.c'],
-                    include_dirs = ['./python', './lib'],
-                    extra_compile_args=['-D_GNU_SOURCE'])
+pypy = platform.python_implementation() == 'PyPy'
+
+if not pypy:
+    module1 = Extension('ujson',
+                        sources = ['./python/ujson.c', 
+                                   './python/objToJSON.c', 
+                                   './python/JSONtoObj.c', 
+                                   './lib/ultrajsonenc.c', 
+                                   './lib/ultrajsondec.c'],
+                        include_dirs = ['./python', './lib'],
+                        extra_compile_args=['-D_GNU_SOURCE'])
 
 def get_version():
     filename = os.path.join(os.path.dirname(__file__), './python/version.h')
@@ -53,7 +57,8 @@ setup (name = 'ujson',
        version = get_version(),
        description = "Ultra fast JSON encoder and decoder for Python",
        long_description = README,
-       ext_modules = [module1],
+       ext_modules = [module1] if not pypy else None,
+       packages=['ujson'] if pypy else None,
        author="Jonas Tarnstrom",
        author_email="jonas.tarnstrom@esn.me",
        download_url="http://github.com/esnme/ultrajson",

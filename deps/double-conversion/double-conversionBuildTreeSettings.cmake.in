@@ -1,0 +1,2 @@
+set(double-conversion_INCLUDE_DIRS
+  "@PROJECT_SOURCE_DIR@/src")

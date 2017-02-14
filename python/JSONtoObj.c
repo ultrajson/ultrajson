@@ -113,14 +113,13 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", "precise_float", NULL};
+static char *g_kwlist[] = {"obj", NULL};
 
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *ret;
   PyObject *sarg;
   PyObject *arg;
-  PyObject *opreciseFloat = NULL;
   JSONObjectDecoder decoder =
   {
     Object_newString,
@@ -141,17 +140,11 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Realloc
   };
 
-  decoder.preciseFloat = 0;
   decoder.prv = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", g_kwlist, &arg, &opreciseFloat))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", g_kwlist, &arg))
   {
       return NULL;
-  }
-
-  if (opreciseFloat && PyObject_IsTrue(opreciseFloat))
-  {
-      decoder.preciseFloat = 1;
   }
 
   if (PyString_Check(arg))
@@ -177,7 +170,11 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   decoder.errorStr = NULL;
   decoder.errorOffset = NULL;
 
+  dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
+
   ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(sarg), PyString_GET_SIZE(sarg));
+
+  dconv_s2d_free();
 
   if (sarg != arg)
   {

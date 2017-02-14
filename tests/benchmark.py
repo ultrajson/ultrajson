@@ -7,17 +7,18 @@ import random
 import sys
 import timeit
 
-import simplejson
 import ujson
-import yajl
-
 
 USER = {"userId": 3381293, "age": 213, "username": "johndoe", "fullname": "John Doe the Second", "isAuthorized": True, "liked": 31231.31231202, "approval": 31.1471, "jobs": [1, 2], "currJob": None}
 FRIENDS = [USER, USER, USER, USER, USER, USER, USER, USER]
 
 decode_data = None
 test_object = None
-skip_lib_comparisons = False
+skip_lib_comparisons = True
+if not skip_lib_comparisons:
+    import simplejson
+    import yajl
+
 benchmark_results = []
 
 
@@ -331,7 +332,6 @@ if __name__ == "__main__":
         skip_lib_comparisons = True
 
     benchmark_array_doubles()
-    """
     benchmark_array_utf8_strings()
     benchmark_array_byte_strings()
     benchmark_medium_complex_object()
@@ -339,5 +339,4 @@ if __name__ == "__main__":
     benchmark_array_of_dict_string_int_pairs()
     benchmark_dict_of_arrays_of_dict_string_int_pairs()
     benchmark_complex_object()
-    """
     results_output_table()

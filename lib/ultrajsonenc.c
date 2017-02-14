@@ -566,141 +566,18 @@ static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 
   enc->offset += (wstr - (enc->offset));
 }
 
-static int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
+static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double value)
 {
-  /* if input is larger than thres_max, revert to exponential */
-  const double thres_max = (double) 1e16 - 1;
-  int count;
-  double diff = 0.0;
-  char* str = enc->offset;
-  char* wstr = str;
-  unsigned long long whole;
-  double tmp;
-  unsigned long long frac;
-  int neg;
-  double pow10;
-
-  if (value == HUGE_VAL || value == -HUGE_VAL)
+  char buf[128];
+  int strlength;
+  if(!dconv_d2s(value, buf, sizeof(buf), &strlength))
   {
-    SetError (obj, enc, "Invalid Inf value when encoding double");
+    SetError (obj, enc, "Invalid value when encoding double");
     return FALSE;
   }
 
-  if (!(value == value))
-  {
-    SetError (obj, enc, "Invalid Nan value when encoding double");
-    return FALSE;
-  }
-
-  /* we'll work in positive values and deal with the
-  negative sign issue later */
-  neg = 0;
-  if (value < 0)
-  {
-    neg = 1;
-    value = -value;
-  }
-
-  pow10 = g_pow10[enc->doublePrecision];
-
-  whole = (unsigned long long) value;
-  tmp = (value - whole) * pow10;
-  frac = (unsigned long long)(tmp);
-  diff = tmp - frac;
-
-  if (diff > 0.5)
-  {
-    ++frac;
-    /* handle rollover, e.g.  case 0.99 with prec 1 is 1.0  */
-    if (frac >= pow10)
-    {
-      frac = 0;
-      ++whole;
-    }
-  }
-  else
-  if (diff == 0.5 && ((frac == 0) || (frac & 1)))
-  {
-    /* if halfway, round up if odd, OR
-    if last digit is 0.  That last part is strange */
-    ++frac;
-  }
-
-  /* for very large numbers switch back to native sprintf for exponentials.
-  anyone want to write code to replace this? */
-  /*
-  normal printf behavior is to print EVERY whole number digit
-  which can be 100s of characters overflowing your buffers == bad
-  */
-  if (value > thres_max)
-  {
-     enc->offset += snprintf(str, enc->end - enc->offset, "%.15e", neg ? -value : value);
-     return TRUE;
-  }
-
-  if (enc->doublePrecision == 0)
-  {
-    diff = value - whole;
-
-    if (diff > 0.5)
-    {
-      /* greater than 0.5, round up, e.g. 1.6 -> 2 */
-      ++whole;
-    }
-    else
-    if (diff == 0.5 && (whole & 1))
-    {
-      /* exactly 0.5 and ODD, then round up */
-      /* 1.5 -> 2, but 2.5 -> 2 */
-      ++whole;
-    }
-    //vvvvvvvvvvvvvvvvvvv  Diff from modp_dto2
-  }
-  else
-  if (frac)
-  {
-    count = enc->doublePrecision;
-    // now do fractional part, as an unsigned number
-    // we know it is not 0 but we can have leading zeros, these
-    // should be removed
-    while (!(frac % 10))
-    {
-      --count;
-      frac /= 10;
-    }
-    //^^^^^^^^^^^^^^^^^^^  Diff from modp_dto2
-
-    // now do fractional part, as an unsigned number
-    do
-    {
-      --count;
-      *wstr++ = (char)(48 + (frac % 10));
-    } while (frac /= 10);
-    // add extra 0s
-    while (count-- > 0)
-    {
-      *wstr++ = '0';
-    }
-    // add decimal
-    *wstr++ = '.';
-  }
-  else
-  {
-    *wstr++ = '0';
-    *wstr++ = '.';
-  }
-
-  // do whole part
-  // Take care of sign
-  // Conversion. Number is reversed.
-  do *wstr++ = (char)(48 + (whole % 10)); while (whole /= 10);
-
-  if (neg)
-  {
-    *wstr++ = '-';
-  }
-  strreverse(str, wstr-1);
-  enc->offset += (wstr - (enc->offset));
+  memcpy(enc->offset, buf, strlength);
+  enc->offset += strlength;
 
   return TRUE;
 }
@@ -906,7 +783,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_DOUBLE:
     {
-      if (!Buffer_AppendDoubleUnchecked (obj, enc, enc->getDoubleValue(obj, &tc)))
+      if (!Buffer_AppendDoubleDconv(obj, enc, enc->getDoubleValue(obj, &tc)))
       {
         enc->endTypeContext(obj, &tc);
         enc->level--;
@@ -994,12 +871,6 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
   if (enc->recursionMax < 1)
   {
     enc->recursionMax = JSON_MAX_RECURSION_DEPTH;
-  }
-
-  if (enc->doublePrecision < 0 ||
-          enc->doublePrecision > JSON_DOUBLE_MAX_DECIMALS)
-  {
-    enc->doublePrecision = JSON_DOUBLE_MAX_DECIMALS;
   }
 
   if (_buffer == NULL)

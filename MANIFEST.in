@@ -1,3 +1,5 @@
+recursive-include deps *
+
 include README.rst
 include MANIFEST.in
 include setup.py

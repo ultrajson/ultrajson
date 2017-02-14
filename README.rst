@@ -47,19 +47,6 @@ Limits output to ASCII and escapes all extended characters above 127. Default is
     >>> ujson.dumps(u"\xe5\xe4\xf6", ensure_ascii=False)
     '"\xc3\xa5\xc3\xa4\xc3\xb6"'
 
-double_precision
-----------------
-Controls how many decimals to encode for double or decimal values. Default is 9::
-
-    >>> ujson.dumps(math.pi)
-    '3.1415926536'
-    >>> ujson.dumps(math.pi, double_precision=1)
-    '3.1'
-    >>> ujson.dumps(math.pi, double_precision=0)
-    '3'
-    >>> ujson.dumps(math.pi, double_precision=4)
-    '3.1416'
-
 escape_forward_slashes
 ----------------------
 Controls whether forward slashes (``/``) are escaped. Default is True::
@@ -79,18 +66,6 @@ Controls whether indention ("pretty output") is enabled. Default is 0 (disabled)
     {
         "foo":"bar"
     }
-
-~~~~~~~~~~~~~~~~
-Decoders options
-~~~~~~~~~~~~~~~~
-precise_float
--------------
-Set to enable usage of higher precision (strtod) function when decoding string to double values. Default is to use fast but less precise builtin functionality::
-
-    >>> ujson.loads("4.56")
-    4.5600000000000005
-    >>> ujson.loads("4.56", precise_float=True)
-    4.5599999999999996
 
 ============		
 Benchmarks		

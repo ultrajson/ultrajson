@@ -681,6 +681,10 @@ static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
 
+  if (tc->type == JT_RAW)
+  {
+    Py_XDECREF(GET_TC(tc)->rawJSONValue);
+  }
   PyObject_Free(tc->prv);
   tc->prv = NULL;
 }

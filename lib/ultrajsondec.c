@@ -44,6 +44,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <wchar.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdint.h>
 
 #ifndef TRUE
 #define TRUE 1

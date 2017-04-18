@@ -1,12 +1,19 @@
 sudo: false
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-install:
-  - pip install six blist unittest2 pytz
-  - python setup.py install
-script: python tests/tests.py
+install: pip install tox
+script: tox
+
+matrix:
+  include:
+    - python: 2.6
+      env: TOXENV=py26
+    - python: 2.7
+      env: TOXENV=py27
+    - python: 3.3
+      env: TOXENV=py33
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
+    - python: 3.6
+      env: TOXENV=py36

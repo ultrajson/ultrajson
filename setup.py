@@ -82,8 +82,8 @@ f = open('README.rst')
 try:
     README = f.read()
 finally:
-    f.close()    
-    
+    f.close()
+
 
 setup(
     name = 'ujson',
@@ -100,4 +100,5 @@ setup(
     url="http://www.esn.me",
     cmdclass = {'build_ext': build_ext, 'build_clib': build_clib_without_warnings},
     classifiers=CLASSIFIERS,
+    install_requires=['six','blist', 'pytz']
 )

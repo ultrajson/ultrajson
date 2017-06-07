@@ -681,6 +681,10 @@ static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
 
+  if (tc->type == JT_RAW)
+  {
+    Py_XDECREF(GET_TC(tc)->rawJSONValue);
+  }
   PyObject_Free(tc->prv);
   tc->prv = NULL;
 }
@@ -854,6 +858,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *string;
   PyObject *write;
   PyObject *argtuple;
+  PyObject *write_result;
 
   PRINTMARK();
 
@@ -896,13 +901,16 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(write);
     return NULL;
   }
-  if (PyObject_CallObject (write, argtuple) == NULL)
+
+  write_result = PyObject_CallObject (write, argtuple);
+  if (write_result == NULL)
   {
     Py_XDECREF(write);
     Py_XDECREF(argtuple);
     return NULL;
   }
 
+  Py_DECREF(write_result);
   Py_XDECREF(write);
   Py_DECREF(argtuple);
   Py_XDECREF(string);

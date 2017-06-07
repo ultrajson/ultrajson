@@ -10,7 +10,6 @@ import json
 import math
 import time
 import sys
-import pytz
 
 if six.PY2:
     import unittest2 as unittest
@@ -817,6 +816,19 @@ class UltraJSONTests(unittest.TestCase):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
         sortedKeys = ujson.dumps(data, sort_keys=True)
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
+
+    def test_ujson_has_no_memory_leak(self):
+        import gc
+        import objgraph
+        gc.collect()
+        pre = dict(objgraph.most_common_types())
+        for value in range(10):
+            data = {"1": [value]}
+            s = ujson.dumps(data)
+            data = None
+        gc.collect()
+        post = dict(objgraph.most_common_types())
+        self.assertEqual(pre["list"], post["list"])
 
 """
 def test_decodeNumericIntFrcOverflow(self):

@@ -262,6 +262,10 @@ typedef struct __JSONObjectEncoder
   int indent;
 
   /*
+  If true, bytes are rejetected. */
+  int rejectBytes;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

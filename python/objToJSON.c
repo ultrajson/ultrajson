@@ -540,8 +540,16 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   if (PyString_Check(obj))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
-    return;
+    if (enc->rejectBytes)
+    {
+      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyString_AS_STRING(obj));
+      goto INVALID;
+    }
+    else
+    {
+      pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
+      return;
+    }
   }
   else
   if (PyUnicode_Check(obj))
@@ -745,7 +753,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "reject_bytes", NULL };
 
   char buffer[65536];
   char *ret;
@@ -755,6 +763,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oencodeHTMLChars = NULL;
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
+  PyObject *orejectBytes = NULL;
 
   JSONObjectEncoder encoder =
   {
@@ -779,13 +788,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     1, //escapeForwardSlashes
     0, //sortKeys
     0, //indent
+    0, //rejectBytes
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOi", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &orejectBytes))
   {
     return NULL;
   }
@@ -808,6 +818,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (orejectBytes != NULL && PyObject_IsTrue(orejectBytes))
+  {
+    encoder.rejectBytes = 1;
   }
 
   dconv_d2s_init(DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT,

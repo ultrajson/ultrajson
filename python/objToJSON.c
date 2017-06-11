@@ -540,7 +540,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   if (PyString_Check(obj))
   {
     PRINTMARK();
-    if (enc->rejectBytes)
+    if (UNLIKELY(enc->rejectBytes))
     {
       PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyString_AS_STRING(obj));
       goto INVALID;

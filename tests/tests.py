@@ -10,7 +10,6 @@ import json
 import math
 import time
 import sys
-import pytz
 
 if six.PY2:
     import unittest2 as unittest
@@ -818,6 +817,70 @@ class UltraJSONTests(unittest.TestCase):
         sortedKeys = ujson.dumps(data, sort_keys=True)
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
 
+    def test_does_not_leak_dictionary_values(self):
+        import gc
+        gc.collect()
+        value = ["abc"]
+        data = {"1": value}
+        ref_count = sys.getrefcount(value)
+        ujson.dumps(data)
+        self.assertEqual(ref_count, sys.getrefcount(value))
+
+    def test_does_not_leak_dictionary_keys(self):
+        import gc
+        gc.collect()
+        key1 = "1"
+        key2 = "1"
+        value1 = ["abc"]
+        value2 = [1,2,3]
+        data = {key1: value1, key2: value2}
+        ref_count1 = sys.getrefcount(key1)
+        ref_count2 = sys.getrefcount(key2)
+        ujson.dumps(data)
+        self.assertEqual(ref_count1, sys.getrefcount(key1))
+        self.assertEqual(ref_count2, sys.getrefcount(key2))
+
+    def test_does_not_leak_dictionary_string_key(self):
+        import gc
+        gc.collect()
+        key1 = "1"
+        value1 = 1
+        data = {key1: value1}
+        ref_count1 = sys.getrefcount(key1)
+        ujson.dumps(data)
+        self.assertEqual(ref_count1, sys.getrefcount(key1))
+
+    def test_does_not_leak_dictionary_tuple_key(self):
+        import gc
+        gc.collect()
+        key1 = ("a",)
+        value1 = 1
+        data = {key1: value1}
+        ref_count1 = sys.getrefcount(key1)
+        ujson.dumps(data)
+        self.assertEqual(ref_count1, sys.getrefcount(key1))
+
+    def test_does_not_leak_dictionary_bytes_key(self):
+        import gc
+        gc.collect()
+        key1 = b"1"
+        value1 = 1
+        data = {key1: value1}
+        ref_count1 = sys.getrefcount(key1)
+        ujson.dumps(data)
+        self.assertEqual(ref_count1, sys.getrefcount(key1))
+
+    def test_does_not_leak_dictionary_None_key(self):
+        import gc
+        gc.collect()
+        key1 = None
+        value1 = 1
+        data = {key1: value1}
+        ref_count1 = sys.getrefcount(key1)
+        ujson.dumps(data)
+        self.assertEqual(ref_count1, sys.getrefcount(key1))
+
+    
 """
 def test_decodeNumericIntFrcOverflow(self):
 input = "X.Y"

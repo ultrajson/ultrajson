@@ -49,6 +49,8 @@ typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue
 typedef ssize_t Py_ssize_t;
 #endif
 
+#define printf(s) fprintf(stderr, s)
+
 typedef struct __TypeContext
 {
   JSPFN_ITEREND iterEnd;
@@ -271,18 +273,24 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
   }
   else
   if (!PyString_Check(GET_TC(tc)->itemName))
   {
     if (UNLIKELY(GET_TC(tc)->itemName == Py_None))
     {
+      itemNameTmp = GET_TC(tc)->itemName;
       GET_TC(tc)->itemName = PyString_FromString("null");
+      Py_DECREF(itemNameTmp);
       return 1;
     }
 
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
 #if PY_MAJOR_VERSION >= 3
     itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
@@ -291,7 +299,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   }
   else
   {
-    Py_INCREF(GET_TC(tc)->itemName);
+//    Py_INCREF(GET_TC(tc)->itemName);
   }
   PRINTMARK();
   return 1;

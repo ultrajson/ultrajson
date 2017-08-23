@@ -77,7 +77,7 @@ tree doesn't have cyclic references.
 /*
 Dictates and limits how much stack space for buffers UltraJSON will use before resorting to provided heap functions */
 #ifndef JSON_MAX_STACK_BUFFER_SIZE
-#define JSON_MAX_STACK_BUFFER_SIZE 131072
+#define JSON_MAX_STACK_BUFFER_SIZE 1024
 #endif
 
 #ifdef _WIN32

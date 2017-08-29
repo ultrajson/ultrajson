@@ -167,6 +167,13 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(enc, json_unicode(input))
         self.assertEqual(dec, json.loads(enc))
 
+    def test_encodeUnicodeBogusSurrogate(self):
+        input = u'"\udcff"'
+        enc = ujson.encode(input)
+        dec = ujson.decode(enc)
+        self.assertEqual(enc, json_unicode(input))
+        self.assertEqual(dec, json.loads(enc))
+
     def test_encodeUnicode4BytesUTF8(self):
         input = "\xf0\x91\x80\xb0TRAILINGNORMAL"
         enc = ujson.encode(input)
@@ -807,11 +814,6 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
-
-    @unittest.skipIf(not six.PY3, "Only raises on Python 3")
-    def test_encodingInvalidUnicodeCharacter(self):
-        s = "\udc7f"
-        self.assertRaises(UnicodeEncodeError, ujson.dumps, s)
 
     def test_sortKeys(self):
         data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}

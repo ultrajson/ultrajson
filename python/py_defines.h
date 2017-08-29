@@ -50,4 +50,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #define PyString_FromString     PyUnicode_FromString
 
+#define PyUnicode_AsUTF8String(o) \
+    (PyUnicode_AsEncodedString((o), "utf-8", "surrogatepass"))
+
 #endif

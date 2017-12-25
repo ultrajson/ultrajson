@@ -6,6 +6,7 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
 install:
   - pip install six blist unittest2 pytz
   - python setup.py install

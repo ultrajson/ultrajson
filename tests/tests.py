@@ -1,23 +1,16 @@
 ﻿# coding=UTF-8
 from __future__ import print_function, unicode_literals
-import six
-from six.moves import range, zip
 
-import calendar
-import functools
 import decimal
+import functools
 import json
 import math
-import time
-import sys
-import pytz
+import unittest
 
-if six.PY2:
-    import unittest2 as unittest
-else:
-    import unittest
+import six
 
 import ujson
+from six.moves import range, zip
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 
@@ -348,7 +341,6 @@ class UltraJSONTests(unittest.TestCase):
         input = -float('inf')
         self.assertRaises(OverflowError, ujson.encode, input)
 
-    @unittest.skipIf(sys.version_info < (2, 7), "No Ordered dict in < 2.7")
     def test_encodeOrderedDict(self):
         from collections import OrderedDict
         input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])

@@ -94,10 +94,10 @@ setup(
     ext_modules = [module1],
     author="Jonas Tarnstrom",
     author_email="jonas.tarnstrom@esn.me",
-    download_url="http://github.com/esnme/ultrajson",
+    download_url="https://github.com/esnme/ultrajson",
     license="BSD License",
     platforms=['any'],
-    url="http://www.esn.me",
+    url="https://github.com/esnme/ultrajson",
     cmdclass = {'build_ext': build_ext, 'build_clib': build_clib_without_warnings},
     classifiers=CLASSIFIERS,
 )

@@ -613,6 +613,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   JSOBJ itemName;
   JSOBJ itemValue;
   JSOBJ newObj;
+  int len;
 
   ds->objDepth++;
   if (ds->objDepth > JSON_MAX_OBJECT_DEPTH)
@@ -621,6 +622,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   }
 
   newObj = ds->dec->newObject(ds->prv);
+  len = 0;
 
   ds->start ++;
 
@@ -631,8 +633,14 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     if ((*ds->start) == '}')
     {
       ds->objDepth--;
-      ds->start ++;
-      return newObj;
+      if (len == 0)
+      {
+        ds->start ++;
+        return newObj;
+      }
+
+      ds->dec->releaseObject(ds->prv, newObj);
+      return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
 
     ds->lastType = JT_INVALID;
@@ -689,6 +697,8 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
         ds->dec->releaseObject(ds->prv, newObj);
         return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
+
+    len++;
   }
 }
 

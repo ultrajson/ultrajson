@@ -337,16 +337,34 @@ class UltraJSONTests(unittest.TestCase):
         self.assertRaises(OverflowError, ujson.encode, input)
 
     def test_encodeDoubleNan(self):
-        input = float('nan')
-        self.assertRaises(OverflowError, ujson.encode, input)
+        data = {"a": float("NaN")}
+        nanJson = ujson.dumps(data)
+        self.assertEqual(nanJson, '{"a":NaN}')
+
+        with self.assertRaises(OverflowError) as context:
+            nanJson = ujson.dumps(data, allow_nan=False)
+
+        self.assertEqual("Invalid value when encoding double", str(context.exception))
 
     def test_encodeDoubleInf(self):
-        input = float('inf')
-        self.assertRaises(OverflowError, ujson.encode, input)
+        data = {"a": float("inf")}
+        nanJson = ujson.dumps(data)
+        self.assertEqual(nanJson, '{"a":Inf}')
+
+        with self.assertRaises(OverflowError) as context:
+            nanJson = ujson.dumps(data, allow_nan=False)
+
+        self.assertEqual("Invalid value when encoding double", str(context.exception))
 
     def test_encodeDoubleNegInf(self):
-        input = -float('inf')
-        self.assertRaises(OverflowError, ujson.encode, input)
+        data = {"a": -float("inf")}
+        nanJson = ujson.dumps(data)
+        self.assertEqual(nanJson, '{"a":-Inf}')
+
+        with self.assertRaises(OverflowError) as context:
+            nanJson = ujson.dumps(data, allow_nan=False)
+
+        self.assertEqual("Invalid value when encoding double", str(context.exception))
 
     @unittest.skipIf(sys.version_info < (2, 7), "No Ordered dict in < 2.7")
     def test_encodeOrderedDict(self):

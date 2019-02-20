@@ -262,6 +262,11 @@ typedef struct __JSONObjectEncoder
   int indent;
 
   /*
+  If true, NaN will be encoded as a string matching the python standard library's json behavior.
+  This is not valid json.*/
+  int allowNan;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

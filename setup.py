@@ -3,6 +3,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 import distutils.sysconfig
+from setuptools.command.build_ext import build_ext
 import os.path
 import re
 import shutil

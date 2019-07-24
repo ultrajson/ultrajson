@@ -37,6 +37,11 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 */
 
 #include "py_defines.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+#include <numpy/arrayscalars.h>
+#include <numpy/ndarraytypes.h>
+#include <numpy/npy_math.h>
 #include <stdio.h>
 #include <datetime.h>
 #include <ultrajson.h>
@@ -46,7 +51,8 @@ static PyObject* type_decimal = NULL;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
-#if (PY_VERSION_HEX < 0x02050000)
+//#if (PY_VERSION_HEX < 0x02050000)
+#if (PY_VERSION_HEX < 0x03000000)
 typedef ssize_t Py_ssize_t;
 #endif
 
@@ -99,6 +105,7 @@ void initObjToJSON(void)
     PyErr_Clear();
 
   PyDateTime_IMPORT;
+  import_array();
 }
 
 #ifdef _LP64
@@ -673,7 +680,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
   pc->longValue = 0;
   pc->rawJSONValue = NULL;
 
-  if (PyIter_Check(obj))
+  if (PyIter_Check(obj) || ( (PyArray_Check(obj) && !PyArray_CheckScalar(obj))))
   {
     PRINTMARK();
     goto ISITERABLE;
@@ -762,6 +769,17 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
     pc->PyTypeToJSON = PyDateToINT64; tc->type = JT_LONG;
     return;
   }
+  else
+  if (PyNumber_Check(obj))
+  {
+    PRINTMARK();
+    #ifdef _LP64
+    pc->PyTypeToJSON = PyIntToINT64; tc->type = JT_LONG;
+    #else
+    pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
+    #endif
+    return;
+    }
   else
   if (obj == Py_None)
   {

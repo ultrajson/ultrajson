@@ -1,15 +1,15 @@
 try:
-  from setuptools import setup, Extension
+    from setuptools import setup, Extension
 except ImportError:
-  from distutils.core import setup, Extension
+    from distutils.core import setup, Extension
 import distutils.sysconfig
-import shutil
 import os.path
 import re
+import shutil
 import sys
 
 CLASSIFIERS = filter(None, map(str.strip,
-"""
+                               """
 Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
 License :: OSI Approved :: BSD License
@@ -28,13 +28,14 @@ except(OSError):
     pass
 
 module1 = Extension('ujson',
-                    sources = ['./python/ujson.c', 
-                               './python/objToJSON.c', 
-                               './python/JSONtoObj.c', 
-                               './lib/ultrajsonenc.c', 
-                               './lib/ultrajsondec.c'],
-                    include_dirs = ['./python', './lib'],
+                    sources=['./python/ujson.c',
+                             './python/objToJSON.c',
+                             './python/JSONtoObj.c',
+                             './lib/ultrajsonenc.c',
+                             './lib/ultrajsondec.c'],
+                    include_dirs=['./python', './lib'],
                     extra_compile_args=['-D_GNU_SOURCE'])
+
 
 def get_version():
     filename = os.path.join(os.path.dirname(__file__), './python/version.h')
@@ -49,22 +50,41 @@ def get_version():
     assert m, "version.h must contain UJSON_VERSION macro"
     return m.group(1)
 
+
 f = open('README.rst')
 try:
     README = f.read()
 finally:
-    f.close()    
-    
-setup (name = 'ujson',
-       version = get_version(),
-       description = "Ultra fast JSON encoder and decoder for Python",
-       long_description = README,
-       ext_modules = [module1],
-       author="Jonas Tarnstrom",
-       author_email="jonas.tarnstrom@esn.me",
-       download_url="http://github.com/esnme/ultrajson",
-       license="BSD License",
-       platforms=['any'],      
-       url="http://www.esn.me",
-       classifiers=CLASSIFIERS,
-       )
+    f.close()
+
+
+class CustomBuildExtCommand(build_ext):
+    """build_ext command for use when numpy headers are needed."""
+
+    def run(self):
+
+        # Import numpy here, only when headers are needed
+        import numpy
+
+        # Add numpy headers to include_dirs
+        self.include_dirs.append(numpy.get_include())
+
+        # Call original build_ext command
+        build_ext.run(self)
+
+
+setup(name='ujson',
+      version=get_version(),
+      description="Ultra fast JSON encoder and decoder for Python",
+      long_description=README,
+      cmdclass={'build_ext': CustomBuildExtCommand},
+      install_requires=['numpy>=1.16.4', 'cython'],
+      ext_modules=[module1],
+      author="Jonas Tarnstrom",
+      author_email="jonas.tarnstrom@esn.me",
+      download_url="http://github.com/esnme/ultrajson",
+      license="BSD License",
+      platforms=['any'],
+      url="http://www.esn.me",
+      classifiers=CLASSIFIERS,
+      )

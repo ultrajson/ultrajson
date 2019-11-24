@@ -37,8 +37,8 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 */
 
 #include <Python.h>
+#include <hpy.h>
 
-#if PY_MAJOR_VERSION >= 3
 
 #define PyInt_Check             PyLong_Check
 #define PyInt_AS_LONG           PyLong_AsLong
@@ -50,4 +50,3 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #define PyString_FromString     PyUnicode_FromString
 
-#endif

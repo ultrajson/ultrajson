@@ -65,49 +65,28 @@ static PyMethodDef ujsonMethods[] = {
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 
-#if PY_MAJOR_VERSION >= 3
-
-static struct PyModuleDef moduledef = {
-  PyModuleDef_HEAD_INIT,
-  "ujson",
-  0,              /* m_doc */
-  -1,             /* m_size */
-  ujsonMethods,   /* m_methods */
-  NULL,           /* m_reload */
-  NULL,           /* m_traverse */
-  NULL,           /* m_clear */
-  NULL            /* m_free */
+static HPyModuleDef moduledef = {
+  HPyModuleDef_HEAD_INIT,
+  .m_name = "ujson",
+  .m_doc = 0,
+  .m_size = -1,
+  .m_methods = ujsonMethods,
 };
 
-#define PYMODINITFUNC       PyObject *PyInit_ujson(void)
-#define PYMODULE_CREATE()   PyModule_Create(&moduledef)
-#define MODINITERROR        return NULL
 
-#else
-
-#define PYMODINITFUNC       PyMODINIT_FUNC initujson(void)
-#define PYMODULE_CREATE()   Py_InitModule("ujson", ujsonMethods)
-#define MODINITERROR        return
-
-#endif
-
-PYMODINITFUNC
+HPy_MODINIT(ujson)
+static HPy init_ujson_impl(HPyContext ctx)
 {
-  PyObject *module;
-  PyObject *version_string;
+  HPy module;
+  //PyObject *version_string;
 
   initObjToJSON();
-  module = PYMODULE_CREATE();
-
-  if (module == NULL)
-  {
-    MODINITERROR;
+  module = HPyModule_Create(ctx, &moduledef);
+  if (HPy_IsNull(module)) {
+      return HPy_NULL;
   }
 
-  version_string = PyString_FromString (UJSON_VERSION);
-  PyModule_AddObject (module, "__version__", version_string);
-
-#if PY_MAJOR_VERSION >= 3
+  //version_string = PyString_FromString (UJSON_VERSION);
+  //PyModule_AddObject (module, "__version__", version_string);
   return module;
-#endif
 }

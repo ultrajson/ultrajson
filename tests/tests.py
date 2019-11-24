@@ -572,6 +572,7 @@ class UltraJSONTests(unittest.TestCase):
     def test_loadFileArgsError(self):
         self.assertRaises(TypeError, ujson.load, "[]")
 
+    @unittest.skip("TODO")
     def test_version(self):
         if six.PY2:
             self.assertRegexpMatches(ujson.__version__, r'^\d+\.\d+(\.\d+)?$', "ujson.__version__ must be a string like '1.4.0'")

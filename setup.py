@@ -10,6 +10,7 @@ import os.path
 import re
 import sys
 from glob import glob
+import hpy_devel
 
 CLASSIFIERS = filter(None, map(str.strip,
 """
@@ -58,7 +59,7 @@ module1 = Extension(
          './lib/ultrajsonenc.c',
          './lib/ultrajsondec.c'
      ],
-     include_dirs = ['./python', './lib'],
+     include_dirs = ['./python', './lib', hpy_devel.get_include()],
      extra_compile_args = ['-D_GNU_SOURCE'],
      extra_link_args = ['-lstdc++', '-lm']
 )
@@ -86,7 +87,7 @@ finally:
     
 
 setup(
-    name = 'ujson',
+    name = 'ujson-hpy',
     version = get_version(),
     description = "Ultra fast JSON encoder and decoder for Python",
     long_description = README,

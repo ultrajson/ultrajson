@@ -1,3 +1,14 @@
+UltraJSON-HPy
+=================
+
+This is an experiment to port the popular ```ujson``` module to HPy_.
+
+.. _HPy: https://github.com/pyhandle/hpy
+
+Below there is the original README.
+
+
+
 UltraJSON
 =============
 .. image:: https://travis-ci.org/esnme/ultrajson.svg?branch=master

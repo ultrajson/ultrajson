@@ -1,5 +1,7 @@
 UltraJSON-HPy
 =================
+.. image:: https://travis-ci.org/pyhandle/ultrajson-hpy.svg?branch=hpy
+    :target: https://travis-ci.org/pyhandle/ultrajson-hpy
 
 This is an experiment to port the popular ```ujson``` module to HPy_.
 

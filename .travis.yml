@@ -4,8 +4,7 @@ python:
   - "3.7"
   - "3.8"
 install:
-  - git clone https://github.com/pyhandle/hpy.git
-  - (cd hpy/hpy-api && python setup.py install)
+  - pip install https://github.com/pyhandle/hpy/archive/master.zip#subdirectory=hpy-api
   - pip install six blist unittest2 pytz
   - python setup.py install
 script: python tests/tests.py

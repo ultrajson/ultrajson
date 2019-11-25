@@ -1,10 +1,16 @@
 sudo: false
 language: python
+
 python:
   - "3.7"
-  - "3.8"
+
+env:
+  - TOXENV="py37"
+  - TOXENV="py37-universal"
+
 install:
-  - pip install https://github.com/pyhandle/hpy/archive/master.zip#subdirectory=hpy-api
-  - pip install six blist unittest2 pytz
-  - python setup.py install
-script: python tests/tests.py
+  - pip install -U pip
+  - pip install tox
+
+script:
+  - tox

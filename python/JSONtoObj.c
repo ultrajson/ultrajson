@@ -117,11 +117,10 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
 
 HPy_DEF_METH_O(JSONToObj)
 static HPy
-JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
+JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
 {
-  PyObject *arg = HPy_AsPyObject(ctx, h_arg);
   PyObject *ret;
-  PyObject *sarg;
+  HPy sarg;
   HPy h_ret;
   JSONObjectDecoder decoder =
   {
@@ -145,15 +144,15 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   decoder.prv = NULL;
 
-  if (PyBytes_Check(arg))
+  if (HPyBytes_Check(ctx, arg))
   {
-      sarg = arg;
+    sarg = HPy_Dup(ctx, arg);
   }
   else
-  if (PyUnicode_Check(arg))
+  if (HPyUnicode_Check(ctx, arg))
   {
-    sarg = PyUnicode_AsUTF8String(arg);
-    if (sarg == NULL)
+    sarg = HPyUnicode_AsUTF8String(ctx, arg);
+    if (HPy_IsNull(sarg))
     {
       //Exception raised above us by codec according to docs
       return HPy_NULL;
@@ -170,15 +169,14 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
-  ret = JSON_DecodeObject(&decoder, PyBytes_AS_STRING(sarg), PyBytes_GET_SIZE(sarg));
+  ret = JSON_DecodeObject(&decoder,
+                          HPyBytes_AS_STRING(ctx, sarg),
+                          HPyBytes_GET_SIZE(ctx, sarg));
 
 
   dconv_s2d_free();
 
-  if (sarg != arg)
-  {
-    Py_DECREF(sarg);
-  }
+  HPy_Close(ctx, sarg);
 
   if (decoder.errorStr)
   {

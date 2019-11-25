@@ -17,7 +17,35 @@ if six.PY2:
 else:
     import unittest
 
-import ujson
+import os
+if os.getenv('HPY_UNIVERSAL') == '1':
+    def import_ujson_universal():
+        """
+        Find and import ujson.hpy.so.
+
+        Eventually this logic should be provided directly by hpy_universal,
+        but in the meantime we just do it manually.
+        """
+        from pathlib import Path
+        import hpy_universal
+        # find ujson.hpy.so in sys.path
+        for p in sys.path:
+            sopath = Path(p) / 'ujson.hpy.so'
+            if sopath.exists():
+                break
+        else:
+            raise ImportError('Cannot find ujson.hpy.so')
+        #
+        # load it through hpy_universal
+        class Spec:
+            name = 'ujson'
+            origin = str(sopath)
+        return hpy_universal.load_from_spec(Spec)
+
+    print('USING THE UNIVERSAL EXTENSION')
+    ujson = import_ujson_universal()
+else:
+    import ujson
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 

@@ -50,6 +50,20 @@ class build_clib_without_warnings(build_clib):
         build_clib.build_libraries(self, libraries)
 
 
+# this is a hack: we need a proper way to tell setup.py whether we want an
+# universal module or not
+if os.getenv('HPY_UNIVERSAL') == '1':
+    EXTRA_COMPILE_ARGS = ['-DHPY_UNIVERSAL_ABI']
+    # hack hack hack: convince distutils to use the .hpy.so suffix. There is
+    # probably a better way :)
+    import distutils.sysconfig
+    distutils.sysconfig.get_config_var('EXT_SUFFIX')
+    distutils.sysconfig._config_vars['EXT_SUFFIX'] = '.hpy.so'
+else:
+    EXTRA_COMPILE_ARGS = []
+
+
+
 module1 = Extension(
     'ujson',
      sources = [
@@ -60,7 +74,7 @@ module1 = Extension(
          './lib/ultrajsondec.c'
      ],
      include_dirs = ['./python', './lib', hpy_devel.get_include()],
-     extra_compile_args = ['-D_GNU_SOURCE'],
+     extra_compile_args = ['-D_GNU_SOURCE'] + EXTRA_COMPILE_ARGS,
      extra_link_args = ['-lstdc++', '-lm']
 )
 

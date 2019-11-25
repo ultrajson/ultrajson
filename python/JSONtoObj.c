@@ -113,9 +113,9 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", NULL};
+//static char *g_kwlist[] = {"obj", NULL};
 
-PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* JSONToObj(PyObject* self, PyObject *args)
 {
   PyObject *ret;
   PyObject *sarg;
@@ -142,7 +142,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 
   decoder.prv = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", g_kwlist, &arg))
+  if (!PyArg_ParseTuple(args, "O", &arg))
   {
       return NULL;
   }
@@ -199,7 +199,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   return ret;
 }
 
-PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* JSONFileToObj(PyObject* self, PyObject *args)
 {
   PyObject *read;
   PyObject *string;
@@ -236,7 +236,7 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 
   argtuple = PyTuple_Pack(1, string);
 
-  result = JSONToObj (self, argtuple, kwargs);
+  result = JSONToObj (self, argtuple);
 
   Py_XDECREF(argtuple);
   Py_XDECREF(string);

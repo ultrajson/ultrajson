@@ -44,24 +44,24 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs);
 void initObjToJSON(void);
 
 /* JSONToObj */
-PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* JSONToObj(PyObject* self, PyObject *args);
 
 /* objToJSONFile */
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 
 /* JSONFileToObj */
-PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* JSONFileToObj(PyObject* self, PyObject *args);
 
 
 #define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision of doubles. Set encode_html_chars=True to encode < > & as unicode escape sequences. Set escape_forward_slashes=False to prevent escaping / characters."
 
 static HPyMethodDef ujsonMethods[] = {
   {"encode", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"decode", (HPyMeth) JSONToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"decode", (HPyMeth) JSONToObj, METH_VARARGS, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
   {"dumps", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"loads", (HPyMeth) JSONToObj, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"loads", (HPyMeth) JSONToObj, METH_VARARGS,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
   {"dump", (HPyMeth) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
-  {"load", (HPyMeth) JSONFileToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"load", (HPyMeth) JSONFileToObj, METH_VARARGS, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

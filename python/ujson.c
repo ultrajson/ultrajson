@@ -83,7 +83,7 @@ static HPy init_ujson_impl(HPyContext ctx)
       return HPy_NULL;
   }
 
-  //version_string = PyString_FromString (UJSON_VERSION);
+  //version_string = PyUnicode_FromString (UJSON_VERSION);
   //PyModule_AddObject (module, "__version__", version_string);
   return module;
 }

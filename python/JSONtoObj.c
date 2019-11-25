@@ -90,7 +90,7 @@ static JSOBJ Object_newArray(void *prv)
 
 static JSOBJ Object_newInteger(void *prv, JSINT32 value)
 {
-  return PyInt_FromLong( (long) value);
+  return PyLong_FromLong( (long) value);
 }
 
 static JSOBJ Object_newLong(void *prv, JSINT64 value)
@@ -145,7 +145,7 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   decoder.prv = NULL;
 
-  if (PyString_Check(arg))
+  if (PyBytes_Check(arg))
   {
       sarg = arg;
   }
@@ -170,7 +170,7 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
-  ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(sarg), PyString_GET_SIZE(sarg));
+  ret = JSON_DecodeObject(&decoder, PyBytes_AS_STRING(sarg), PyBytes_GET_SIZE(sarg));
 
 
   dconv_s2d_free();

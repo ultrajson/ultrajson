@@ -1,5 +1,5 @@
 /*
-Developed by ESN, an Electronic Arts Inc. studio. 
+Developed by ESN, an Electronic Arts Inc. studio.
 Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
@@ -17,7 +17,7 @@ derived from this software without specific prior written permission.
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -43,25 +43,22 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs);
 void initObjToJSON(void);
 
-/* JSONToObj */
-PyObject* JSONToObj(PyObject* self, PyObject *args);
-
 /* objToJSONFile */
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 
-/* JSONFileToObj */
-PyObject* JSONFileToObj(PyObject* self, PyObject *args);
+HPy_DECL_METH_O(JSONToObj)
+HPy_DECL_METH_O(JSONFileToObj)
 
 
 #define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision of doubles. Set encode_html_chars=True to encode < > & as unicode escape sequences. Set escape_forward_slashes=False to prevent escaping / characters."
 
 static HPyMethodDef ujsonMethods[] = {
   {"encode", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"decode", (HPyMeth) JSONToObj, METH_VARARGS, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"decode", JSONToObj, HPy_METH_O, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
   {"dumps", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"loads", (HPyMeth) JSONToObj, METH_VARARGS,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"loads", JSONToObj, HPy_METH_O,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
   {"dump", (HPyMeth) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
-  {"load", (HPyMeth) JSONFileToObj, METH_VARARGS, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"load", JSONFileToObj, HPy_METH_O, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

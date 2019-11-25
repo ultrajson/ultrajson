@@ -62,7 +62,7 @@ if os.getenv('HPY_UNIVERSAL') == '1':
 else:
     EXTRA_COMPILE_ARGS = []
 
-
+#EXTRA_COMPILE_ARGS += ['-g', '-O0']
 
 module1 = Extension(
     'ujson',
@@ -97,8 +97,8 @@ f = open('README.rst')
 try:
     README = f.read()
 finally:
-    f.close()    
-    
+    f.close()
+
 
 setup(
     name = 'ujson-hpy',

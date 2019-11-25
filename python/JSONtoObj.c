@@ -1,5 +1,5 @@
 /*
-Developed by ESN, an Electronic Arts Inc. studio. 
+Developed by ESN, an Electronic Arts Inc. studio.
 Copyright (c) 2014, Electronic Arts Inc.
 All rights reserved.
 
@@ -17,7 +17,7 @@ derived from this software without specific prior written permission.
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE 
+DISCLAIMED. IN NO EVENT SHALL ELECTRONIC ARTS INC. BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -115,11 +115,14 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
 
 //static char *g_kwlist[] = {"obj", NULL};
 
-PyObject* JSONToObj(PyObject* self, PyObject *args)
+HPy_DEF_METH_O(JSONToObj)
+static HPy
+JSONToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 {
+  PyObject *arg = HPy_AsPyObject(ctx, h_arg);
   PyObject *ret;
   PyObject *sarg;
-  PyObject *arg;
+  HPy h_ret;
   JSONObjectDecoder decoder =
   {
     Object_newString,
@@ -142,11 +145,6 @@ PyObject* JSONToObj(PyObject* self, PyObject *args)
 
   decoder.prv = NULL;
 
-  if (!PyArg_ParseTuple(args, "O", &arg))
-  {
-      return NULL;
-  }
-
   if (PyString_Check(arg))
   {
       sarg = arg;
@@ -158,13 +156,13 @@ PyObject* JSONToObj(PyObject* self, PyObject *args)
     if (sarg == NULL)
     {
       //Exception raised above us by codec according to docs
-      return NULL;
+      return HPy_NULL;
     }
   }
   else
   {
     PyErr_Format(PyExc_TypeError, "Expected String or Unicode");
-    return NULL;
+    return HPy_NULL;
   }
 
   decoder.errorStr = NULL;
@@ -173,6 +171,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args)
   dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
   ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(sarg), PyString_GET_SIZE(sarg));
+
 
   dconv_s2d_free();
 
@@ -193,29 +192,27 @@ PyObject* JSONToObj(PyObject* self, PyObject *args)
         Py_DECREF( (PyObject *) ret);
     }
 
-    return NULL;
+    return HPy_NULL;
   }
 
-  return ret;
+  h_ret = HPy_FromPyObject(ctx, ret);
+  Py_DECREF(ret);
+  return h_ret;
 }
 
-PyObject* JSONFileToObj(PyObject* self, PyObject *args)
+HPy_DEF_METH_O(JSONFileToObj)
+static HPy
+JSONFileToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 {
+  PyObject *file = HPy_AsPyObject(ctx, h_arg);
   PyObject *read;
   PyObject *string;
-  PyObject *result;
-  PyObject *file = NULL;
-  PyObject *argtuple;
-
-  if (!PyArg_ParseTuple (args, "O", &file))
-  {
-    return NULL;
-  }
+  HPy h_result;
 
   if (!PyObject_HasAttrString (file, "read"))
   {
     PyErr_Format (PyExc_TypeError, "expected file");
-    return NULL;
+    return HPy_NULL;
   }
 
   read = PyObject_GetAttrString (file, "read");
@@ -223,7 +220,7 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args)
   if (!PyCallable_Check (read)) {
     Py_XDECREF(read);
     PyErr_Format (PyExc_TypeError, "expected file");
-    return NULL;
+    return HPy_NULL;
   }
 
   string = PyObject_CallObject (read, NULL);
@@ -231,19 +228,16 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args)
 
   if (string == NULL)
   {
-    return NULL;
+    return HPy_NULL;
   }
 
-  argtuple = PyTuple_Pack(1, string);
-
-  result = JSONToObj (self, argtuple);
-
-  Py_XDECREF(argtuple);
+  HPy h_string = HPy_FromPyObject(ctx, string);
+  h_result = JSONToObj_impl(ctx, self, h_string);
   Py_XDECREF(string);
+  HPy_Close(ctx, h_string);
 
-  if (result == NULL) {
-    return NULL;
+  if (HPy_IsNull(h_result)) {
+    return HPy_NULL;
   }
-
-  return result;
+  return h_result;
 }

@@ -68,8 +68,8 @@ static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newString");
-  return PyUnicode_FromWideChar (start, (end - start));
+  HPy res = HPyUnicode_FromWideChar(ctx, start, (end - start));
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newTrue(void *prv)

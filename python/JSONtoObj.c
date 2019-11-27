@@ -97,8 +97,8 @@ static JSOBJ Object_newNull(void *prv)
 static JSOBJ Object_newObject(void *prv)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newObject");
-  return PyDict_New();
+  HPy res = HPyDict_New(ctx);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newArray(void *prv)
@@ -139,8 +139,8 @@ static JSOBJ Object_newDouble(void *prv, double value)
 static void Object_releaseObject(void *prv, JSOBJ obj)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("releaseObject");
-  Py_DECREF( ((PyObject *)obj));
+  HPy h_obj = HPy_FromVoidP(obj);
+  HPy_Close(ctx, h_obj);
 }
 
 //static char *g_kwlist[] = {"obj", NULL};

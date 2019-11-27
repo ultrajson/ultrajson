@@ -71,8 +71,8 @@ static HPyModuleDef moduledef = {
 };
 
 
-HPy_MODINIT(ujson)
-static HPy init_ujson_impl(HPyContext ctx)
+HPy_MODINIT(ujson_hpy)
+static HPy init_ujson_hpy_impl(HPyContext ctx)
 {
   HPy module;
   //PyObject *version_string;

@@ -65,7 +65,7 @@ else:
 #EXTRA_COMPILE_ARGS += ['-g', '-O0']
 
 module1 = Extension(
-    'ujson',
+    'ujson_hpy',
      sources = [
          './python/ujson.c',
          './python/objToJSON.c',

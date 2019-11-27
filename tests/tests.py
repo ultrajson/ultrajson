@@ -30,7 +30,7 @@ if os.getenv('HPY_UNIVERSAL') == '1':
         import hpy_universal
         # find ujson.hpy.so in sys.path
         for p in sys.path:
-            sopath = Path(p) / 'ujson.hpy.so'
+            sopath = Path(p) / 'ujson_hpy.hpy.so'
             if sopath.exists():
                 break
         else:
@@ -38,14 +38,14 @@ if os.getenv('HPY_UNIVERSAL') == '1':
         #
         # load it through hpy_universal
         class Spec:
-            name = 'ujson'
+            name = 'ujson_hpy'
             origin = str(sopath)
         return hpy_universal.load_from_spec(Spec)
 
     print('USING THE UNIVERSAL EXTENSION')
     ujson = import_ujson_universal()
 else:
-    import ujson
+    import ujson_hpy as ujson
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 

@@ -160,7 +160,7 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
   }
   else
   {
-    PyErr_Format(PyExc_TypeError, "Expected String or Unicode");
+    HPyErr_SetString(ctx, ctx->h_TypeError, "Expected String or Unicode");
     return HPy_NULL;
   }
 
@@ -183,7 +183,9 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
     /*
     FIXME: It's possible to give a much nicer error message here with actual failing element in input etc*/
 
-    PyErr_Format (PyExc_ValueError, "%s", decoder.errorStr);
+    // XXX hpy does not support HPyErr_Format yet!
+    //PyErr_Format (PyExc_ValueError, "%s", decoder.errorStr);
+    HPyErr_SetString(ctx, ctx->h_ValueError, "generic error while decoding");
 
     if (ret)
     {
@@ -209,7 +211,7 @@ JSONFileToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   if (!PyObject_HasAttrString (file, "read"))
   {
-    PyErr_Format (PyExc_TypeError, "expected file");
+    HPyErr_SetString(ctx, ctx->h_TypeError, "expected file");
     return HPy_NULL;
   }
 
@@ -217,7 +219,7 @@ JSONFileToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 
   if (!PyCallable_Check (read)) {
     Py_XDECREF(read);
-    PyErr_Format (PyExc_TypeError, "expected file");
+    HPyErr_SetString(ctx, ctx->h_TypeError, "expected file");
     return HPy_NULL;
   }
 

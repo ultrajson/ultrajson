@@ -43,9 +43,6 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
-#define ABORT(msg) \
-  printf("abort in %s\n", msg); abort()
-
 static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
   HPyContext ctx = (HPyContext)prv;
@@ -113,22 +110,22 @@ static JSOBJ Object_newArray(void *prv)
 static JSOBJ Object_newInteger(void *prv, JSINT32 value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newInteger");
-  return PyLong_FromLong( (long) value);
+  HPy res = HPyLong_FromLong(ctx, (long) value);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newLong(void *prv, JSINT64 value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newLong");
-  return PyLong_FromLongLong (value);
+  HPy res = HPyLong_FromLongLong(ctx, value);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newUnsignedLong");
-  return PyLong_FromUnsignedLongLong (value);
+  HPy res = HPyLong_FromUnsignedLongLong(ctx, value);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newDouble(void *prv, double value)

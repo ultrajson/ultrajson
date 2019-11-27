@@ -64,7 +64,7 @@ static HPyMethodDef ujsonMethods[] = {
 
 static HPyModuleDef moduledef = {
   HPyModuleDef_HEAD_INIT,
-  .m_name = "ujson",
+  .m_name = "ujson_hpy",
   .m_doc = 0,
   .m_size = -1,
   .m_methods = ujsonMethods,

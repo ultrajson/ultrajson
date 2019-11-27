@@ -49,10 +49,12 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("objectAddKey");
-  PyDict_SetItem (obj, name, value);
-  Py_DECREF( (PyObject *) name);
-  Py_DECREF( (PyObject *) value);
+  HPy h_obj = HPy_FromVoidP(obj);
+  HPy h_name = HPy_FromVoidP(name);
+  HPy h_value = HPy_FromVoidP(value);
+  HPyDict_SetItem(ctx, h_obj, h_name, h_value);
+  HPy_Close(ctx, h_name);
+  HPy_Close(ctx, h_value);
   return;
 }
 
@@ -132,8 +134,8 @@ static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
 static JSOBJ Object_newDouble(void *prv, double value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newDouble");
-  return PyFloat_FromDouble(value);
+  HPy res = HPyFloat_FromDouble(ctx, value);
+  return HPy_AsVoidP(res);
 }
 
 static void Object_releaseObject(void *prv, JSOBJ obj)

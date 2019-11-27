@@ -59,9 +59,10 @@ static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("arrayAddItem");
-  PyList_Append(obj, value);
-  Py_DECREF( (PyObject *) value);
+  HPy h_obj = HPy_FromVoidP(obj);
+  HPy h_value = HPy_FromVoidP(value);
+  HPyList_Append(ctx, h_obj, h_value);
+  HPy_Close(ctx, h_value);
   return;
 }
 
@@ -75,22 +76,22 @@ static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 static JSOBJ Object_newTrue(void *prv)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newTrue");
-  Py_RETURN_TRUE;
+  HPy res = HPy_Dup(ctx, ctx->h_True);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newFalse(void *prv)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newFalse");
-  Py_RETURN_FALSE;
+  HPy res = HPy_Dup(ctx, ctx->h_False);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newNull(void *prv)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newNull");
-  Py_RETURN_NONE;
+  HPy res = HPy_Dup(ctx, ctx->h_None);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newObject(void *prv)
@@ -103,8 +104,8 @@ static JSOBJ Object_newObject(void *prv)
 static JSOBJ Object_newArray(void *prv)
 {
   HPyContext ctx = (HPyContext)prv;
-  ABORT("newArray");
-  return PyList_New(0);
+  HPy res = HPyList_New(ctx, 0);
+  return HPy_AsVoidP(res);
 }
 
 static JSOBJ Object_newInteger(void *prv, JSINT32 value)

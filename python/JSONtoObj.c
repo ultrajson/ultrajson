@@ -43,8 +43,13 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
+#define ABORT(msg) \
+  printf("abort in %s\n", msg); abort()
+
 static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("objectAddKey");
   PyDict_SetItem (obj, name, value);
   Py_DECREF( (PyObject *) name);
   Py_DECREF( (PyObject *) value);
@@ -53,6 +58,8 @@ static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 
 static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("arrayAddItem");
   PyList_Append(obj, value);
   Py_DECREF( (PyObject *) value);
   return;
@@ -60,56 +67,78 @@ static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 
 static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newString");
   return PyUnicode_FromWideChar (start, (end - start));
 }
 
 static JSOBJ Object_newTrue(void *prv)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newTrue");
   Py_RETURN_TRUE;
 }
 
 static JSOBJ Object_newFalse(void *prv)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newFalse");
   Py_RETURN_FALSE;
 }
 
 static JSOBJ Object_newNull(void *prv)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newNull");
   Py_RETURN_NONE;
 }
 
 static JSOBJ Object_newObject(void *prv)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newObject");
   return PyDict_New();
 }
 
 static JSOBJ Object_newArray(void *prv)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newArray");
   return PyList_New(0);
 }
 
 static JSOBJ Object_newInteger(void *prv, JSINT32 value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newInteger");
   return PyLong_FromLong( (long) value);
 }
 
 static JSOBJ Object_newLong(void *prv, JSINT64 value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newLong");
   return PyLong_FromLongLong (value);
 }
 
 static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newUnsignedLong");
   return PyLong_FromUnsignedLongLong (value);
 }
 
 static JSOBJ Object_newDouble(void *prv, double value)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("newDouble");
   return PyFloat_FromDouble(value);
 }
 
 static void Object_releaseObject(void *prv, JSOBJ obj)
 {
+  HPyContext ctx = (HPyContext)prv;
+  ABORT("releaseObject");
   Py_DECREF( ((PyObject *)obj));
 }
 
@@ -119,7 +148,6 @@ HPy_DEF_METH_O(JSONToObj)
 static HPy
 JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
 {
-  PyObject *ret;
   HPy sarg;
   HPy h_ret;
   JSONObjectDecoder decoder =
@@ -142,7 +170,8 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
     PyObject_Realloc
   };
 
-  decoder.prv = NULL;
+  // use decoder.prv to pass around the ctx
+  decoder.prv = ctx;
 
   if (HPyBytes_Check(ctx, arg))
   {
@@ -169,10 +198,10 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
 
   dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
-  ret = JSON_DecodeObject(&decoder,
-                          HPyBytes_AS_STRING(ctx, sarg),
-                          HPyBytes_GET_SIZE(ctx, sarg));
-
+  void *ret = JSON_DecodeObject(&decoder,
+                                HPyBytes_AS_STRING(ctx, sarg),
+                                HPyBytes_GET_SIZE(ctx, sarg));
+  h_ret = HPy_FromVoidP(ret);
 
   dconv_s2d_free();
 
@@ -187,16 +216,14 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
     //PyErr_Format (PyExc_ValueError, "%s", decoder.errorStr);
     HPyErr_SetString(ctx, ctx->h_ValueError, "generic error while decoding");
 
-    if (ret)
+    if (!HPy_IsNull(h_ret))
     {
-        Py_DECREF( (PyObject *) ret);
+      HPy_Close(ctx, h_ret);
     }
 
     return HPy_NULL;
   }
 
-  h_ret = HPy_FromPyObject(ctx, ret);
-  Py_DECREF(ret);
   return h_ret;
 }
 

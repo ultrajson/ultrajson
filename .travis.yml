@@ -6,11 +6,8 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-# Enable 3.7 without globally enabling dist: xenial for other build jobs
-matrix:
-  include:
-    - python: "3.7"
-      dist: xenial
+  - "3.7"
+  - "3.8"
 install:
   - pip install six blist unittest2 pytz
   - python setup.py install

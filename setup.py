@@ -18,7 +18,6 @@ Programming Language :: C
 Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 """.splitlines()))
@@ -98,6 +97,6 @@ setup(
     platforms=['any'],
     url="http://www.esn.me",
     cmdclass = {'build_ext': build_ext, 'build_clib': build_clib_without_warnings},
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     classifiers=CLASSIFIERS,
 )

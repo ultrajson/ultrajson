@@ -2,6 +2,7 @@ recursive-include deps *
 
 include README.rst
 include MANIFEST.in
+include LICENSE.txt
 include setup.py
 include tests/tests.py
 include tests/sample.json

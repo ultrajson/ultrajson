@@ -1,6 +1,12 @@
 sudo: false
 language: python
 
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
+
 python:
   - "2.7"
   - "3.4"

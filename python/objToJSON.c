@@ -255,7 +255,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  if (!(GET_TC(tc)->itemValue = PyObject_GetItem(GET_TC(tc)->dictObj, GET_TC(tc)->itemName)))
+  if (!(GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, GET_TC(tc)->itemName)))
   {
     PRINTMARK();
     return 0;

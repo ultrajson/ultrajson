@@ -5,6 +5,7 @@ import decimal
 import functools
 import json
 import math
+import sys
 import unittest
 
 import six
@@ -294,6 +295,16 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(input, json.loads(output))
         self.assertEqual(input, ujson.decode(output))
         self.assertEqual(input, ujson.decode(output))
+
+    def test_encodeDictValuesRefCounting(self):
+        import gc
+
+        gc.collect()
+        value = ["abc"]
+        data = {"1": value}
+        ref_count = sys.getrefcount(value)
+        ujson.dumps(data)
+        self.assertEqual(ref_count, sys.getrefcount(value))
 
     def test_encodeNoneConversion(self):
         input = None

@@ -9,8 +9,7 @@ import os.path
 import re
 from glob import glob
 
-CLASSIFIERS = filter(None, map(str.strip,
-"""
+CLASSIFIERS = """
 Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
 License :: OSI Approved :: BSD License
@@ -22,7 +21,7 @@ Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
-""".splitlines()))
+"""
 
 source_files = glob("./deps/double-conversion/double-conversion/*.cc")
 source_files.append("./lib/dconv_wrapper.cc")
@@ -99,5 +98,5 @@ setup(
     url="http://www.esn.me",
     cmdclass = {'build_ext': build_ext, 'build_clib': build_clib_without_warnings},
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
-    classifiers=CLASSIFIERS,
+    classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

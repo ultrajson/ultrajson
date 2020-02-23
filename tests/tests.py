@@ -12,7 +12,7 @@ import ujson
 from six.moves import range, zip
 
 json_unicode = (
-    json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
+    functools.partial(json.dumps, encoding="utf-8") if six.PY2 else json.dumps
 )
 
 
@@ -215,10 +215,10 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(s, decoded)
 
         # ujson outputs an UTF-8 encoded str object
-        if six.PY3:
-            encoded = ujson.dumps(s, ensure_ascii=False)
-        else:
+        if six.PY2:
             encoded = ujson.dumps(s, ensure_ascii=False).decode("utf-8")
+        else:
+            encoded = ujson.dumps(s, ensure_ascii=False)
 
         # json outputs an unicode object
         encoded_json = json.dumps(s, ensure_ascii=False)
@@ -237,10 +237,10 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(s, decoded)
 
         # ujson outputs an UTF-8 encoded str object
-        if six.PY3:
-            encoded = ujson.dumps(s, ensure_ascii=False)
-        else:
+        if six.PY2:
             encoded = ujson.dumps(s, ensure_ascii=False).decode("utf-8")
+        else:
+            encoded = ujson.dumps(s, ensure_ascii=False)
 
         # json outputs an unicode object
         encoded_json = json.dumps(s, ensure_ascii=False)
@@ -318,7 +318,7 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_encodeToUTF8(self):
         input = b"\xe6\x97\xa5\xd1\x88"
-        if six.PY3:
+        if not six.PY2:
             input = input.decode("utf-8")
         enc = ujson.encode(input, ensure_ascii=False)
         dec = ujson.decode(enc)
@@ -624,21 +624,21 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_encodeBigEscape(self):
         for x in range(10):
-            if six.PY3:
-                base = "\u00e5".encode("utf-8")
-            else:
+            if six.PY2:
                 base = "\xc3\xa5"
+            else:
+                base = "\u00e5".encode("utf-8")
             input = base * 1024 * 1024 * 2
             ujson.encode(input)
 
     def test_decodeBigEscape(self):
         for x in range(10):
-            if six.PY3:
-                base = "\u00e5".encode("utf-8")
-                quote = b'"'
-            else:
+            if six.PY2:
                 base = "\xc3\xa5"
                 quote = '"'
+            else:
+                base = "\u00e5".encode("utf-8")
+                quote = b'"'
             input = quote + (base * 1024 * 1024 * 2) + quote
             ujson.decode(input)
 
@@ -841,7 +841,7 @@ class UltraJSONTests(unittest.TestCase):
     def test_WriteArrayOfSymbolsFromTuple(self):
         self.assertEqual("[true,false,null]", ujson.dumps((True, False, None)))
 
-    @unittest.skipIf(not six.PY3, "Only raises on Python 3")
+    @unittest.skipIf(six.PY2, "Only raises on Python 3")
     def test_encodingInvalidUnicodeCharacter(self):
         s = "\udc7f"
         self.assertRaises(UnicodeEncodeError, ujson.dumps, s)

@@ -1,4 +1,4 @@
-# Bazel(http://bazel.io) BUILD file
+# Bazel (https://bazel.build/) BUILD file
 
 licenses(["notice"])
 

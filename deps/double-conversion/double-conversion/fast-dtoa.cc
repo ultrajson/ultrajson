@@ -232,7 +232,7 @@ static bool RoundWeedCounted(Vector<char> buffer,
 // Precondition: number < (1 << (number_bits + 1)).
 
 // Inspired by the method for finding an integer log base 10 from here:
-// http://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
+// https://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
 static unsigned int const kSmallPowersOfTen[] =
     {0, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000,
      1000000000};

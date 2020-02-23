@@ -1,12 +1,22 @@
-sudo: false
 language: python
+cache: pip
+
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
+
 python:
-  - "2.6"
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9-dev"
+
 install:
-  - pip install six blist unittest2 pytz
+  - pip install six blist
   - python setup.py install
+
 script: python tests/tests.py

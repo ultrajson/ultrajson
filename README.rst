@@ -16,11 +16,11 @@ UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindi
 
 For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.
 
-.. _ujson4c: http://github.com/esnme/ujson4c/
+.. _ujson4c: https://github.com/esnme/ujson4c/
 
 | Please checkout the rest of the projects in the Ultra series:
-| http://github.com/esnme/ultramemcache
-| http://github.com/esnme/ultramysql
+| https://github.com/esnme/ultramemcache
+| https://github.com/esnme/ultramysql
 
 To install it just run Pip as usual:
 

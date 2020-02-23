@@ -1,6 +1,12 @@
 language: python
 cache: pip
 
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
+
 python:
   - "2.7"
   - "3.5"
@@ -12,4 +18,5 @@ python:
 install:
   - pip install six blist
   - python setup.py install
+
 script: python tests/tests.py

@@ -1,9 +1,18 @@
 UltraJSON
 =============
+.. image:: https://img.shields.io/pypi/v/ujson.svg?style=flat
+    :alt: PyPI version
+    :target: https://pypi.python.org/pypi/ujson
+
+.. image:: https://img.shields.io/pypi/pyversions/ujson.svg
+    :alt: Supported Python versions
+    :target: https://pypi.python.org/pypi/ujson
+
 .. image:: https://travis-ci.org/esnme/ultrajson.svg?branch=master
+    :alt: Travis CI build status
     :target: https://travis-ci.org/esnme/ultrajson
 
-UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
+UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.7 and 3.5+.
 
 For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.
 

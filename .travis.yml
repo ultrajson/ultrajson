@@ -1,5 +1,11 @@
-sudo: false
 language: python
+cache: pip
+
+arch:
+  - amd64
+  - arm64
+  - ppc64le
+  - s390x
 
 python:
   - "2.7"

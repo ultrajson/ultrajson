@@ -1,0 +1,2 @@
+[tool.black]
+target_version = ["py27"]

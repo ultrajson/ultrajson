@@ -92,7 +92,6 @@ setup(
     libraries=[libdoubleconversion],
     ext_modules=[module1],
     author="Jonas Tarnstrom",
-    author_email="jonas.tarnstrom@esn.me",
     download_url="https://github.com/ultrajson/ultrajson",
     platforms=["any"],
     url="https://github.com/ultrajson/ultrajson",

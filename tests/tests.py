@@ -1,4 +1,4 @@
-﻿# coding=UTF-8
+# coding=UTF-8
 from __future__ import print_function, unicode_literals
 
 import decimal
@@ -852,9 +852,10 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(sortedKeys, '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}')
 
     def test_reject_bytes_mode(self):
-        data = {"a": "b".encode('utf8')}
+        data = {"a": b"b"}
         self.assertEqual(ujson.dumps(data), '{"a":"b"}')
         self.assertRaises(TypeError, ujson.dumps, data, reject_bytes=True)
+
 
 """
 def test_decodeNumericIntFrcOverflow(self):

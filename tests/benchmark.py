@@ -1,5 +1,6 @@
 ﻿# coding=UTF-8
 from __future__ import division, print_function, unicode_literals
+
 import json
 import os
 import platform
@@ -9,7 +10,17 @@ import timeit
 
 import ujson
 
-USER = {"userId": 3381293, "age": 213, "username": "johndoe", "fullname": "John Doe the Second", "isAuthorized": True, "liked": 31231.31231202, "approval": 31.1471, "jobs": [1, 2], "currJob": None}
+USER = {
+    "userId": 3381293,
+    "age": 213,
+    "username": "johndoe",
+    "fullname": "John Doe the Second",
+    "isAuthorized": True,
+    "liked": 31231.31231202,
+    "approval": 31.1471,
+    "jobs": [1, 2],
+    "currJob": None,
+}
 FRIENDS = [USER, USER, USER, USER, USER, USER, USER, USER]
 
 decode_data = None
@@ -34,13 +45,22 @@ def results_record_result(callback, is_encode, count):
     callback_name = callback.__name__
     library = callback_name.split("_")[-1]
     try:
-      results = timeit.repeat("{}()".format(callback_name), "from __main__ import {}".format(callback_name), repeat=10, number=count)
+        results = timeit.repeat(
+            "{}()".format(callback_name),
+            "from __main__ import {}".format(callback_name),
+            repeat=10,
+            number=count,
+        )
     except TypeError:
-      return
+        return
     result = count / min(results)
     benchmark_results[-1][1 if is_encode else 2][library] = result
 
-    print("{} {}: {:.02f} calls/sec".format(library, "encode" if is_encode else "decode", result))
+    print(
+        "{} {}: {:.02f} calls/sec".format(
+            library, "encode" if is_encode else "decode", result
+        )
+    )
 
 
 def results_output_table():
@@ -58,7 +78,11 @@ def results_output_table():
     print("Versions:")
     print("~~~~~~~~~")
     print()
-    print("- {} {}".format(platform.python_implementation(), sys.version.replace("\n", "")))
+    print(
+        "- {} {}".format(
+            platform.python_implementation(), sys.version.replace("\n", "")
+        )
+    )
     print("- blist     : 1.3.6")
     print("- simplejson: 3.8.1")
     print("- ujson     : 1.34")
@@ -69,8 +93,8 @@ def results_output_table():
     for library in LIBRARIES:
         column_widths.append(max(10, len(library)))
 
-    line = "+{}+".format("+".join("-"*(width + 2) for width in column_widths))
-    columns = [" "*(width + 2) for width in column_widths]
+    line = "+{}+".format("+".join("-" * (width + 2) for width in column_widths))
+    columns = [" " * (width + 2) for width in column_widths]
     for i, library in enumerate(LIBRARIES):
         columns[i + 1] = (" " + library).ljust(column_widths[i + 1] + 2)
     print(line)
@@ -78,7 +102,7 @@ def results_output_table():
     print(line.replace("-", "="))
 
     for name, encodes, decodes in benchmark_results:
-        columns = [" "*(width + 2) for width in column_widths]
+        columns = [" " * (width + 2) for width in column_widths]
         columns[0] = (" " + name).ljust(column_widths[0] + 2)
         print("|{}|".format("|".join(columns)))
         print(line)
@@ -87,9 +111,11 @@ def results_output_table():
         columns[0] = " encode".ljust(column_widths[0] + 2)
         for i, library in enumerate(LIBRARIES):
             if library in encodes:
-                columns[i + 1] = "{:.2f} ".format(encodes[library]).rjust(column_widths[i + 1] + 2)
+                columns[i + 1] = "{:.2f} ".format(encodes[library]).rjust(
+                    column_widths[i + 1] + 2
+                )
             else:
-                columns[i + 1] = " "*(column_widths[i + 1] + 2)
+                columns[i + 1] = " " * (column_widths[i + 1] + 2)
         print("|{}|".format("|".join(columns)))
         print(line)
 
@@ -98,9 +124,11 @@ def results_output_table():
             columns[0] = " decode".ljust(column_widths[0] + 2)
             for i, library in enumerate(LIBRARIES):
                 if library in decodes:
-                    columns[i + 1] = "{:.2f} ".format(decodes[library]).rjust(column_widths[i + 1] + 2)
+                    columns[i + 1] = "{:.2f} ".format(decodes[library]).rjust(
+                        column_widths[i + 1] + 2
+                    )
                 else:
-                    columns[i + 1] = " "*(column_widths[i + 1] + 2)
+                    columns[i + 1] = " " * (column_widths[i + 1] + 2)
             print("|{}|".format("|".join(columns)))
             print(line)
 
@@ -208,7 +236,11 @@ def benchmark_array_utf8_strings():
 
     test_object = []
     for x in range(256):
-        test_object.append("نظام الحكم سلطاني وراثي في الذكور من ذرية السيد تركي بن سعيد بن سلطان ويشترط فيمن يختار لولاية الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين ")
+        test_object.append(
+            "نظام الحكم سلطاني وراثي "
+            "في الذكور من ذرية السيد تركي بن سعيد بن سلطان ويشترط فيمن يختار لولاية"
+            " الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين "
+        )
     run_encode(COUNT)
 
     decode_data = json.dumps(test_object)
@@ -240,7 +272,14 @@ def benchmark_medium_complex_object():
     results_new_benchmark("Medium complex object")
     COUNT = 5000
 
-    test_object = [[USER, FRIENDS], [USER, FRIENDS], [USER, FRIENDS], [USER, FRIENDS], [USER, FRIENDS], [USER, FRIENDS]]
+    test_object = [
+        [USER, FRIENDS],
+        [USER, FRIENDS],
+        [USER, FRIENDS],
+        [USER, FRIENDS],
+        [USER, FRIENDS],
+        [USER, FRIENDS],
+    ]
     run_encode(COUNT)
 
     decode_data = json.dumps(test_object)
@@ -274,7 +313,7 @@ def benchmark_array_of_dict_string_int_pairs():
 
     test_object = []
     for x in range(256):
-        test_object.append({str(random.random()*20): int(random.random()*1000000)})
+        test_object.append({str(random.random() * 20): int(random.random() * 1000000)})
     run_encode(COUNT)
 
     decode_data = json.dumps(test_object)
@@ -293,8 +332,8 @@ def benchmark_dict_of_arrays_of_dict_string_int_pairs():
     for y in range(256):
         arrays = []
         for x in range(256):
-            arrays.append({str(random.random()*20): int(random.random()*1000000)})
-        test_object[str(random.random()*20)] = arrays
+            arrays.append({str(random.random() * 20): int(random.random() * 1000000)})
+        test_object[str(random.random() * 20)] = arrays
     run_encode(COUNT)
 
     decode_data = json.dumps(test_object)
@@ -302,7 +341,9 @@ def benchmark_dict_of_arrays_of_dict_string_int_pairs():
 
     decode_data = None
 
-    results_new_benchmark("Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys")
+    results_new_benchmark(
+        "Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys"
+    )
     run_encode_sort_keys(COUNT)
 
     test_object = None
@@ -314,7 +355,7 @@ def benchmark_complex_object():
     COUNT = 100
 
     with open(os.path.join(os.path.dirname(__file__), "sample.json"), "r") as f:
-       test_object = json.load(f)
+        test_object = json.load(f)
     run_encode(COUNT)
 
     decode_data = json.dumps(test_object)

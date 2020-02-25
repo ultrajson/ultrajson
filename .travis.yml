@@ -15,8 +15,12 @@ python:
   - "3.8"
   - "3.9-dev"
 
+matrix:
+  fast_finish: true
+
 install:
-  - pip install six blist
-  - python setup.py install
+  - pip install -U pip
+  - pip install -U six blist
+  - pip install .
 
 script: python tests/tests.py

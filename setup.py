@@ -24,22 +24,23 @@ dconv_source_files = glob("./deps/double-conversion/double-conversion/*.cc")
 dconv_source_files.append("./lib/dconv_wrapper.cc")
 
 module1 = Extension(
-    'ujson',
-    sources=dconv_source_files + [
-        './python/ujson.c',
-        './python/objToJSON.c',
-        './python/JSONtoObj.c',
-        './lib/ultrajsonenc.c',
-        './lib/ultrajsondec.c'
+    "ujson",
+    sources=dconv_source_files
+    + [
+        "./python/ujson.c",
+        "./python/objToJSON.c",
+        "./python/JSONtoObj.c",
+        "./lib/ultrajsonenc.c",
+        "./lib/ultrajsondec.c",
     ],
-    include_dirs=['./python', './lib', './deps/double-conversion/double-conversion'],
-    extra_compile_args=['-D_GNU_SOURCE'],
-    extra_link_args=['-lstdc++', '-lm']
+    include_dirs=["./python", "./lib", "./deps/double-conversion/double-conversion"],
+    extra_compile_args=["-D_GNU_SOURCE"],
+    extra_link_args=["-lstdc++", "-lm"],
 )
 
 
 def get_version():
-    filename = os.path.join(os.path.dirname(__file__), './python/version.h')
+    filename = os.path.join(os.path.dirname(__file__), "./python/version.h")
     file = None
     try:
         file = open(filename)
@@ -52,7 +53,7 @@ def get_version():
     return m.group(1)
 
 
-f = open('README.rst')
+f = open("README.rst")
 try:
     README = f.read()
 finally:
@@ -60,7 +61,7 @@ finally:
 
 
 setup(
-    name='ujson',
+    name="ujson",
     version=get_version(),
     description="Ultra fast JSON encoder and decoder for Python",
     long_description=README,
@@ -68,8 +69,8 @@ setup(
     author="Jonas Tarnstrom",
     author_email="jonas.tarnstrom@esn.me",
     download_url="https://github.com/esnme/ultrajson",
-    platforms=['any'],
+    platforms=["any"],
     url="http://www.esn.me",
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

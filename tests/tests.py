@@ -182,7 +182,7 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(dec, json.loads(enc))
 
     def test_encodeUnicodeBogusSurrogate(self):
-        input = u'"\udcff"'
+        input = '"\udcff"'
         enc = ujson.encode(input)
         dec = ujson.decode(enc)
         self.assertEqual(enc, json_unicode(input))

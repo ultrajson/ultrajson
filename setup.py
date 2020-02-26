@@ -84,9 +84,18 @@ finally:
     f.close()
 
 
+with open("python/version_template.h") as f:
+    version_template = f.read()
+
+
+def local_scheme(version):
+    """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2)
+    to be able to upload to Test PyPI"""
+    return ""
+
+
 setup(
     name="ujson",
-    version=get_version(),
     description="Ultra fast JSON encoder and decoder for Python",
     long_description=README,
     libraries=[libdoubleconversion],
@@ -97,6 +106,12 @@ setup(
     url="https://github.com/ultrajson/ultrajson",
     project_urls={"Source": "https://github.com/ultrajson/ultrajson"},
     cmdclass={"build_ext": build_ext, "build_clib": build_clib_without_warnings},
+    use_scm_version={
+        "local_scheme": local_scheme,
+        "write_to": "python/version.h",
+        "write_to_template": version_template,
+    },
+    setup_requires=["setuptools_scm"],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

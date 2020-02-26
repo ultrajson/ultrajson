@@ -594,17 +594,13 @@ class UltraJSONTests(unittest.TestCase):
 
     def test_version(self):
         if six.PY2:
-            self.assertRegexpMatches(
-                ujson.__version__,
-                r"^\d+\.\d+(\.\d+)?$",
-                "ujson.__version__ must be a string like '1.4.0'",
-            )
-        else:
-            self.assertRegex(
-                ujson.__version__,
-                r"^\d+\.\d+(\.\d+)?$",
-                "ujson.__version__ must be a string like '1.4.0'",
-            )
+            self.assertRegex = self.assertRegexpMatches
+
+        self.assertRegex(
+            ujson.__version__,
+            r"^\d+\.\d+(\.\d+)?$",
+            "ujson.__version__ must be a string like '1.4.0'",
+        )
 
     def test_encodeNumericOverflow(self):
         self.assertRaises(OverflowError, ujson.encode, 12839128391289382193812939)

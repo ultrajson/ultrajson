@@ -598,7 +598,7 @@ class UltraJSONTests(unittest.TestCase):
 
         self.assertRegex(
             ujson.__version__,
-            r"^\d+\.\d+(\.\d+)?$",
+            r"^\d+\.\d+(\.\d+)?",
             "ujson.__version__ must be a string like '1.4.0'",
         )
 

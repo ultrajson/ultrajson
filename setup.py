@@ -67,10 +67,10 @@ setup(
     long_description=README,
     ext_modules=[module1],
     author="Jonas Tarnstrom",
-    author_email="jonas.tarnstrom@esn.me",
-    download_url="https://github.com/esnme/ultrajson",
+    download_url="https://github.com/ultrajson/ultrajson",
     platforms=["any"],
-    url="http://www.esn.me",
+    url="https://github.com/ultrajson/ultrajson",
+    project_urls={"Source": "https://github.com/ultrajson/ultrajson"},
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

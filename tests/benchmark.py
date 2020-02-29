@@ -83,7 +83,6 @@ def results_output_table():
             platform.python_implementation(), sys.version.replace("\n", "")
         )
     )
-    print("- blist     : 1.3.6")
     print("- simplejson: 3.8.1")
     print("- ujson     : 1.34")
     print("- yajl      : 0.3.5")

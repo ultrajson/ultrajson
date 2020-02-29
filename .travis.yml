@@ -37,7 +37,7 @@ deploy:
     username: __token__
     password:
         secure: "rwg0zHBkAOw82fvcyH5VbS941Qu++kHGng5XOZBU4MQKr3TW7pzr3pgXqOX48rhEhXStuEKY6WquiwDAYnULNgTkvMeuMEPVPdIfrZUFj+mzEn0UY9xunMSz79uGubU9Nc+zbqgBEoEeY1rCmpwcaSWyH8M1MR/I3ZhL6UZAaP+j59diFgdlDjp1Knu1lmbNMEu1rpb/VrERLcOqs2Ggxegw7yH1cYn1fMliSvx8MZjMwBGYWQ66TWqZmocfv4aW76t3WE9NnvxdKROs+WjvYVk9WQRf+X922i+bQ3m6W76qaey6/lplscsbs1SeUmtxu3Qom7yoHr6URXY37mbIjbN/areLQHY2j16vX0CIJuZNmYWLL31g4gpZ6sLbLLPLX9ZettM2ymEkNy37WyhlCblM1t76On/4MkDIViRgNsQHq/XDmW+PPumMs4pxjQ/k9+e/E5yMxOmt1OvY2jL9RVCZ3WdewsPBDlL9ti71kUZKUeczcirTqVsJdxvzxeFb3dbphETqNtEO+PwtoklYnGnMR3axBLbx28DwUY/qwkw/nFrSuJ4MKpiKtkdle5UvTp9gGMDvW89FxOqYEklkSy4AwxYQqkkTjkTBlewxi75RIRdwGjoY5mGdPL6tI1kItYU1+INwT9pA5vU3wZxv4v3FrrhBUpSgJl/4GpP+tas="
-    distributions: sdist --format=gztar bdist_wheel
+    distributions: sdist --format=gztar
     skip_existing: true
   - provider: pypi
     on:
@@ -49,5 +49,5 @@ deploy:
     username: __token__
     password:
       secure: "n8MDp/Si7GWjv10PDxIts2WtCa/bvArrSDzFypUQ8LYftKTjAMsmXy8+hj+CViiAzLhA733WbvIck59uhggduJMpiAFxn8EOFPc/KeTrutReI/WWC1UD/dt2v5slJmmxEYFnUK3dx1zPTdIgiJnAyWbsIMJSsGGH0b9IpKdnJ9eY5RAaGMiabR3rsM+uj8vq5ErfBTaj1q0NWaU+1AHb7cUtCAZ/PSUzgSNrnJeNRWQY7aptyyymp87KiL1sweyIaLneZRHbkhPaTmFtGsI5c8nnq2omAawmPQHZ2hJRhucfp2TDzLAVUiryDG1Fr1VDOOjZNu7F2XrP85z2inOWSuJDjyyfTjg0MiqVhfcGBH9T1YlcT+p4zyUFBmujdqQnzQKA/Y2jguj8Zl8yZ/ORHJn2cRzeJKSZsbgWp9j2TVaoBd38zTwNJ7TNKKSlx7clcTeODepaip3eBZUGoO2riRW5lYpKnEHUEimHVLJlE4PmGIFxPHdM8CUawC402TaEU3pPHIy7z0MANq7SMzMjPVFnx8vPzHVudsgGQs+a9F1ecNQAFCiGWAmutdJEZ26fFhYFQzagw5j/PgcPdsulWR/tVmICVXD+GSTLBpHJsluCN8gLnLj8S08TmMxS2u7ux4Yyu4gv/eWjduZraFqeAdTr2cNpz1TLwTXx38UvWpo="
-    distributions: sdist --format=gztar bdist_wheel
+    distributions: sdist --format=gztar
     skip_existing: true

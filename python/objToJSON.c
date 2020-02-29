@@ -743,12 +743,15 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
 
-PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
+HPy_DEF_METH_O(objToJSON)
+static HPy
+objToJSON_impl(HPyContext ctx, HPy self, HPy arg)
 {
   static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", NULL };
 
   char buffer[65536];
   char *ret;
+  HPy h_ret;
   PyObject *newobj;
   PyObject *oinput = NULL;
   PyObject *oensureAscii = NULL;
@@ -782,13 +785,18 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     NULL, //prv
   };
 
+  // use encoder.prv to pass around the ctx
+  encoder.prv = ctx;
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOi", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
-  {
-    return NULL;
-  }
+  // XXX: implement kwarg parsing for HPy
+  // if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOi", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent))
+  // {
+  //   return NULL;
+  // }
+
+  oinput = HPy_AsPyObject(ctx, arg);
 
   if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
   {
@@ -821,9 +829,10 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (PyErr_Occurred())
   {
-    return NULL;
+    return HPy_NULL;
   }
 
+  // XXX: FIXME set error with HPy error
   if (encoder.errorMsg)
   {
     if (ret != buffer)
@@ -832,10 +841,10 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     }
 
     PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
-    return NULL;
+    return HPy_NULL;
   }
 
-  newobj = PyUnicode_FromString (ret);
+  h_ret = HPyUnicode_FromString(ctx, ret);
 
   if (ret != buffer)
   {
@@ -844,7 +853,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  return newobj;
+  return h_ret;
 }
 
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
@@ -879,7 +888,9 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
 
   argtuple = PyTuple_Pack(1, data);
 
-  string = objToJSON (self, argtuple, kwargs);
+  //XXX: FIXME -- handle more args
+  //string = objToJSON (self, argtuple, kwargs);
+  abort();
 
   if (string == NULL)
   {

@@ -8,9 +8,8 @@ from distutils.command.build_clib import build_clib
 from distutils.command.build_ext import build_ext
 import os.path
 import re
-import sys
 from glob import glob
-import hpy_devel
+import hpy.devel
 
 CLASSIFIERS = filter(None, map(str.strip,
 """
@@ -76,7 +75,7 @@ module1 = Extension(
          './lib/ultrajsonenc.c',
          './lib/ultrajsondec.c'
      ],
-     include_dirs = ['./python', './lib', hpy_devel.get_include()],
+     include_dirs = ['./python', './lib', hpy.devel.get_include()],
      extra_compile_args = ['-D_GNU_SOURCE'] + EXTRA_COMPILE_ARGS,
      extra_link_args = ['-lstdc++', '-lm']
 )

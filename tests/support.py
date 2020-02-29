@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-import hpy_universal
+import hpy.universal
 
 def import_ujson_universal():
     """
@@ -21,4 +21,4 @@ def import_ujson_universal():
     class Spec:
         name = 'ujson_hpy'
         origin = str(sopath)
-    return hpy_universal.load_from_spec(Spec)
+    return hpy.universal.load_from_spec(Spec)

@@ -4,9 +4,6 @@ except ImportError:
     from distutils.core import setup, Extension
 import os.path
 import re
-from distutils.command.build_clib import build_clib
-from distutils.command.build_ext import build_ext
-from distutils.sysconfig import customize_compiler
 from glob import glob
 
 CLASSIFIERS = """
@@ -23,41 +20,20 @@ Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 """
 
-source_files = glob("./deps/double-conversion/double-conversion/*.cc")
-source_files.append("./lib/dconv_wrapper.cc")
-
-libdoubleconversion = (
-    "double-conversion",
-    dict(
-        sources=source_files,
-        include_dirs=["./deps/double-conversion/double-conversion"],
-        language="c++",
-    ),
-)
-
-
-class build_clib_without_warnings(build_clib):
-    def build_libraries(self, libraries):
-        customize_compiler(self.compiler)
-
-        try:
-            self.compiler.compiler_so.remove("-Wstrict-prototypes")
-        except (AttributeError, ValueError):
-            pass
-
-        build_clib.build_libraries(self, libraries)
-
+dconv_source_files = glob("./deps/double-conversion/double-conversion/*.cc")
+dconv_source_files.append("./lib/dconv_wrapper.cc")
 
 module1 = Extension(
     "ujson",
-    sources=[
+    sources=dconv_source_files
+    + [
         "./python/ujson.c",
         "./python/objToJSON.c",
         "./python/JSONtoObj.c",
         "./lib/ultrajsonenc.c",
         "./lib/ultrajsondec.c",
     ],
-    include_dirs=["./python", "./lib"],
+    include_dirs=["./python", "./lib", "./deps/double-conversion/double-conversion"],
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"],
 )
@@ -98,14 +74,12 @@ setup(
     name="ujson",
     description="Ultra fast JSON encoder and decoder for Python",
     long_description=README,
-    libraries=[libdoubleconversion],
     ext_modules=[module1],
     author="Jonas Tarnstrom",
     download_url="https://github.com/ultrajson/ultrajson",
     platforms=["any"],
     url="https://github.com/ultrajson/ultrajson",
     project_urls={"Source": "https://github.com/ultrajson/ultrajson"},
-    cmdclass={"build_ext": build_ext, "build_clib": build_clib_without_warnings},
     use_scm_version={
         "local_scheme": local_scheme,
         "write_to": "python/version.h",

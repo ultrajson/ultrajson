@@ -1,12 +1,23 @@
-sudo: false
 language: python
+cache: pip
+
+arch:
+  - ppc64le
+  - arm64
+  - s390x
+
 python:
-  - "2.6"
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
+  - "3.8"
+  - "3.9-dev"
+
+jobs:
+  fast_finish: true
+
 install:
-  - pip install six blist unittest2 pytz
-  - python setup.py install
-script: python tests/tests.py
+  - pip install -U pip
+  - pip install -U pytest six
+  - pip install .
+
+script: pytest

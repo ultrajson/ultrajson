@@ -1,19 +1,33 @@
 UltraJSON
-=============
-.. image:: https://travis-ci.org/esnme/ultrajson.svg?branch=master
-    :target: https://travis-ci.org/esnme/ultrajson
+=========
 
-UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
+.. image:: https://img.shields.io/pypi/v/ujson.svg
+    :alt: PyPI version
+    :target: https://pypi.python.org/pypi/ujson
 
-For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.
+.. image:: https://img.shields.io/pypi/pyversions/ujson.svg
+    :alt: Supported Python versions
+    :target: https://pypi.python.org/pypi/ujson
 
-.. _ujson4c: http://github.com/esnme/ujson4c/
+.. image:: https://img.shields.io/pypi/dm/ujson.svg
+    :alt: PyPI downloads
+    :target: https://pypistats.org/packages/ujson
 
-| Please checkout the rest of the projects in the Ultra series:
-| http://github.com/esnme/ultramemcache
-| http://github.com/esnme/ultramysql
+.. image:: https://github.com/ultrajson/ultrajson/workflows/Test/badge.svg
+    :alt: GitHub Actions status
+    :target: https://github.com/ultrajson/ultrajson/actions?query=workflow%3ATest
 
-To install it just run Pip as usual:
+.. image:: https://travis-ci.com/ultrajson/ultrajson.svg?branch=master
+    :alt: Travis CI status
+    :target: https://travis-ci.com/ultrajson/ultrajson
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :alt: Code style: Black
+    :target: https://github.com/psf/black
+
+UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.7 and 3.5+.
+
+To install it just run pip as usual:
 
 .. code-block:: sh
 
@@ -79,9 +93,9 @@ Controls whether indention ("pretty output") is enabled. Default is ``0`` (disab
         "foo":"bar"
     }
 
-============		
-Benchmarks		
-============		
+==========
+Benchmarks
+==========
 *UltraJSON* calls/sec compared to three other popular JSON parsers with performance gain specified below each.
 
 ~~~~~~~~~~~~~

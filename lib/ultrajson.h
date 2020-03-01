@@ -262,7 +262,7 @@ typedef struct __JSONObjectEncoder
   int indent;
 
   /*
-  If true, bytes are rejetected. */
+  If true, bytes are rejected. */
   int rejectBytes;
 
   /*

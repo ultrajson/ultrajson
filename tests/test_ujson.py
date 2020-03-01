@@ -445,7 +445,7 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual({}, obj)
         input = '{"one": 1, "two": 2, "three": 3}'
         obj = ujson.decode(input)
-        self.assertEqual({'one': 1, 'two': 2, 'three': 3}, obj)
+        self.assertEqual({"one": 1, "two": 2, "three": 3}, obj)
 
     def test_decodeDictWithNoKey(self):
         input = "{{{{31337}}}}"

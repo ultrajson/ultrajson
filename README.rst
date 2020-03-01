@@ -13,13 +13,13 @@ UltraJSON
     :alt: PyPI downloads
     :target: https://pypistats.org/packages/ujson
 
-.. image:: https://travis-ci.com/ultrajson/ultrajson.svg?branch=master
-    :alt: Travis CI status
-    :target: https://travis-ci.com/ultrajson/ultrajson
-
 .. image:: https://github.com/ultrajson/ultrajson/workflows/Test/badge.svg
     :alt: GitHub Actions status
     :target: https://github.com/ultrajson/ultrajson/actions?query=workflow%3ATest
+
+.. image:: https://travis-ci.com/ultrajson/ultrajson.svg?branch=master
+    :alt: Travis CI status
+    :target: https://travis-ci.com/ultrajson/ultrajson
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :alt: Code style: Black
@@ -93,9 +93,9 @@ Controls whether indention ("pretty output") is enabled. Default is ``0`` (disab
         "foo":"bar"
     }
 
-============		
-Benchmarks		
-============		
+==========
+Benchmarks
+==========
 *UltraJSON* calls/sec compared to three other popular JSON parsers with performance gain specified below each.
 
 ~~~~~~~~~~~~~

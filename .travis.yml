@@ -17,10 +17,10 @@ jobs:
 
 install:
   - pip install -U pip
-  - pip install -U six
+  - pip install -U pytest six
   - pip install .
 
-script: python tests/tests.py
+script: pytest
 
 deploy:
   - provider: pypi

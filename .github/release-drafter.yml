@@ -1,0 +1,28 @@
+name-template: "$NEXT_PATCH_VERSION"
+tag-template: "$NEXT_PATCH_VERSION"
+
+categories:
+  - title: "Added"
+    labels:
+      - "changelog: Added"
+      - "enhancement"
+  - title: "Changed"
+    label: "changelog: Changed"
+  - title: "Deprecated"
+    label: "changelog: Deprecated"
+  - title: "Removed"
+    label: "changelog: Removed"
+  - title: "Fixed"
+    labels:
+      - "changelog: Fixed"
+      - "bug"
+  - title: "Security"
+    label: "changelog: Security"
+
+exclude-labels:
+  - "changelog: skip"
+
+template: |
+  ## Changes
+
+  $CHANGES

@@ -4,9 +4,6 @@ except ImportError:
     from distutils.core import setup, Extension
 import os.path
 import re
-from distutils.command.build_clib import build_clib
-from distutils.command.build_ext import build_ext
-from distutils.sysconfig import customize_compiler
 from glob import glob
 
 CLASSIFIERS = """
@@ -23,41 +20,20 @@ Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 """
 
-source_files = glob("./deps/double-conversion/double-conversion/*.cc")
-source_files.append("./lib/dconv_wrapper.cc")
-
-libdoubleconversion = (
-    "double-conversion",
-    dict(
-        sources=source_files,
-        include_dirs=["./deps/double-conversion/double-conversion"],
-        language="c++",
-    ),
-)
-
-
-class build_clib_without_warnings(build_clib):
-    def build_libraries(self, libraries):
-        customize_compiler(self.compiler)
-
-        try:
-            self.compiler.compiler_so.remove("-Wstrict-prototypes")
-        except (AttributeError, ValueError):
-            pass
-
-        build_clib.build_libraries(self, libraries)
-
+dconv_source_files = glob("./deps/double-conversion/double-conversion/*.cc")
+dconv_source_files.append("./lib/dconv_wrapper.cc")
 
 module1 = Extension(
     "ujson",
-    sources=[
+    sources=dconv_source_files
+    + [
         "./python/ujson.c",
         "./python/objToJSON.c",
         "./python/JSONtoObj.c",
         "./lib/ultrajsonenc.c",
         "./lib/ultrajsondec.c",
     ],
-    include_dirs=["./python", "./lib"],
+    include_dirs=["./python", "./lib", "./deps/double-conversion/double-conversion"],
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"],
 )
@@ -84,19 +60,32 @@ finally:
     f.close()
 
 
+with open("python/version_template.h") as f:
+    version_template = f.read()
+
+
+def local_scheme(version):
+    """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2)
+    to be able to upload to Test PyPI"""
+    return ""
+
+
 setup(
     name="ujson",
-    version=get_version(),
     description="Ultra fast JSON encoder and decoder for Python",
     long_description=README,
-    libraries=[libdoubleconversion],
     ext_modules=[module1],
     author="Jonas Tarnstrom",
-    author_email="jonas.tarnstrom@esn.me",
-    download_url="https://github.com/esnme/ultrajson",
+    download_url="https://github.com/ultrajson/ultrajson",
     platforms=["any"],
-    url="http://www.esn.me",
-    cmdclass={"build_ext": build_ext, "build_clib": build_clib_without_warnings},
+    url="https://github.com/ultrajson/ultrajson",
+    project_urls={"Source": "https://github.com/ultrajson/ultrajson"},
+    use_scm_version={
+        "local_scheme": local_scheme,
+        "write_to": "python/version.h",
+        "write_to_template": version_template,
+    },
+    setup_requires=["setuptools_scm"],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

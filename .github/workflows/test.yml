@@ -29,9 +29,20 @@ jobs:
 
       - name: macOS cache
         uses: actions/cache@v1
-        if: startsWith(matrix.os, 'macOS')
+        if: startsWith(matrix.os, 'macos')
         with:
           path: ~/Library/Caches/pip
+          key:
+            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
+            }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-
+
+      - name: Windows cache
+        uses: actions/cache@v1
+        if: startsWith(matrix.os, 'windows')
+        with:
+          path: ~\AppData\Local\pip\Cache
           key:
             ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
             }}

@@ -149,7 +149,7 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
 #endif
 
 #if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-    #error "Endianess not supported"
+    #error "Endianness not supported"
 #endif
 
 enum JSTYPES

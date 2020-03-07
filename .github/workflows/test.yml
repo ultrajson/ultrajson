@@ -10,6 +10,8 @@ jobs:
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
         os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
+        exclude:
+          - {python-version: 2.7, os: windows-2019}
 
     steps:
       - uses: actions/checkout@v1

@@ -117,14 +117,6 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
 
     #define INLINE_PREFIX inline
 
-    #ifdef __GNUC__
-        #define LIKELY(x)       __builtin_expect(!!(x), 1)
-        #define UNLIKELY(x)     __builtin_expect(!!(x), 0)
-    #else
-        #define LIKELY(x)       (x)
-        #define UNLIKELY(x)     (x)
-    #endif
-
     typedef uint8_t JSUINT8;
     typedef uint16_t JSUTF16;
     typedef uint32_t JSUTF32;
@@ -132,6 +124,14 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
     typedef int64_t JSLONG;
 
     #define EXPORTFUNCTION
+#endif
+
+#ifdef __GNUC__
+    #define LIKELY(x)       __builtin_expect(!!(x), 1)
+    #define UNLIKELY(x)     __builtin_expect(!!(x), 0)
+#else
+    #define LIKELY(x)       (x)
+    #define UNLIKELY(x)     (x)
 #endif
 
 #if !(defined(__LITTLE_ENDIAN__) || defined(__BIG_ENDIAN__))

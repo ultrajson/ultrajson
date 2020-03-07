@@ -24,9 +24,9 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/.cache/pre-commit
-          key: lint-pre-commit-${{ hashFiles('**/.pre-commit-config.yaml') }}
+          key: lint-pre-commit-v1-${{ hashFiles('**/.pre-commit-config.yaml') }}
           restore-keys: |
-            lint-pre-commit-
+            lint-pre-commit-v1-
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1

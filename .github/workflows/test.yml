@@ -9,7 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
-        os: [ubuntu-18.04, ubuntu-16.04, macos-latest]
+        os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
+        exclude:
+          - {python-version: 2.7, os: windows-2019}
 
     steps:
       - uses: actions/checkout@v1
@@ -27,9 +29,20 @@ jobs:
 
       - name: macOS cache
         uses: actions/cache@v1
-        if: startsWith(matrix.os, 'macOS')
+        if: startsWith(matrix.os, 'macos')
         with:
           path: ~/Library/Caches/pip
+          key:
+            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
+            }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-
+
+      - name: Windows cache
+        uses: actions/cache@v1
+        if: startsWith(matrix.os, 'windows')
+        with:
+          path: ~\AppData\Local\pip\Cache
           key:
             ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
             }}

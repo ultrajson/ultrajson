@@ -7,6 +7,7 @@ import json
 import math
 import re
 import sys
+from collections import OrderedDict
 
 import pytest
 import six
@@ -99,40 +100,11 @@ def test_decimal_decode_test():
     assert_almost_equal(sut["a"], decoded["a"])
 
 
-def test_encode_dict_with_unicode_keys():
-    input = {
-        "key1": "value1",
-        "key1": "value1",
-        "key1": "value1",
-        "key1": "value1",
-        "key1": "value1",
-        "key1": "value1",
-    }
-    ujson.encode(input)
-
-    input = {
-        "بن": "value1",
-        "بن": "value1",
-        "بن": "value1",
-        "بن": "value1",
-        "بن": "value1",
-        "بن": "value1",
-        "بن": "value1",
-    }
-    ujson.encode(input)
-
-
 def test_encode_double_conversion():
     input = math.pi
     output = ujson.encode(input)
     assert round(input, 5) == round(json.loads(output), 5)
     assert round(input, 5) == round(ujson.decode(output), 5)
-
-
-def test_encode_with_decimal():
-    input = 1.0
-    output = ujson.encode(input)
-    assert output == "1.0"
 
 
 def test_encode_double_neg_conversion():
@@ -401,136 +373,6 @@ def test_encode_recursion_max():
         ujson.encode(input)
 
 
-def test_encode_double_nan():
-    input = float("nan")
-    with pytest.raises(OverflowError):
-        ujson.encode(input)
-
-
-def test_encode_double_inf():
-    input = float("inf")
-    with pytest.raises(OverflowError):
-        ujson.encode(input)
-
-
-def test_encode_double_neg_inf():
-    input = -float("inf")
-    with pytest.raises(OverflowError):
-        ujson.encode(input)
-
-
-def test_encode_ordered_dict():
-    from collections import OrderedDict
-
-    input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])
-    assert '{"1":1,"0":0,"8":8,"2":2}' == ujson.encode(input)
-
-
-def test_decode_jibberish():
-    input = "fdsa sda v9sa fdsa"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_broken_array_start():
-    input = "["
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_broken_object_start():
-    input = "{"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_broken_array_end():
-    input = "]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_array_depth_too_big():
-    input = "[" * (1024 * 1024)
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_broken_object_end():
-    input = "}"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_object_trailing_comma_fail():
-    input = '{"one":1,}'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_object_depth_too_big():
-    input = "{" * (1024 * 1024)
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_string_unterminated():
-    input = '"TESTING'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_string_unterm_escape_sequence():
-    input = '"TESTING\\"'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_string_bad_escape():
-    input = '"TESTING\\"'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_true_broken():
-    input = "tru"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_false_broken():
-    input = "fa"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_null_broken():
-    input = "n"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_broken_dict_key_type_leak_test():
-    input = '{{1337:""}}'
-    for x in range(1000):
-        with pytest.raises(ValueError):
-            ujson.decode(input)
-
-
-def test_decode_broken_dict_leak_test():
-    input = '{{"key":"}'
-    for x in range(1000):
-        with pytest.raises(ValueError):
-            ujson.decode(input)
-
-
-def test_decode_broken_list_leak_test():
-    input = "[[[true"
-    for x in range(1000):
-        with pytest.raises(ValueError):
-            ujson.decode(input)
-
-
 def test_decode_dict():
     input = "{}"
     obj = ujson.decode(input)
@@ -538,34 +380,6 @@ def test_decode_dict():
     input = '{"one": 1, "two": 2, "three": 3}'
     obj = ujson.decode(input)
     assert {"one": 1, "two": 2, "three": 3} == obj
-
-
-def test_decode_dict_with_no_key():
-    input = "{{{{31337}}}}"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_dict_with_no_colon_or_value():
-    input = '{{{{"key"}}}}'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_dict_with_no_value():
-    input = '{{{{"key":}}}}'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_numeric_int_pos():
-    input = "31337"
-    assert 31337 == ujson.decode(input)
-
-
-def test_decode_numeric_int_neg():
-    input = "-31337"
-    assert -31337 == ujson.decode(input)
 
 
 def test_encode_unicode_4_bytes_utf8_fail():
@@ -593,93 +407,6 @@ def test_encode_null_character():
 def test_decode_null_character():
     input = '"31337 \\u0000 31337"'
     assert ujson.decode(input) == json.loads(input)
-
-
-def test_encode_list_long_conversion():
-    input = [
-        9223372036854775807,
-        9223372036854775807,
-        9223372036854775807,
-        9223372036854775807,
-        9223372036854775807,
-        9223372036854775807,
-    ]
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert input == ujson.decode(output)
-
-
-def test_encode_list_long_unsigned_conversion():
-    input = [18446744073709551615, 18446744073709551615, 18446744073709551615]
-    output = ujson.encode(input)
-
-    assert input == json.loads(output)
-    assert input == ujson.decode(output)
-
-
-def test_encode_long_conversion():
-    input = 9223372036854775807
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_encode_long_unsigned_conversion():
-    input = 18446744073709551615
-    output = ujson.encode(input)
-
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_numeric_int_exp():
-    input = "1337E40"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_numeric_int_frc_exp():
-    input = "1.337E40"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_uc_e_plus():
-    input = "1337E+9"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_lc_e_plus():
-    input = "1.337e+40"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_uc_e():
-    input = "1337E40"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_lc_e():
-    input = "1337e40"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_uc_e_minus():
-    input = "1.337E-4"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
-
-
-def test_decode_numeric_int_exp_lc_e_minus():
-    input = "1.337e-4"
-    output = ujson.decode(input)
-    assert output == json.loads(input)
 
 
 def test_dump_to_file():
@@ -733,11 +460,6 @@ def test_version():
     assert re.search(
         r"^\d+\.\d+(\.\d+)?", ujson.__version__
     ), "ujson.__version__ must be a string like '1.4.0'"
-
-
-def test_encode_numeric_overflow():
-    with pytest.raises(OverflowError):
-        ujson.encode(12839128391289382193812939)
 
 
 def test_decode_number_with32bit_sign_bit():
@@ -861,159 +583,10 @@ def test_object_with_json_attribute_error():
         ujson.encode(d)
 
 
-def test_decode_array_trailing_comma_fail():
-    input = "[31337,]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_array_leading_comma_fail():
-    input = "[,31337]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_array_only_comma_fail():
-    input = "[,]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_array_unmatched_bracket_fail():
-    input = "[]]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
 def test_decode_array_empty():
     input = "[]"
     obj = ujson.decode(input)
     assert [] == obj
-
-
-def test_decode_array_one_item():
-    input = "[31337]"
-    ujson.decode(input)
-
-
-def test_decode_long_unsigned_value():
-    input = "18446744073709551615"
-    ujson.decode(input)
-
-
-def test_decode_big_value():
-    input = "9223372036854775807"
-    ujson.decode(input)
-
-
-def test_decode_small_value():
-    input = "-9223372036854775808"
-    ujson.decode(input)
-
-
-def test_decode_too_big_value():
-    input = "18446744073709551616"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_too_small_value():
-    input = "-90223372036854775809"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_very_too_big_value():
-    input = "18446744073709551616"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_very_too_small_value():
-    input = "-90223372036854775809"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_with_trailing_whitespaces():
-    input = "{}\n\t "
-    ujson.decode(input)
-
-
-def test_decode_with_trailing_non_whitespaces():
-    input = "{}\n\t a"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_array_with_big_int():
-    input = "[18446744073709551616]"
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_decode_floating_point_additional_tests():
-    assert -1.1234567893 == ujson.loads("-1.1234567893")
-    assert -1.234567893 == ujson.loads("-1.234567893")
-    assert -1.34567893 == ujson.loads("-1.34567893")
-    assert -1.4567893 == ujson.loads("-1.4567893")
-    assert -1.567893 == ujson.loads("-1.567893")
-    assert -1.67893 == ujson.loads("-1.67893")
-    assert -1.7893 == ujson.loads("-1.7893")
-    assert -1.893 == ujson.loads("-1.893")
-    assert -1.3 == ujson.loads("-1.3")
-
-    assert 1.1234567893 == ujson.loads("1.1234567893")
-    assert 1.234567893 == ujson.loads("1.234567893")
-    assert 1.34567893 == ujson.loads("1.34567893")
-    assert 1.4567893 == ujson.loads("1.4567893")
-    assert 1.567893 == ujson.loads("1.567893")
-    assert 1.67893 == ujson.loads("1.67893")
-    assert 1.7893 == ujson.loads("1.7893")
-    assert 1.893 == ujson.loads("1.893")
-    assert 1.3 == ujson.loads("1.3")
-
-
-def test_read_bad_object_syntax():
-    input = '{"age", 44}'
-    with pytest.raises(ValueError):
-        ujson.decode(input)
-
-
-def test_read_true():
-    assert ujson.loads("true") is True
-
-
-def test_read_false():
-    assert ujson.loads("false") is False
-
-
-def test_read_null():
-    assert ujson.loads("null") is None
-
-
-def test_write_true():
-    assert "true" == ujson.dumps(True)
-
-
-def test_write_false():
-    assert "false" == ujson.dumps(False)
-
-
-def test_write_null():
-    assert "null" == ujson.dumps(None)
-
-
-def test_read_array_of_symbols():
-    assert [True, False, None] == ujson.loads(" [ true, false,null] ")
-
-
-def test_write_array_of_symbols_from_list():
-    assert "[true,false,null]" == ujson.dumps([True, False, None])
-
-
-def test_write_array_of_symbols_from_tuple():
-    assert "[true,false,null]" == ujson.dumps((True, False, None))
 
 
 @pytest.mark.skipif(six.PY2, reason="Only raises on Python 3")
@@ -1025,8 +598,226 @@ def test_encoding_invalid_unicode_character():
 
 def test_sort_keys():
     data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
-    sortedKeys = ujson.dumps(data, sort_keys=True)
-    assert sortedKeys == '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}'
+    sorted_keys = ujson.dumps(data, sort_keys=True)
+    assert sorted_keys == '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}'
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        "[31337]",  # array one item
+        "18446744073709551615",  # long unsigned value
+        "9223372036854775807",  # big value
+        "-9223372036854775808",  # small value
+        "{}\n\t ",  # trailing whitespaces
+    ],
+)
+def test_decode_no_assert(test_input):
+    ujson.decode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected", [("31337", 31337), ("-31337", -31337)],
+)
+def test_decode(test_input, expected):
+    assert ujson.decode(test_input) == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        "1337E40",
+        "1.337E40",
+        "1337E+9",
+        "1.337e+40",
+        "1337E40",
+        "1337e40",
+        "1.337E-4",
+        "1.337e-4",
+    ],
+)
+def test_decode_numeric_int_exp(test_input):
+    output = ujson.decode(test_input)
+    assert output == json.loads(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ('{{1337:""}}', ValueError),  # broken dict key type leak test
+        ('{{"key":"}', ValueError),  # broken dict leak test
+        ('{{"key":"}', ValueError),  # broken dict leak test
+        ("[[[true", ValueError),  # broken list leak test
+    ],
+)
+def test_decode_range_raises(test_input, expected):
+    for x in range(1000):
+        with pytest.raises(ValueError):
+            ujson.decode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ("fdsa sda v9sa fdsa", ValueError),  # jibberish
+        ("[", ValueError),  # broken array start
+        ("{", ValueError),  # broken object start
+        ("]", ValueError),  # broken array end
+        ("[" * (1024 * 1024), ValueError),  # array depth too big
+        ("}", ValueError),  # broken object end
+        ('{"one":1,}', ValueError),  # object trailing comma fail
+        ("{" * (1024 * 1024), ValueError),  # object depth too big
+        ('"TESTING', ValueError),  # string unterminated
+        ('"TESTING\\"', ValueError),  # string bad escape
+        ("tru", ValueError),  # true broken
+        ("fa", ValueError),  # false broken
+        ("n", ValueError),  # null broken
+        ("{{{{31337}}}}", ValueError),  # dict with no key
+        ('{{{{"key"}}}}', ValueError),  # dict with no colon or value
+        ('{{{{"key":}}}}', ValueError),  # dict with no value
+        ("[31337,]", ValueError),  # array trailing comma fail
+        ("[,31337]", ValueError),  # array leading comma fail
+        ("[,]", ValueError),  # array only comma fail
+        ("[]]", ValueError),  # array unmatched bracket fail
+        ("18446744073709551616", ValueError),  # too big value
+        ("-90223372036854775809", ValueError),  # too small value
+        ("18446744073709551616", ValueError),  # very too big value
+        ("-90223372036854775809", ValueError),  # very too small value
+        ("{}\n\t a", ValueError),  # with trailing non whitespaces
+        ("[18446744073709551616]", ValueError),  # array with big int
+        ('{"age", 44}', ValueError),  # read bad object syntax
+    ],
+)
+def test_decode_raises(test_input, expected):
+    with pytest.raises(expected):
+        ujson.decode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        (True, "true"),
+        (False, "false"),
+        (None, "null"),
+        ([True, False, None], "[true,false,null]"),
+        ((True, False, None), "[true,false,null]"),
+    ],
+)
+def test_dumps(test_input, expected):
+    assert ujson.dumps(test_input) == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        {
+            "key1": "value1",
+            "key1": "value1",
+            "key1": "value1",
+            "key1": "value1",
+            "key1": "value1",
+            "key1": "value1",
+        },
+        {
+            "بن": "value1",
+            "بن": "value1",
+            "بن": "value1",
+            "بن": "value1",
+            "بن": "value1",
+            "بن": "value1",
+            "بن": "value1",
+        },
+    ],
+)
+def test_encode_no_assert(test_input):
+    ujson.encode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        (1.0, "1.0"),
+        (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1":1,"0":0,"8":8,"2":2}'),
+    ],
+)
+def test_encode(test_input, expected):
+    assert ujson.encode(test_input) == expected
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        [
+            9223372036854775807,
+            9223372036854775807,
+            9223372036854775807,
+            9223372036854775807,
+            9223372036854775807,
+            9223372036854775807,
+        ],
+        [18446744073709551615, 18446744073709551615, 18446744073709551615],
+    ],
+)
+def test_encode_list_long_conversion(test_input):
+    output = ujson.encode(test_input)
+    assert test_input == json.loads(output)
+    assert test_input == ujson.decode(output)
+
+
+@pytest.mark.parametrize(
+    "test_input", [9223372036854775807, 18446744073709551615],
+)
+def test_encode_long_conversion(test_input):
+    output = ujson.encode(test_input)
+
+    assert test_input == json.loads(output)
+    assert output == json.dumps(test_input)
+    assert test_input == ujson.decode(output)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        (float("nan"), OverflowError),
+        (float("inf"), OverflowError),
+        (-float("inf"), OverflowError),
+        (12839128391289382193812939, OverflowError),
+    ],
+)
+def test_encode_raises(test_input, expected):
+    with pytest.raises(expected):
+        ujson.encode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ("-1.1234567893", -1.1234567893),
+        ("-1.234567893", -1.234567893),
+        ("-1.34567893", -1.34567893),
+        ("-1.4567893", -1.4567893),
+        ("-1.567893", -1.567893),
+        ("-1.67893", -1.67893),
+        ("-1.7893", -1.7893),
+        ("-1.893", -1.893),
+        ("-1.3", -1.3),
+        ("1.1234567893", 1.1234567893),
+        ("1.234567893", 1.234567893),
+        ("1.34567893", 1.34567893),
+        ("1.4567893", 1.4567893),
+        ("1.567893", 1.567893),
+        ("1.67893", 1.67893),
+        ("1.7893", 1.7893),
+        ("1.893", 1.893),
+        ("1.3", 1.3),
+        ("true", True),
+        ("false", False),
+        ("null", None),
+        (" [ true, false,null] ", [True, False, None]),
+    ],
+)
+def test_loads(test_input, expected):
+    assert ujson.loads(test_input) == expected
 
 
 """

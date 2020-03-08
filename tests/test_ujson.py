@@ -22,14 +22,14 @@ def assert_almost_equal(a, b):
     assert round(abs(a - b), 7) == 0
 
 
-def test_encodeDecimal():
+def test_encode_decimal():
     sut = decimal.Decimal("1337.1337")
     encoded = ujson.encode(sut)
     decoded = ujson.decode(encoded)
     assert decoded == 1337.1337
 
 
-def test_encodeStringConversion():
+def test_encode_string_conversion():
     input = "A string \\ / \b \f \n \r \t </script> &"
     not_html_encoded = '"A string \\\\ \\/ \\b \\f \\n \\r \\t <\\/script> &"'
     html_encoded = (
@@ -60,13 +60,13 @@ def test_encodeStringConversion():
     helper(not_slashes_escaped, escape_forward_slashes=False)
 
 
-def testWriteEscapedString():
+def test_write_escaped_string():
     assert "\"\\u003cimg src='\\u0026amp;'\\/\\u003e\"" == ujson.dumps(
         "<img src='&amp;'/>", encode_html_chars=True
     )
 
 
-def test_doubleLongIssue():
+def test_double_long_issue():
     sut = {"a": -4342969734183514}
     encoded = json.dumps(sut)
     decoded = json.loads(encoded)
@@ -76,7 +76,7 @@ def test_doubleLongIssue():
     assert sut == decoded
 
 
-def test_doubleLongDecimalIssue():
+def test_double_long_decimal_issue():
     sut = {"a": -12345678901234.56789012}
     encoded = json.dumps(sut)
     decoded = json.loads(encoded)
@@ -86,20 +86,20 @@ def test_doubleLongDecimalIssue():
     assert sut == decoded
 
 
-def test_encodeDecodeLongDecimal():
+def test_encode_decode_long_decimal():
     sut = {"a": -528656961.4399388}
     encoded = ujson.dumps(sut)
     ujson.decode(encoded)
 
 
-def test_decimalDecodeTest():
+def test_decimal_decode_test():
     sut = {"a": 4.56}
     encoded = ujson.encode(sut)
     decoded = ujson.decode(encoded)
     assert_almost_equal(sut["a"], decoded["a"])
 
 
-def test_encodeDictWithUnicodeKeys():
+def test_encode_dict_with_unicode_keys():
     input = {
         "key1": "value1",
         "key1": "value1",
@@ -122,20 +122,20 @@ def test_encodeDictWithUnicodeKeys():
     ujson.encode(input)
 
 
-def test_encodeDoubleConversion():
+def test_encode_double_conversion():
     input = math.pi
     output = ujson.encode(input)
     assert round(input, 5) == round(json.loads(output), 5)
     assert round(input, 5) == round(ujson.decode(output), 5)
 
 
-def test_encodeWithDecimal():
+def test_encode_with_decimal():
     input = 1.0
     output = ujson.encode(input)
     assert output == "1.0"
 
 
-def test_encodeDoubleNegConversion():
+def test_encode_double_neg_conversion():
     input = -math.pi
     output = ujson.encode(input)
 
@@ -143,7 +143,7 @@ def test_encodeDoubleNegConversion():
     assert round(input, 5) == round(ujson.decode(output), 5)
 
 
-def test_encodeArrayOfNestedArrays():
+def test_encode_array_of_nested_arrays():
     input = [[[[]]]] * 20
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -151,7 +151,7 @@ def test_encodeArrayOfNestedArrays():
     assert input == ujson.decode(output)
 
 
-def test_encodeArrayOfDoubles():
+def test_encode_array_of_doubles():
     input = [31337.31337, 31337.31337, 31337.31337, 31337.31337] * 10
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -159,7 +159,7 @@ def test_encodeArrayOfDoubles():
     assert input == ujson.decode(output)
 
 
-def test_encodeStringConversion2():
+def test_encode_string_conversion2():
     input = "A string \\ / \b \f \n \r \t"
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -167,11 +167,11 @@ def test_encodeStringConversion2():
     assert input == ujson.decode(output)
 
 
-def test_decodeUnicodeConversion():
+def test_decode_unicode_conversion():
     pass
 
 
-def test_encodeUnicodeConversion1():
+def test_encode_unicode_conversion1():
     input = "Räksmörgås اسامة بن محمد بن عوض بن لادن"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -179,7 +179,7 @@ def test_encodeUnicodeConversion1():
     assert dec == json.loads(enc)
 
 
-def test_encodeControlEscaping():
+def test_encode_control_escaping():
     input = "\x19"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -187,7 +187,7 @@ def test_encodeControlEscaping():
     assert enc == json_unicode(input)
 
 
-def test_encodeUnicodeConversion2():
+def test_encode_unicode_conversion2():
     input = "\xe6\x97\xa5\xd1\x88"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -195,7 +195,7 @@ def test_encodeUnicodeConversion2():
     assert dec == json.loads(enc)
 
 
-def test_encodeUnicodeSurrogatePair():
+def test_encode_unicode_surrogate_pair():
     input = "\xf0\x90\x8d\x86"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -204,7 +204,7 @@ def test_encodeUnicodeSurrogatePair():
     assert dec == json.loads(enc)
 
 
-def test_encodeUnicode4BytesUTF8():
+def test_encode_unicode_4_bytes_utf8():
     input = "\xf0\x91\x80\xb0TRAILINGNORMAL"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -213,7 +213,7 @@ def test_encodeUnicode4BytesUTF8():
     assert dec == json.loads(enc)
 
 
-def test_encodeUnicode4BytesUTF8Highest():
+def test_encode_unicode_4_bytes_utf8_highest():
     input = "\xf3\xbf\xbf\xbfTRAILINGNORMAL"
     enc = ujson.encode(input)
     dec = ujson.decode(enc)
@@ -225,7 +225,7 @@ def test_encodeUnicode4BytesUTF8Highest():
 # Characters outside of Basic Multilingual Plane(larger than
 # 16 bits) are represented as \UXXXXXXXX in python but should be encoded
 # as \uXXXX\uXXXX in json.
-def testEncodeUnicodeBMP():
+def test_encode_unicode_bmp():
     s = "\U0001f42e\U0001f42e\U0001F42D\U0001F42D"  # 🐮🐮🐭🐭
     encoded = ujson.dumps(s)
     encoded_json = json.dumps(s)
@@ -253,7 +253,7 @@ def testEncodeUnicodeBMP():
     assert s == decoded
 
 
-def testEncodeSymbols():
+def test_encode_symbols():
     s = "\u273f\u2661\u273f"  # ✿♡✿
     encoded = ujson.dumps(s)
     encoded_json = json.dumps(s)
@@ -276,7 +276,7 @@ def testEncodeSymbols():
     assert s == decoded
 
 
-def test_encodeArrayInArray():
+def test_encode_array_in_array():
     input = [[[[]]]]
     output = ujson.encode(input)
 
@@ -285,7 +285,7 @@ def test_encodeArrayInArray():
     assert input == ujson.decode(output)
 
 
-def test_encodeIntConversion():
+def test_encode_int_conversion():
     input = 31337
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -293,7 +293,7 @@ def test_encodeIntConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeIntNegConversion():
+def test_encode_int_neg_conversion():
     input = -31337
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -301,7 +301,7 @@ def test_encodeIntNegConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeLongNegConversion():
+def test_encode_long_neg_conversion():
     input = -9223372036854775808
     output = ujson.encode(input)
 
@@ -313,14 +313,14 @@ def test_encodeLongNegConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeListConversion():
+def test_encode_list_conversion():
     input = [1, 2, 3, 4]
     output = ujson.encode(input)
     assert input == json.loads(output)
     assert input == ujson.decode(output)
 
 
-def test_encodeDictConversion():
+def test_encode_dict_conversion():
     input = {"k1": 1, "k2": 2, "k3": 3, "k4": 4}
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -328,7 +328,7 @@ def test_encodeDictConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeDictValuesRefCounting():
+def test_encode_dict_values_ref_counting():
     import gc
 
     gc.collect()
@@ -339,7 +339,7 @@ def test_encodeDictValuesRefCounting():
     assert ref_count == sys.getrefcount(value)
 
 
-def test_encodeNoneConversion():
+def test_encode_none_conversion():
     input = None
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -347,7 +347,7 @@ def test_encodeNoneConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeTrueConversion():
+def test_encode_true_conversion():
     input = True
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -355,7 +355,7 @@ def test_encodeTrueConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeFalseConversion():
+def test_encode_false_conversion():
     input = False
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -363,7 +363,7 @@ def test_encodeFalseConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeToUTF8():
+def test_encode_to_utf8():
     input = b"\xe6\x97\xa5\xd1\x88"
     if not six.PY2:
         input = input.decode("utf-8")
@@ -373,14 +373,14 @@ def test_encodeToUTF8():
     assert dec == json.loads(enc)
 
 
-def test_decodeFromUnicode():
+def test_decode_from_unicode():
     input = '{"obj": 31337}'
     dec1 = ujson.decode(input)
     dec2 = ujson.decode(str(input))
     assert dec1 == dec2
 
 
-def test_encodeRecursionMax():
+def test_encode_recursion_max():
     # 8 is the max recursion depth
     class O2:
         member = 0
@@ -401,137 +401,137 @@ def test_encodeRecursionMax():
         ujson.encode(input)
 
 
-def test_encodeDoubleNan():
+def test_encode_double_nan():
     input = float("nan")
     with pytest.raises(OverflowError):
         ujson.encode(input)
 
 
-def test_encodeDoubleInf():
+def test_encode_double_inf():
     input = float("inf")
     with pytest.raises(OverflowError):
         ujson.encode(input)
 
 
-def test_encodeDoubleNegInf():
+def test_encode_double_neg_inf():
     input = -float("inf")
     with pytest.raises(OverflowError):
         ujson.encode(input)
 
 
-def test_encodeOrderedDict():
+def test_encode_ordered_dict():
     from collections import OrderedDict
 
     input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])
     assert '{"1":1,"0":0,"8":8,"2":2}' == ujson.encode(input)
 
 
-def test_decodeJibberish():
+def test_decode_jibberish():
     input = "fdsa sda v9sa fdsa"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeBrokenArrayStart():
+def test_decode_broken_array_start():
     input = "["
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeBrokenObjectStart():
+def test_decode_broken_object_start():
     input = "{"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeBrokenArrayEnd():
+def test_decode_broken_array_end():
     input = "]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayDepthTooBig():
+def test_decode_array_depth_too_big():
     input = "[" * (1024 * 1024)
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeBrokenObjectEnd():
+def test_decode_broken_object_end():
     input = "}"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeObjectTrailingCommaFail():
+def test_decode_object_trailing_comma_fail():
     input = '{"one":1,}'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeObjectDepthTooBig():
+def test_decode_object_depth_too_big():
     input = "{" * (1024 * 1024)
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeStringUnterminated():
+def test_decode_string_unterminated():
     input = '"TESTING'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeStringUntermEscapeSequence():
+def test_decode_string_unterm_escape_sequence():
     input = '"TESTING\\"'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeStringBadEscape():
+def test_decode_string_bad_escape():
     input = '"TESTING\\"'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeTrueBroken():
+def test_decode_true_broken():
     input = "tru"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeFalseBroken():
+def test_decode_false_broken():
     input = "fa"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeNullBroken():
+def test_decode_null_broken():
     input = "n"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeBrokenDictKeyTypeLeakTest():
+def test_decode_broken_dict_key_type_leak_test():
     input = '{{1337:""}}'
     for x in range(1000):
         with pytest.raises(ValueError):
             ujson.decode(input)
 
 
-def test_decodeBrokenDictLeakTest():
+def test_decode_broken_dict_leak_test():
     input = '{{"key":"}'
     for x in range(1000):
         with pytest.raises(ValueError):
             ujson.decode(input)
 
 
-def test_decodeBrokenListLeakTest():
+def test_decode_broken_list_leak_test():
     input = "[[[true"
     for x in range(1000):
         with pytest.raises(ValueError):
             ujson.decode(input)
 
 
-def test_decodeDict():
+def test_decode_dict():
     input = "{}"
     obj = ujson.decode(input)
     assert {} == obj
@@ -540,41 +540,41 @@ def test_decodeDict():
     assert {"one": 1, "two": 2, "three": 3} == obj
 
 
-def test_decodeDictWithNoKey():
+def test_decode_dict_with_no_key():
     input = "{{{{31337}}}}"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeDictWithNoColonOrValue():
+def test_decode_dict_with_no_colon_or_value():
     input = '{{{{"key"}}}}'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeDictWithNoValue():
+def test_decode_dict_with_no_value():
     input = '{{{{"key":}}}}'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeNumericIntPos():
+def test_decode_numeric_int_pos():
     input = "31337"
     assert 31337 == ujson.decode(input)
 
 
-def test_decodeNumericIntNeg():
+def test_decode_numeric_int_neg():
     input = "-31337"
     assert -31337 == ujson.decode(input)
 
 
-def test_encodeUnicode4BytesUTF8Fail():
+def test_encode_unicode_4_bytes_utf8_fail():
     input = b"\xfd\xbf\xbf\xbf\xbf\xbf"
     with pytest.raises(OverflowError):
         ujson.encode(input)
 
 
-def test_encodeNullCharacter():
+def test_encode_null_character():
     input = "31337 \x00 1337"
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -590,12 +590,12 @@ def test_encodeNullCharacter():
     assert '"  \\u0000\\r\\n "' == ujson.dumps("  \u0000\r\n ")
 
 
-def test_decodeNullCharacter():
+def test_decode_null_character():
     input = '"31337 \\u0000 31337"'
     assert ujson.decode(input) == json.loads(input)
 
 
-def test_encodeListLongConversion():
+def test_encode_list_long_conversion():
     input = [
         9223372036854775807,
         9223372036854775807,
@@ -609,7 +609,7 @@ def test_encodeListLongConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeListLongUnsignedConversion():
+def test_encode_list_long_unsigned_conversion():
     input = [18446744073709551615, 18446744073709551615, 18446744073709551615]
     output = ujson.encode(input)
 
@@ -617,7 +617,7 @@ def test_encodeListLongUnsignedConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeLongConversion():
+def test_encode_long_conversion():
     input = 9223372036854775807
     output = ujson.encode(input)
     assert input == json.loads(output)
@@ -625,7 +625,7 @@ def test_encodeLongConversion():
     assert input == ujson.decode(output)
 
 
-def test_encodeLongUnsignedConversion():
+def test_encode_long_unsigned_conversion():
     input = 18446744073709551615
     output = ujson.encode(input)
 
@@ -634,61 +634,61 @@ def test_encodeLongUnsignedConversion():
     assert input == ujson.decode(output)
 
 
-def test_numericIntExp():
+def test_numeric_int_exp():
     input = "1337E40"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_numericIntFrcExp():
+def test_numeric_int_frc_exp():
     input = "1.337E40"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpEPLUS():
+def test_decode_numeric_int_exp_uc_e_plus():
     input = "1337E+9"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpePLUS():
+def test_decode_numeric_int_exp_lc_e_plus():
     input = "1.337e+40"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpE():
+def test_decode_numeric_int_exp_uc_e():
     input = "1337E40"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpe():
+def test_decode_numeric_int_exp_lc_e():
     input = "1337e40"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpEMinus():
+def test_decode_numeric_int_exp_uc_e_minus():
     input = "1.337E-4"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_decodeNumericIntExpeMinus():
+def test_decode_numeric_int_exp_lc_e_minus():
     input = "1.337e-4"
     output = ujson.decode(input)
     assert output == json.loads(input)
 
 
-def test_dumpToFile():
+def test_dump_to_file():
     f = six.StringIO()
     ujson.dump([1, 2, 3], f)
     assert "[1,2,3]" == f.getvalue()
 
 
-def test_dumpToFileLikeObject():
+def test_dump_to_file_like_object():
     class filelike:
         def __init__(self):
             self.bytes = ""
@@ -701,17 +701,17 @@ def test_dumpToFileLikeObject():
     assert "[1,2,3]" == f.bytes
 
 
-def test_dumpFileArgsError():
+def test_dump_file_args_error():
     with pytest.raises(TypeError):
         ujson.dump([], "")
 
 
-def test_loadFile():
+def test_load_file():
     f = six.StringIO("[1,2,3,4]")
     assert [1, 2, 3, 4] == ujson.load(f)
 
 
-def test_loadFileLikeObject():
+def test_load_file_like_object():
     class filelike:
         def read(self):
             try:
@@ -724,7 +724,7 @@ def test_loadFileLikeObject():
     assert [1, 2, 3, 4] == ujson.load(f)
 
 
-def test_loadFileArgsError():
+def test_load_file_args_error():
     with pytest.raises(TypeError):
         ujson.load("[]")
 
@@ -735,12 +735,12 @@ def test_version():
     ), "ujson.__version__ must be a string like '1.4.0'"
 
 
-def test_encodeNumericOverflow():
+def test_encode_numeric_overflow():
     with pytest.raises(OverflowError):
         ujson.encode(12839128391289382193812939)
 
 
-def test_decodeNumberWith32bitSignBit():
+def test_decode_number_with32bit_sign_bit():
     # Test that numbers that fit within 32 bits but would have the
     # sign bit set (2**31 <= x < 2**32) are decoded properly.
     docs = (
@@ -754,7 +754,7 @@ def test_decodeNumberWith32bitSignBit():
         assert ujson.decode(doc)["id"] == result
 
 
-def test_encodeBigEscape():
+def test_encode_big_escape():
     for x in range(10):
         if six.PY2:
             base = "\xc3\xa5"
@@ -764,7 +764,7 @@ def test_encodeBigEscape():
         ujson.encode(input)
 
 
-def test_decodeBigEscape():
+def test_decode_big_escape():
     for x in range(10):
         if six.PY2:
             base = "\xc3\xa5"
@@ -776,7 +776,7 @@ def test_decodeBigEscape():
         ujson.decode(input)
 
 
-def test_toDict():
+def test_to_dict():
     d = {"key": 31337}
 
     class DictTest:
@@ -861,98 +861,98 @@ def test_object_with_json_attribute_error():
         ujson.encode(d)
 
 
-def test_decodeArrayTrailingCommaFail():
+def test_decode_array_trailing_comma_fail():
     input = "[31337,]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayLeadingCommaFail():
+def test_decode_array_leading_comma_fail():
     input = "[,31337]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayOnlyCommaFail():
+def test_decode_array_only_comma_fail():
     input = "[,]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayUnmatchedBracketFail():
+def test_decode_array_unmatched_bracket_fail():
     input = "[]]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayEmpty():
+def test_decode_array_empty():
     input = "[]"
     obj = ujson.decode(input)
     assert [] == obj
 
 
-def test_decodeArrayOneItem():
+def test_decode_array_one_item():
     input = "[31337]"
     ujson.decode(input)
 
 
-def test_decodeLongUnsignedValue():
+def test_decode_long_unsigned_value():
     input = "18446744073709551615"
     ujson.decode(input)
 
 
-def test_decodeBigValue():
+def test_decode_big_value():
     input = "9223372036854775807"
     ujson.decode(input)
 
 
-def test_decodeSmallValue():
+def test_decode_small_value():
     input = "-9223372036854775808"
     ujson.decode(input)
 
 
-def test_decodeTooBigValue():
+def test_decode_too_big_value():
     input = "18446744073709551616"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeTooSmallValue():
+def test_decode_too_small_value():
     input = "-90223372036854775809"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeVeryTooBigValue():
+def test_decode_very_too_big_value():
     input = "18446744073709551616"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeVeryTooSmallValue():
+def test_decode_very_too_small_value():
     input = "-90223372036854775809"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeWithTrailingWhitespaces():
+def test_decode_with_trailing_whitespaces():
     input = "{}\n\t "
     ujson.decode(input)
 
 
-def test_decodeWithTrailingNonWhitespaces():
+def test_decode_with_trailing_non_whitespaces():
     input = "{}\n\t a"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeArrayWithBigInt():
+def test_decode_array_with_big_int():
     input = "[18446744073709551616]"
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_decodeFloatingPointAdditionalTests():
+def test_decode_floating_point_additional_tests():
     assert -1.1234567893 == ujson.loads("-1.1234567893")
     assert -1.234567893 == ujson.loads("-1.234567893")
     assert -1.34567893 == ujson.loads("-1.34567893")
@@ -974,80 +974,80 @@ def test_decodeFloatingPointAdditionalTests():
     assert 1.3 == ujson.loads("1.3")
 
 
-def test_ReadBadObjectSyntax():
+def test_read_bad_object_syntax():
     input = '{"age", 44}'
     with pytest.raises(ValueError):
         ujson.decode(input)
 
 
-def test_ReadTrue():
+def test_read_true():
     assert ujson.loads("true") is True
 
 
-def test_ReadFalse():
+def test_read_false():
     assert ujson.loads("false") is False
 
 
-def test_ReadNull():
+def test_read_null():
     assert ujson.loads("null") is None
 
 
-def test_WriteTrue():
+def test_write_true():
     assert "true" == ujson.dumps(True)
 
 
-def test_WriteFalse():
+def test_write_false():
     assert "false" == ujson.dumps(False)
 
 
-def test_WriteNull():
+def test_write_null():
     assert "null" == ujson.dumps(None)
 
 
-def test_ReadArrayOfSymbols():
+def test_read_array_of_symbols():
     assert [True, False, None] == ujson.loads(" [ true, false,null] ")
 
 
-def test_WriteArrayOfSymbolsFromList():
+def test_write_array_of_symbols_from_list():
     assert "[true,false,null]" == ujson.dumps([True, False, None])
 
 
-def test_WriteArrayOfSymbolsFromTuple():
+def test_write_array_of_symbols_from_tuple():
     assert "[true,false,null]" == ujson.dumps((True, False, None))
 
 
 @pytest.mark.skipif(six.PY2, reason="Only raises on Python 3")
-def test_encodingInvalidUnicodeCharacter():
+def test_encoding_invalid_unicode_character():
     s = "\udc7f"
     with pytest.raises(UnicodeEncodeError):
         ujson.dumps(s)
 
 
-def test_sortKeys():
+def test_sort_keys():
     data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
     sortedKeys = ujson.dumps(data, sort_keys=True)
     assert sortedKeys == '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}'
 
 
 """
-def test_decodeNumericIntFrcOverflow():
+def test_decode_numeric_int_frc_overflow():
 input = "X.Y"
 raise NotImplementedError("Implement this test!")
 
 
-def test_decodeStringUnicodeEscape():
+def test_decode_string_unicode_escape():
 input = "\u3131"
 raise NotImplementedError("Implement this test!")
 
-def test_decodeStringUnicodeBrokenEscape():
+def test_decode_string_unicode_broken_escape():
 input = "\u3131"
 raise NotImplementedError("Implement this test!")
 
-def test_decodeStringUnicodeInvalidEscape():
+def test_decode_string_unicode_invalid_escape():
 input = "\u3131"
 raise NotImplementedError("Implement this test!")
 
-def test_decodeStringUTF8():
+def test_decode_string_utf8():
 input = "someutfcharacters"
 raise NotImplementedError("Implement this test!")
 

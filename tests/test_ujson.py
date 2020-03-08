@@ -552,10 +552,8 @@ def test_decode_range_raises(test_input, expected):
         ("[", ValueError),  # broken array start
         ("{", ValueError),  # broken object start
         ("]", ValueError),  # broken array end
-        ("[" * (1024 * 1024), ValueError),  # array depth too big
         ("}", ValueError),  # broken object end
         ('{"one":1,}', ValueError),  # object trailing comma fail
-        ("{" * (1024 * 1024), ValueError),  # object depth too big
         ('"TESTING', ValueError),  # string unterminated
         ('"TESTING\\"', ValueError),  # string bad escape
         ("tru", ValueError),  # true broken
@@ -580,6 +578,18 @@ def test_decode_range_raises(test_input, expected):
 def test_decode_raises(test_input, expected):
     with pytest.raises(expected):
         ujson.decode(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ("[", ValueError),  # array depth too big
+        ("{", ValueError),  # object depth too big
+    ],
+)
+def test_decode_raises_for_long_input(test_input, expected):
+    with pytest.raises(expected):
+        ujson.decode(test_input * (1024 * 1024))
 
 
 @pytest.mark.parametrize(

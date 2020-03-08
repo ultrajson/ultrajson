@@ -139,59 +139,12 @@ def test_encode_string_conversion2():
     assert test_input == ujson.decode(output)
 
 
-def test_decode_unicode_conversion():
-    pass
-
-
-def test_encode_unicode_conversion1():
-    test_input = "Räksmörgås اسامة بن محمد بن عوض بن لادن"
-    enc = ujson.encode(test_input)
-    dec = ujson.decode(enc)
-    assert enc == json_unicode(test_input)
-    assert dec == json.loads(enc)
-
-
 def test_encode_control_escaping():
     test_input = "\x19"
     enc = ujson.encode(test_input)
     dec = ujson.decode(enc)
     assert test_input == dec
     assert enc == json_unicode(test_input)
-
-
-def test_encode_unicode_conversion2():
-    test_input = "\xe6\x97\xa5\xd1\x88"
-    enc = ujson.encode(test_input)
-    dec = ujson.decode(enc)
-    assert enc == json_unicode(test_input)
-    assert dec == json.loads(enc)
-
-
-def test_encode_unicode_surrogate_pair():
-    test_input = "\xf0\x90\x8d\x86"
-    enc = ujson.encode(test_input)
-    dec = ujson.decode(enc)
-
-    assert enc == json_unicode(test_input)
-    assert dec == json.loads(enc)
-
-
-def test_encode_unicode_4_bytes_utf8():
-    test_input = "\xf0\x91\x80\xb0TRAILINGNORMAL"
-    enc = ujson.encode(test_input)
-    dec = ujson.decode(enc)
-
-    assert enc == json_unicode(test_input)
-    assert dec == json.loads(enc)
-
-
-def test_encode_unicode_4_bytes_utf8_highest():
-    test_input = "\xf3\xbf\xbf\xbfTRAILINGNORMAL"
-    enc = ujson.encode(test_input)
-    dec = ujson.decode(enc)
-
-    assert enc == json_unicode(test_input)
-    assert dec == json.loads(enc)
 
 
 # Characters outside of Basic Multilingual Plane(larger than
@@ -246,15 +199,6 @@ def test_encode_symbols():
     assert encoded == encoded_json
     decoded = ujson.loads(encoded)
     assert s == decoded
-
-
-@pytest.mark.parametrize("test_input", [[[[[]]]], 31337, -31337, None, True, False])
-def test_encode_decode(test_input):
-    output = ujson.encode(test_input)
-
-    assert test_input == json.loads(output)
-    assert output == json.dumps(test_input)
-    assert test_input == ujson.decode(output)
 
 
 def test_encode_long_neg_conversion():
@@ -732,6 +676,33 @@ def test_encode_long_conversion(test_input):
 def test_encode_raises(test_input, expected):
     with pytest.raises(expected):
         ujson.encode(test_input)
+
+
+@pytest.mark.parametrize("test_input", [[[[[]]]], 31337, -31337, None, True, False])
+def test_encode_decode(test_input):
+    output = ujson.encode(test_input)
+
+    assert test_input == json.loads(output)
+    assert output == json.dumps(test_input)
+    assert test_input == ujson.decode(output)
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        "Räksmörgås اسامة بن محمد بن عوض بن لادن",
+        "\xe6\x97\xa5\xd1\x88",
+        "\xf0\x90\x8d\x86",  # surrogate pair
+        "\xf0\x91\x80\xb0TRAILINGNORMAL",  # 4 bytes UTF8
+        "\xf3\xbf\xbf\xbfTRAILINGNORMAL",  # 4 bytes UTF8 highest
+    ],
+)
+def test_encode_unicode(test_input):
+    enc = ujson.encode(test_input)
+    dec = ujson.decode(enc)
+
+    assert enc == json_unicode(test_input)
+    assert dec == json.loads(enc)
 
 
 @pytest.mark.parametrize(

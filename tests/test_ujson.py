@@ -248,29 +248,13 @@ def test_encode_symbols():
     assert s == decoded
 
 
-def test_encode_array_in_array():
-    input = [[[[]]]]
-    output = ujson.encode(input)
+@pytest.mark.parametrize("test_input", [[[[[]]]], 31337, -31337, None, True, False])
+def test_encode_decode(test_input):
+    output = ujson.encode(test_input)
 
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_encode_int_conversion():
-    input = 31337
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_encode_int_neg_conversion():
-    input = -31337
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
+    assert test_input == json.loads(output)
+    assert output == json.dumps(test_input)
+    assert test_input == ujson.decode(output)
 
 
 def test_encode_long_neg_conversion():
@@ -309,30 +293,6 @@ def test_encode_dict_values_ref_counting():
     ref_count = sys.getrefcount(value)
     ujson.dumps(data)
     assert ref_count == sys.getrefcount(value)
-
-
-def test_encode_none_conversion():
-    input = None
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_encode_true_conversion():
-    input = True
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
-
-
-def test_encode_false_conversion():
-    input = False
-    output = ujson.encode(input)
-    assert input == json.loads(output)
-    assert output == json.dumps(input)
-    assert input == ujson.decode(output)
 
 
 def test_encode_to_utf8():
@@ -515,21 +475,6 @@ def test_to_dict():
 
 
 def test_object_with_json():
-    # If __json__ returns a string, then that string
-    # will be used as a raw JSON snippet in the object.
-    output_text = "this is the correct output"
-
-    class JSONTest:
-        def __json__(self):
-            return '"' + output_text + '"'
-
-    d = {"key": JSONTest()}
-    output = ujson.encode(d)
-    dec = ujson.decode(output)
-    assert dec == {"key": output_text}
-
-
-def test_object_with_json_unicode():
     # If __json__ returns a string, then that string
     # will be used as a raw JSON snippet in the object.
     output_text = "this is the correct output"

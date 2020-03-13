@@ -606,6 +606,33 @@ def test_dumps(test_input, expected):
     assert ujson.dumps(test_input) == expected
 
 
+class SomeObject:
+    def __repr__(self):
+        return "Some Object"
+
+
+if sys.version_info.major == 2:
+    EMPTY_SET_ERROR = "set([]) is not JSON serializable"
+    FILLED_SET_ERROR = "set([1, 2, 3]) is not JSON serializable"
+else:
+    EMPTY_SET_ERROR = "set() is not JSON serializable"
+    FILLED_SET_ERROR = "{1, 2, 3} is not JSON serializable"
+
+
+@pytest.mark.parametrize(
+    "test_input, expected_exception, expected_message",
+    [
+        (set(), TypeError, EMPTY_SET_ERROR),
+        ({1, 2, 3}, TypeError, FILLED_SET_ERROR),
+        (SomeObject(), TypeError, "Some Object is not JSON serializable"),
+    ],
+)
+def test_dumps_raises(test_input, expected_exception, expected_message):
+    with pytest.raises(expected_exception) as e:
+        ujson.dumps(test_input)
+    assert str(e.value) == expected_message
+
+
 @pytest.mark.parametrize(
     "test_input",
     [

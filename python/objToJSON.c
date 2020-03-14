@@ -662,7 +662,13 @@ ISITERABLE:
   PyErr_Clear();
 
   objRepr = PyObject_Repr(obj);
+#if PY_MAJOR_VERSION >= 3
+  PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "~E~");
+  PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyString_AS_STRING(str));
+  Py_XDECREF(str);
+#else
   PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyString_AS_STRING(objRepr));
+#endif
   Py_DECREF(objRepr);
 
 INVALID:

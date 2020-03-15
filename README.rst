@@ -29,7 +29,7 @@ UltraJSON
     :alt: Code style: Black
     :target: https://github.com/psf/black
 
-UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.7 and 3.5+.
+UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 3.5+.
 
 To install it just run pip as usual:
 

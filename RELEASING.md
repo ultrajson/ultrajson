@@ -17,8 +17,20 @@
       [GitHub Actions build](https://github.com/ultrajson/ultrajson/actions?query=workflow%3ADeploy)
       has deployed to [PyPI](https://pypi.org/project/ujson/#history)
 
+* [ ] Create wheels in a freshly cloned repo, replace x.y.z with real version:
+
+```bash
+cd /tmp
+rm -rf ultrajson
+git clone https://github.com/ultrajson/ultrajson
+cd ultrajson
+python3 scripts/build-manylinux.py x.y.z
+twine upload dist/*
+```
+
 - [ ] Check installation:
 
 ```bash
 pip3 uninstall -y ujson && pip3 install -U ujson
+python3 -c "import ujson; print(ujson.__version__)"
 ```

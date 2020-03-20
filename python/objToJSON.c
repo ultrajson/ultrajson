@@ -263,7 +263,9 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
   }
   else
   if (!PyString_Check(GET_TC(tc)->itemName))

@@ -239,6 +239,17 @@ def test_encode_dict_values_ref_counting():
     assert ref_count == sys.getrefcount(value)
 
 
+def test_encode_dict_key_ref_counting():
+    import gc
+
+    gc.collect()
+    key = "key"
+    data = {key: "abc"}
+    ref_count = sys.getrefcount(key)
+    ujson.dumps(data)
+    assert ref_count == sys.getrefcount(key)
+
+
 def test_encode_to_utf8():
     test_input = b"\xe6\x97\xa5\xd1\x88"
     if not six.PY2:

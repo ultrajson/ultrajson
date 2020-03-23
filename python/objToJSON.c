@@ -239,9 +239,7 @@ static char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-#if PY_MAJOR_VERSION >= 3
   PyObject* itemNameTmp;
-#endif
 
   if (GET_TC(tc)->itemName)
   {
@@ -263,7 +261,9 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
   }
   else
   if (!PyString_Check(GET_TC(tc)->itemName))

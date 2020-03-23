@@ -25,7 +25,7 @@ FRIENDS = [USER, USER, USER, USER, USER, USER, USER, USER]
 
 decode_data = None
 test_object = None
-skip_lib_comparisons = True
+skip_lib_comparisons = False
 if not skip_lib_comparisons:
     import simplejson
     import yajl

@@ -27,8 +27,8 @@ decode_data = None
 test_object = None
 skip_lib_comparisons = False
 if not skip_lib_comparisons:
+    import orjson
     import simplejson
-    import yajl
 
 benchmark_results = []
 
@@ -64,7 +64,7 @@ def results_record_result(callback, is_encode, count):
 
 
 def results_output_table():
-    LIBRARIES = ("ujson", "yajl", "simplejson", "json")
+    LIBRARIES = ("ujson", "orjson", "simplejson", "json")
 
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
     print()
@@ -84,12 +84,9 @@ def results_output_table():
         )
     )
     if not skip_lib_comparisons:
+        print("- orjson    : {}".format(orjson.__version__))
         print("- simplejson: {}".format(simplejson.__version__))
     print("- ujson     : {}".format(ujson.__version__))
-    if not skip_lib_comparisons:
-        import pkg_resources
-
-        print("- yajl      : {}".format(pkg_resources.get_distribution("yajl").version))
     print()
 
     column_widths = [max(len(r[0]) for r in benchmark_results)]
@@ -143,16 +140,16 @@ def dumps_with_json():
     json.dumps(test_object)
 
 
+def dumps_with_orjson():
+    orjson.dumps(test_object)
+
+
 def dumps_with_simplejson():
     simplejson.dumps(test_object)
 
 
 def dumps_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False)
-
-
-def dumps_with_yajl():
-    yajl.dumps(test_object)
 
 
 # =============================================================================
@@ -177,16 +174,16 @@ def loads_with_json():
     json.loads(decode_data)
 
 
+def loads_with_orjson():
+    orjson.loads(decode_data)
+
+
 def loads_with_simplejson():
     simplejson.loads(decode_data)
 
 
 def loads_with_ujson():
     ujson.loads(decode_data)
-
-
-def loads_with_yajl():
-    yajl.loads(decode_data)
 
 
 # =============================================================================
@@ -196,7 +193,7 @@ def run_decode(count):
     results_record_result(loads_with_ujson, False, count)
     if not skip_lib_comparisons:
         results_record_result(loads_with_simplejson, False, count)
-        results_record_result(loads_with_yajl, False, count)
+        results_record_result(loads_with_orjson, False, count)
         results_record_result(loads_with_json, False, count)
 
 
@@ -204,7 +201,7 @@ def run_encode(count):
     results_record_result(dumps_with_ujson, True, count)
     if not skip_lib_comparisons:
         results_record_result(dumps_with_simplejson, True, count)
-        results_record_result(dumps_with_yajl, True, count)
+        results_record_result(dumps_with_orjson, True, count)
         results_record_result(dumps_with_json, True, count)
 
 

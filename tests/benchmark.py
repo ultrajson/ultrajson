@@ -27,6 +27,7 @@ decode_data = None
 test_object = None
 skip_lib_comparisons = False
 if not skip_lib_comparisons:
+    import nujson
     import orjson
     import simplejson
 
@@ -64,7 +65,7 @@ def results_record_result(callback, is_encode, count):
 
 
 def results_output_table():
-    LIBRARIES = ("ujson", "orjson", "simplejson", "json")
+    LIBRARIES = ("ujson", "nujson", "orjson", "simplejson", "json")
 
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
     print()
@@ -84,6 +85,7 @@ def results_output_table():
         )
     )
     if not skip_lib_comparisons:
+        print("- nujson    : {}".format(nujson.__version__))
         print("- orjson    : {}".format(orjson.__version__))
         print("- simplejson: {}".format(simplejson.__version__))
     print("- ujson     : {}".format(ujson.__version__))
@@ -140,6 +142,10 @@ def dumps_with_json():
     json.dumps(test_object)
 
 
+def dumps_with_nujson():
+    nujson.dumps(test_object)
+
+
 def dumps_with_orjson():
     orjson.dumps(test_object)
 
@@ -163,6 +169,14 @@ def dumps_sorted_with_simplejson():
     simplejson.dumps(test_object, sort_keys=True)
 
 
+def dumps_sorted_with_nujson():
+    nujson.dumps(test_object, sort_keys=True)
+
+
+def dumps_sorted_with_orjson():
+    orjson.dumps(test_object, sort_keys=True)
+
+
 def dumps_sorted_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False, sort_keys=True)
 
@@ -172,6 +186,10 @@ def dumps_sorted_with_ujson():
 # =============================================================================
 def loads_with_json():
     json.loads(decode_data)
+
+
+def loads_with_nujson():
+    nujson.loads(decode_data)
 
 
 def loads_with_orjson():
@@ -193,6 +211,7 @@ def run_decode(count):
     results_record_result(loads_with_ujson, False, count)
     if not skip_lib_comparisons:
         results_record_result(loads_with_simplejson, False, count)
+        results_record_result(loads_with_nujson, False, count)
         results_record_result(loads_with_orjson, False, count)
         results_record_result(loads_with_json, False, count)
 
@@ -201,6 +220,7 @@ def run_encode(count):
     results_record_result(dumps_with_ujson, True, count)
     if not skip_lib_comparisons:
         results_record_result(dumps_with_simplejson, True, count)
+        results_record_result(dumps_with_nujson, True, count)
         results_record_result(dumps_with_orjson, True, count)
         results_record_result(dumps_with_json, True, count)
 
@@ -209,6 +229,8 @@ def run_encode_sort_keys(count):
     results_record_result(dumps_sorted_with_ujson, True, count)
     if not skip_lib_comparisons:
         results_record_result(dumps_sorted_with_simplejson, True, count)
+        results_record_result(dumps_sorted_with_nujson, True, count)
+        results_record_result(dumps_sorted_with_orjson, True, count)
         results_record_result(dumps_sorted_with_json, True, count)
 
 

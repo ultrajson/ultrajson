@@ -83,9 +83,13 @@ def results_output_table():
             platform.python_implementation(), sys.version.replace("\n", "")
         )
     )
-    print("- simplejson: 3.8.1")
-    print("- ujson     : 1.34")
-    print("- yajl      : 0.3.5")
+    if not skip_lib_comparisons:
+        print("- simplejson: {}".format(simplejson.__version__))
+    print("- ujson     : {}".format(ujson.__version__))
+    if not skip_lib_comparisons:
+        import pkg_resources
+
+        print("- yajl      : {}".format(pkg_resources.get_distribution("yajl").version))
     print()
 
     column_widths = [max(len(r[0]) for r in benchmark_results)]

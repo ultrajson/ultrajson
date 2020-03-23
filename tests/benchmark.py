@@ -58,7 +58,7 @@ def results_record_result(callback, is_encode, count):
     benchmark_results[-1][1 if is_encode else 2][library] = result
 
     print(
-        "{} {}: {:.02f} calls/sec".format(
+        "{} {}: {:,.02f} calls/sec".format(
             library, "encode" if is_encode else "decode", result
         )
     )
@@ -113,7 +113,7 @@ def results_output_table():
         columns[0] = " encode".ljust(column_widths[0] + 2)
         for i, library in enumerate(LIBRARIES):
             if library in encodes:
-                columns[i + 1] = "{:.2f} ".format(encodes[library]).rjust(
+                columns[i + 1] = "{:,.0f} ".format(encodes[library]).rjust(
                     column_widths[i + 1] + 2
                 )
             else:
@@ -126,7 +126,7 @@ def results_output_table():
             columns[0] = " decode".ljust(column_widths[0] + 2)
             for i, library in enumerate(LIBRARIES):
                 if library in decodes:
-                    columns[i + 1] = "{:.2f} ".format(decodes[library]).rjust(
+                    columns[i + 1] = "{:,.0f} ".format(decodes[library]).rjust(
                         column_widths[i + 1] + 2
                     )
                 else:

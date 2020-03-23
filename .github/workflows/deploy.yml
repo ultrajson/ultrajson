@@ -15,7 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: |
+            git fetch --prune --unshallow
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -29,6 +30,8 @@ jobs:
 
       - name: Build package
         run: |
+          git tag
+          python setup.py --version
           python setup.py sdist --format=gztar
           twine check dist/*
 

@@ -51,7 +51,7 @@ def results_record_result(callback, is_encode, count):
             repeat=10,
             number=count,
         )
-    except TypeError:
+    except (TypeError, json.decoder.JSONDecodeError):
         return
     result = count / min(results)
     benchmark_results[-1][1 if is_encode else 2][library] = result

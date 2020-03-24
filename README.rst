@@ -21,6 +21,10 @@ UltraJSON
     :alt: Travis CI status
     :target: https://travis-ci.com/ultrajson/ultrajson
 
+.. image:: https://zenodo.org/badge/1418941.svg
+   :alt: DOI
+   :target: https://zenodo.org/badge/latestdoi/1418941
+
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :alt: Code style: Black
     :target: https://github.com/psf/black

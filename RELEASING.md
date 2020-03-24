@@ -25,6 +25,7 @@ rm -rf ultrajson
 git clone https://github.com/ultrajson/ultrajson
 cd ultrajson
 python3 scripts/build-manylinux.py x.y.z
+twine check dist/*
 twine upload dist/*
 ```
 

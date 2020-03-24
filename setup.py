@@ -1,10 +1,8 @@
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
 import os.path
 import re
 from glob import glob
+
+from setuptools import Extension, setup
 
 CLASSIFIERS = """
 Development Status :: 5 - Production/Stable

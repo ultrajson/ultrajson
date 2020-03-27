@@ -239,9 +239,7 @@ static char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-#if PY_MAJOR_VERSION >= 3
   PyObject* itemNameTmp;
-#endif
 
   if (GET_TC(tc)->itemName)
   {
@@ -255,7 +253,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  if (!(GET_TC(tc)->itemValue = PyObject_GetItem(GET_TC(tc)->dictObj, GET_TC(tc)->itemName)))
+  if (!(GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, GET_TC(tc)->itemName)))
   {
     PRINTMARK();
     return 0;
@@ -263,7 +261,9 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
   }
   else
   if (!PyString_Check(GET_TC(tc)->itemName))
@@ -662,7 +662,13 @@ ISITERABLE:
   PyErr_Clear();
 
   objRepr = PyObject_Repr(obj);
+#if PY_MAJOR_VERSION >= 3
+  PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "~E~");
+  PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyString_AS_STRING(str));
+  Py_XDECREF(str);
+#else
   PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyString_AS_STRING(objRepr));
+#endif
   Py_DECREF(objRepr);
 
 INVALID:
@@ -677,6 +683,10 @@ static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
 
+  if (tc->type == JT_RAW)
+  {
+    Py_XDECREF(GET_TC(tc)->rawJSONValue);
+  }
   PyObject_Free(tc->prv);
   tc->prv = NULL;
 }
@@ -865,6 +875,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *string;
   PyObject *write;
   PyObject *argtuple;
+  PyObject *write_result;
 
   PRINTMARK();
 
@@ -907,13 +918,16 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(write);
     return NULL;
   }
-  if (PyObject_CallObject (write, argtuple) == NULL)
+
+  write_result = PyObject_CallObject (write, argtuple);
+  if (write_result == NULL)
   {
     Py_XDECREF(write);
     Py_XDECREF(argtuple);
     return NULL;
   }
 
+  Py_DECREF(write_result);
   Py_XDECREF(write);
   Py_DECREF(argtuple);
   Py_XDECREF(string);

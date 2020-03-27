@@ -1,0 +1,66 @@
+# Default GitHub labels
+- color: d73a4a
+  description: "Something isn't working"
+  name: bug
+- color: cfd3d7
+  description: "This issue or pull request already exists"
+  name: duplicate
+- color: a2eeef
+  description: "New feature or request"
+  name: enhancement
+- color: 7057ff
+  description: "Good for newcomers"
+  name: good first issue
+- color: 008672
+  description: "Extra attention is needed"
+  name: help wanted
+- color: e4e669
+  description: "This doesn't seem right"
+  name: invalid
+- color: d876e3
+  description: "Further information is requested"
+  name: question
+- color: ffffff
+  description: "This will not be worked on"
+  name: wontfix
+
+# Keep a Changelog labels
+# https://keepachangelog.com/en/1.0.0/
+- color: 0e8a16
+  description: "For new features"
+  name: "changelog: Added"
+- color: af99e5
+  description: "For changes in existing functionality"
+  name: "changelog: Changed"
+- color: FFA500
+  description: "For soon-to-be removed features"
+  name: "changelog: Deprecated"
+- color: 00A800
+  description: "For any bug fixes"
+  name: "changelog: Fixed"
+- color: ff0000
+  description: "For now removed features"
+  name: "changelog: Removed"
+- color: 045aa0
+  description: "In case of vulnerabilities"
+  name: "changelog: Security"
+- color: fbca04
+  description: "Exclude PR from release draft"
+  name: "changelog: skip"
+
+# Other labels
+- color: fbca04
+  description: "Unit tests, linting, CI, etc."
+  name: testing
+- color: FFD43B
+  description: ""
+  name: Python 2
+- color: F25022
+  description: ""
+  name: Windows
+- color: e28acf
+  description: ""
+  name: documentation
+- color: caffaf
+  description: ""
+  name: release

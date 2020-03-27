@@ -8,11 +8,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
-        os: [ubuntu-18.04, ubuntu-16.04, macos-latest]
+        python-version: ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9"]
+        os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
+        exclude:
+          - { python-version: 2.7, os: windows-2019 }
+          - { python-version: 3.9, os: ubuntu-16.04 }
+          - { python-version: 3.9, os: macos-latest }
+          - { python-version: 3.9, os: windows-2019 }
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Ubuntu cache
         uses: actions/cache@v1
@@ -27,7 +32,7 @@ jobs:
 
       - name: macOS cache
         uses: actions/cache@v1
-        if: startsWith(matrix.os, 'macOS')
+        if: startsWith(matrix.os, 'macos')
         with:
           path: ~/Library/Caches/pip
           key:
@@ -36,7 +41,30 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-${{ matrix.python-version }}-
 
+      - name: Windows cache
+        uses: actions/cache@v1
+        if: startsWith(matrix.os, 'windows')
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key:
+            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
+            }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-
+
+      - name: Install Python 3.9
+        if: matrix.python-version == '3.9'
+        run: |
+          sudo add-apt-repository ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3.9-dev python3.9-distutils python3.9-venv
+          python3.9 -m pip install --upgrade pip setuptools
+          python3.9 -m venv $HOME/venv-python3.9
+          echo "::set-env name=VIRTUAL_ENV::$HOME/venv-python3.9"
+          echo "::add-path::$HOME/venv-python3.9/bin"
+
       - name: Set up Python ${{ matrix.python-version }}
+        if: matrix.python-version != '3.9'
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}

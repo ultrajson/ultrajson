@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+      - run: |
+            git fetch --prune --unshallow
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -28,6 +30,8 @@ jobs:
 
       - name: Build package
         run: |
+          git tag
+          python setup.py --version
           python setup.py sdist --format=gztar
           twine check dist/*
 

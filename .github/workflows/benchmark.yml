@@ -1,0 +1,45 @@
+name: Benchmark
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+        os: [ubuntu-18.04]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Ubuntu cache
+        uses: actions/cache@v1
+        if: startsWith(matrix.os, 'ubuntu')
+        with:
+          path: ~/.cache/pip
+          key:
+            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
+            }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.python-version }}-
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade nujson orjson simplejson
+          python -m pip install .
+
+      - name: Tests
+        shell: bash
+        run: |
+          python tests/benchmark.py

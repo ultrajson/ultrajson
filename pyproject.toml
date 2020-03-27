@@ -1,2 +1,5 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+
 [tool.black]
 target_version = ["py27"]

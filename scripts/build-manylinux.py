@@ -13,9 +13,7 @@ with open("setup.py") as f:
         if match:
             major_s, minor_s = match[1].split(".")
             major, minor = int(major_s), int(minor_s)
-            if (major, minor) == (2, 7):
-                EXES.extend(("cp27-cp27mu", "cp27-cp27m"))
-            elif (major, minor) < (3, 8):
+            if (major, minor) < (3, 8):
                 EXES.append(f"cp{major}{minor}-cp{major}{minor}m")
             else:
                 EXES.append(f"cp{major}{minor}-cp{major}{minor}")

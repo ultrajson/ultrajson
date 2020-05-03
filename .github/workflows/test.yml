@@ -8,10 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.5", "3.6", "3.7", "3.8", "3.9"]
         os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
         exclude:
-          - { python-version: 2.7, os: windows-2019 }
           - { python-version: 3.9, os: ubuntu-16.04 }
           - { python-version: 3.9, os: macos-latest }
           - { python-version: 3.9, os: windows-2019 }
@@ -72,7 +71,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade pytest six
+          python -m pip install --upgrade pytest
           python -m pip install .
 
       - name: Tests

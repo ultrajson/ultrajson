@@ -3,12 +3,13 @@ repos:
     rev: v2.1.0
     hooks:
       - id: pyupgrade
+        args: ["--py3-plus"]
 
   - repo: https://github.com/psf/black
     rev: 19.10b0
     hooks:
       - id: black
-        args: ["--target-version", "py27"]
+        args: ["--target-version", "py35"]
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.9

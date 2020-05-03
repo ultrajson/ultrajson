@@ -7,7 +7,6 @@ arch:
   - s390x
 
 python:
-  - "2.7"
   - "3.5"
   - "3.8"
   - "3.9-dev"
@@ -17,7 +16,7 @@ jobs:
 
 install:
   - pip install -U pip
-  - pip install -U pytest six
+  - pip install -U pytest
   - pip install .
 
 script: pytest

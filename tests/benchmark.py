@@ -1,5 +1,4 @@
 ﻿# coding=UTF-8
-from __future__ import division, print_function, unicode_literals
 
 import json
 import os
@@ -376,7 +375,7 @@ def benchmark_complex_object():
     results_new_benchmark("Complex object")
     COUNT = 100
 
-    with open(os.path.join(os.path.dirname(__file__), "sample.json"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "sample.json")) as f:
         test_object = json.load(f)
     run_encode(COUNT)
 

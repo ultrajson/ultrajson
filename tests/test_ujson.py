@@ -614,6 +614,21 @@ def test_dumps_raises(test_input, expected_exception, expected_message):
 
 
 @pytest.mark.parametrize(
+    "test_input, expected_exception, expected_message",
+    [
+        (float("nan"), OverflowError, "Invalid value when encoding double"),
+        (float("inf"), OverflowError, "Invalid value when encoding double"),
+        (-float("inf"), OverflowError, "Invalid value when encoding double"),
+        (12839128391289382193812939, OverflowError, "int too big to convert"),
+    ],
+)
+def test_encode_raises_allow_nan(test_input, expected_exception, expected_message):
+    with pytest.raises(expected_exception) as e:
+        ujson.dumps(test_input, allow_nan=False)
+    assert str(e.value) == expected_message
+
+
+@pytest.mark.parametrize(
     "test_input",
     [
         {
@@ -644,6 +659,9 @@ def test_encode_no_assert(test_input):
     [
         (1.0, "1.0"),
         (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1":1,"0":0,"8":8,"2":2}'),
+        ({"a": float("NaN")}, '{"a":NaN}'),
+        ({"a": float("inf")}, '{"a":Inf}'),
+        ({"a": -float("inf")}, '{"a":-Inf}'),
     ],
 )
 def test_encode(test_input, expected):
@@ -679,20 +697,6 @@ def test_encode_long_conversion(test_input):
     assert test_input == json.loads(output)
     assert output == json.dumps(test_input)
     assert test_input == ujson.decode(output)
-
-
-@pytest.mark.parametrize(
-    "test_input, expected",
-    [
-        (float("nan"), OverflowError),
-        (float("inf"), OverflowError),
-        (-float("inf"), OverflowError),
-        (12839128391289382193812939, OverflowError),
-    ],
-)
-def test_encode_raises(test_input, expected):
-    with pytest.raises(expected):
-        ujson.encode(test_input)
 
 
 @pytest.mark.parametrize("test_input", [[[[[]]]], 31337, -31337, None, True, False])

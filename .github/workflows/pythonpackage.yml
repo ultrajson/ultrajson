@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2016, macOS-latest]
-        python-version: [3.5, 3.6, 3.7, 3.8] 
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8] 
 
     steps:
     - uses: actions/checkout@v2
@@ -33,4 +33,7 @@ jobs:
         pytest
     - name: Build wheel
       run: python setup.py -q bdist_wheel
-      
+    - uses: actions/upload-artifact@v2  
+      with:
+        name: wheel
+        path: dist/*.whl

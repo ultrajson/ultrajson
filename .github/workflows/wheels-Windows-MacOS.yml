@@ -5,10 +5,11 @@ name: Wheels for Windows and MacOS
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+    branches:
+      - master
+  release:
+    types:
+      - published
 jobs:
   build:
 
@@ -46,6 +47,7 @@ jobs:
       run: twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
+      if: github.repository == 'ultrajson/ultrajson'
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}

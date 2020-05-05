@@ -30,6 +30,7 @@ jobs:
         python -m pip install --upgrade -q pip pytest wheel
     - name: Test with pytest
       run: |
+        python setup.py install
         pytest
     - name: Build wheel
       run: python setup.py -q bdist_wheel

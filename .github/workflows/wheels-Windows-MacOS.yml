@@ -43,11 +43,11 @@ jobs:
       env: 
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
         TWINE_USERNAME: ${{ secrets.pypi_username }}
-      run: python -m twine upload --non-interactive --skip-existing dist/*.whl
+      run: python -m twine upload --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
       env: 
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
         TWINE_USERNAME: ${{ secrets.pypi_username }}
-      run: python -m twine upload --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*.whl
+      run: python -m twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*.whl
         

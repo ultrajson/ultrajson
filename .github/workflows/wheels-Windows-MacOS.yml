@@ -40,15 +40,16 @@ jobs:
         
     - name: Publish package to PyPI
       if: github.event.action == 'published'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+      env: 
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        TWINE_USERNAME: __token__
+      run: |
+        - python -m twine upload --non-interactive --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.test_pypi_password }}
-        repository_url: https://test.pypi.org/legacy/
+      env: 
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        TWINE_USERNAME: __token__
+      run: |
+        - python -m twine upload --non-interactive --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*.whl
         

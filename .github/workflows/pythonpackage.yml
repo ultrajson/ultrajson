@@ -35,5 +35,20 @@ jobs:
       run: python setup.py -q bdist_wheel
     - uses: actions/upload-artifact@v2  
       with:
-        name: wheel
+        name: Upload as build artifacts
         path: dist/*.whl
+        
+    - name: Publish package to PyPI
+      if: github.event.action == 'published'
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+
+    - name: Publish package to TestPyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.test_pypi_password }}
+        repository_url: https://test.pypi.org/legacy/
+        

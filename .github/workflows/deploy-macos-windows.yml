@@ -21,6 +21,7 @@ jobs:
         include: 
           - os: ubuntu-latest
             python-version: 3.8
+            DOCKER_NAME: [manylinux1_x86_64, manylinux1_i686]
           
     steps:
     - uses: actions/checkout@v2
@@ -48,8 +49,10 @@ jobs:
               
     - name: Build wheels ubuntu
       if: matrix.os == 'ubuntu-latest'
+      env:
+        DOCKER_IMAGE: quay.io/pypa/DOCKER_NAME
       run: |
-        python scripts/build-manylinux.py 
+        docker run  -e PLAT=$DOCKER_NAME  -v `pwd`:/io $DOCKER_IMAGE   /io/scripts/build-wheels.sh
       
     - uses: actions/upload-artifact@v2
       with:

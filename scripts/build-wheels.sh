@@ -19,7 +19,7 @@ done
 # Wheels aren't considered manylinux unless they have been through 
 # auditwheel. (Know idea why.) Auditted wheels go in /io/dist/.
 mkdir -p /io/dist/
-for whl in /io/dist/*.whl; do
+for whl in /io/temp-wheels/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
         
 done

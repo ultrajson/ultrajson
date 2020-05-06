@@ -22,7 +22,6 @@ jobs:
           - os: ubuntu-latest
             python-version: 3.8
             DOCKER_NAME: manylinux1_x86_64
-        include: 
           - os: ubuntu-latest
             python-version: 3.8
             DOCKER_NAME: manylinux1_x86_64

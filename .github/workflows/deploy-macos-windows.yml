@@ -49,7 +49,7 @@ jobs:
     - name: Build wheels ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        chmod 777 scripts/build-wheels.sh
+        chmod 777 scripts/build-manylinux-wheels.sh
         docker run  -e PLAT=manylinux1_x86_64  -v `pwd`:/io quay.io/pypa/manylinux1_x86_64   /io/scripts/build-manylinux-wheels.sh
         docker run  -e PLAT=manylinux1_i686  -v `pwd`:/io quay.io/pypa/manylinux1_i686   /io/scripts/build-manylinux-wheels.sh
       

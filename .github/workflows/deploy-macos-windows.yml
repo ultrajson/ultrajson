@@ -57,7 +57,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         python -V
-        python scripts/build-manylinux.py ${{ env.RELEASE_VERSION }}  
+        python scripts/build-manylinux.py "$python setup.py -V"
       
     - uses: actions/upload-artifact@v2
       with:

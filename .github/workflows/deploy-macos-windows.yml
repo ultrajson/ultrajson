@@ -18,7 +18,10 @@ jobs:
       matrix:
         os: [windows-latest, macOS-latest]
         python-version: [3.5, 3.6, 3.7, 3.8] 
-
+        include: 
+          - os: ubuntu-latest
+          - python-version: 3.8
+          
     steps:
     - uses: actions/checkout@v2
     - run: |
@@ -34,12 +37,22 @@ jobs:
         python -m pip install --upgrade -q pip pytest wheel setuptools twine
         
     - name: Test with pytest
+      if: matrix.os != 'ubuntu-latest'
       run: |
         pip install .
         pytest
         
     - name: Build wheel
+      if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
+      
+    - name: Get version
+      if: matrix.os == 'ubuntu-latest'
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+  
+    - name: Build wheels ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: python scripts/build-manylinux.py ${{ steps.get_version.outputs.VERSION }}
       
     - uses: actions/upload-artifact@v2
       with:

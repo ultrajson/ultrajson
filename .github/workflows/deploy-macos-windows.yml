@@ -52,7 +52,9 @@ jobs:
   
     - name: Build wheels ubuntu
       if: matrix.os == 'ubuntu-latest'
-      run: python scripts/build-manylinux.py ${{ steps.get_version.outputs.VERSION }}
+      run: |
+        python -V
+        python scripts/build-manylinux.py ${{ steps.get_version.outputs.VERSION }}
       
     - uses: actions/upload-artifact@v2
       with:

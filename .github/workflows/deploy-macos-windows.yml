@@ -53,7 +53,7 @@ jobs:
     - name: Build wheels ubuntu
       if: matrix.os == 'ubuntu-latest'
       env:
-        DOCKER_IMAGE: quay.io/pypa/DOCKER_NAME
+        DOCKER_IMAGE: quay.io/pypa/$DOCKER_NAME
       run: |
         docker run  -e PLAT=$DOCKER_NAME  -v `pwd`:/io $DOCKER_IMAGE   /io/scripts/build-wheels.sh
       

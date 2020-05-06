@@ -51,7 +51,7 @@ jobs:
       env: 
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
-      run: twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+      run: twine upload --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
       if: github.repository == 'ultrajson/ultrajson'

@@ -21,10 +21,13 @@ with open("setup.py") as f:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("version")
+    parser.add_argument("version", nargs="?")
     args = parser.parse_args()
 
-    pkg = f"ujson=={args.version}"
+    if args.version is None:
+        pkg = "."
+    else:
+        pkg = f"ujson=={args.version}"
 
     os.makedirs("dist", exist_ok=True)
     for exe in EXES:

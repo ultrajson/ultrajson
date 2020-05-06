@@ -45,19 +45,11 @@ jobs:
     - name: Build wheel
       if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
-      
-    - name: Get version
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
-        echo $RELEASE_VERSION
-        echo ${{ env.RELEASE_VERSION }}  
-        
+              
     - name: Build wheels ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        python -V
-        python scripts/build-manylinux.py "$python setup.py -V"
+        python scripts/build-manylinux.py 
       
     - uses: actions/upload-artifact@v2
       with:

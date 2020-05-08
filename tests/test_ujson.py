@@ -757,6 +757,22 @@ def test_loads(test_input, expected):
     assert ujson.loads(test_input) == expected
 
 
+def test_reject_bytes_default():
+    data = {"a": b"b"}
+    assert ujson.dumps(data) == '{"a":"b"}'
+
+
+def test_reject_bytes_true():
+    data = {"a": b"b"}
+    with pytest.raises(TypeError):
+        ujson.dumps(data, reject_bytes=True)
+
+
+def test_reject_bytes_false():
+    data = {"a": b"b"}
+    assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

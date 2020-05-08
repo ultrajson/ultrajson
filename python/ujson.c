@@ -56,7 +56,8 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs);
 #define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. " \
     "Set encode_html_chars=True to encode < > & as unicode escape sequences. "\
     "Set escape_forward_slashes=False to prevent escaping / characters." \
-    "Set allow_nan=False to raise an exception when NaN or Inf would be serialized."
+    "Set allow_nan=False to raise an exception when NaN or Inf would be serialized." \
+    "Set reject_bytes=True to raise TypeError on bytes."
 
 static PyMethodDef ujsonMethods[] = {
   {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},

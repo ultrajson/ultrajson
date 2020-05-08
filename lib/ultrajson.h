@@ -267,6 +267,10 @@ typedef struct __JSONObjectEncoder
   int allowNan;
 
   /*
+  If true, bytes are rejected. */
+  int rejectBytes;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

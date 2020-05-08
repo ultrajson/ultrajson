@@ -525,11 +525,19 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyBytes_Check(obj))
+  if (UNLIKELY(PyBytes_Check(obj)))
   {
     PRINTMARK();
-    pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
-    return;
+    if (enc->rejectBytes)
+    {
+      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AS_STRING(obj));
+      goto INVALID;
+    }
+    else
+    {
+      pc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
+      return;
+    }
   }
   else
   if (PyUnicode_Check(obj))
@@ -739,7 +747,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", NULL };
 
   char buffer[65536];
   char *ret;
@@ -751,6 +759,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   int allowNan = -1;
+  int orejectBytes = -1;
 
   JSONObjectEncoder encoder =
   {
@@ -776,13 +785,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //sortKeys
     0, //indent
     1, //allowNan
+    1, //rejectBytes
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOpi", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOpii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
   {
     return NULL;
   }
@@ -816,6 +826,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     csInf = "Inf";
     csNan = "NaN";
+  }
+
+  if (orejectBytes != -1)
+  {
+    encoder.rejectBytes = orejectBytes;
   }
 
 

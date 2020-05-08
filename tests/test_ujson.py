@@ -285,7 +285,7 @@ def test_decode_dict():
 def test_encode_unicode_4_bytes_utf8_fail():
     test_input = b"\xfd\xbf\xbf\xbf\xbf\xbf"
     with pytest.raises(OverflowError):
-        ujson.encode(test_input)
+        ujson.encode(test_input, reject_bytes=False)
 
 
 def test_encode_null_character():
@@ -380,7 +380,7 @@ def test_encode_big_escape():
     for x in range(10):
         base = "\u00e5".encode()
         test_input = base * 1024 * 1024 * 2
-        ujson.encode(test_input)
+        ujson.encode(test_input, reject_bytes=False)
 
 
 def test_decode_big_escape():
@@ -755,6 +755,23 @@ def test_encode_unicode(test_input):
 )
 def test_loads(test_input, expected):
     assert ujson.loads(test_input) == expected
+
+
+def test_reject_bytes_default():
+    data = {"a": b"b"}
+    with pytest.raises(TypeError):
+        ujson.dumps(data)
+
+
+def test_reject_bytes_true():
+    data = {"a": b"b"}
+    with pytest.raises(TypeError):
+        ujson.dumps(data, reject_bytes=True)
+
+
+def test_reject_bytes_false():
+    data = {"a": b"b"}
+    assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
 
 
 """

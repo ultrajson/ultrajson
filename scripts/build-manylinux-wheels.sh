@@ -28,11 +28,10 @@ done
 "$PYBIN/pip" install -q auditwheel 
 
 # Wheels aren't considered manylinux unless they have been through 
-# auditwheel. Auditted wheels go in /io/dist/.
+# auditwheel. Audited wheels go in /io/dist/.
 mkdir -p /io/dist/
 
 for whl in /io/temp-wheels/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
-
 

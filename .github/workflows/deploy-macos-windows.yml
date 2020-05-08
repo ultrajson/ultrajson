@@ -41,7 +41,7 @@ jobs:
         pip install .
         pytest
         
-    - name: Build wheel
+    - name: Build macOS/Windows wheel
       if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
               

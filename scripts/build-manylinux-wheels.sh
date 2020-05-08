@@ -12,7 +12,7 @@ set -e -x
 # The last argument is a shell command that the docker will execute. Filenames must be from the docker's perspective.
 
 
-# Wheels are initially generated as you would usually, but put in a temp directory `temp-wheels`.
+# Wheels are initially generated as you would usually, but put in a temp directory temp-wheels.
 # The pip-cache is optional but can speed up local builds having a real permanent pip-cache dir.
 mkdir -p /io/pip-cache
 mkdir -p /io/temp-wheels

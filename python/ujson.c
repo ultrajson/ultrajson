@@ -36,7 +36,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 * Copyright (c) 1994 Sun Microsystems, Inc.
 */
 
-#include "py_defines.h"
+#include <Python.h>
 #include "version.h"
 
 /* objToJSON */
@@ -53,19 +53,21 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs);
 
 
-#define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision of doubles. Set encode_html_chars=True to encode < > & as unicode escape sequences. Set escape_forward_slashes=False to prevent escaping / characters. Set reject_bytes=True to raise TypeError on bytes."
+#define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. " \
+    "Set encode_html_chars=True to encode < > & as unicode escape sequences. "\
+    "Set escape_forward_slashes=False to prevent escaping / characters." \
+    "Set allow_nan=False to raise an exception when NaN or Inf would be serialized." \
+    "Set reject_bytes=True to raise TypeError on bytes."
 
 static PyMethodDef ujsonMethods[] = {
   {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"decode", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"decode", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure."},
   {"dumps", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"loads", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"loads", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure."},
   {"dump", (PyCFunction) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
-  {"load", (PyCFunction) JSONFileToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
+  {"load", (PyCFunction) JSONFileToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure."},
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
-
-#if PY_MAJOR_VERSION >= 3
 
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
@@ -79,35 +81,21 @@ static struct PyModuleDef moduledef = {
   NULL            /* m_free */
 };
 
-#define PYMODINITFUNC       PyObject *PyInit_ujson(void)
-#define PYMODULE_CREATE()   PyModule_Create(&moduledef)
-#define MODINITERROR        return NULL
-
-#else
-
-#define PYMODINITFUNC       PyMODINIT_FUNC initujson(void)
-#define PYMODULE_CREATE()   Py_InitModule("ujson", ujsonMethods)
-#define MODINITERROR        return
-
-#endif
-
-PYMODINITFUNC
+PyObject *PyInit_ujson(void)
 {
   PyObject *module;
   PyObject *version_string;
 
   initObjToJSON();
-  module = PYMODULE_CREATE();
+  module = PyModule_Create(&moduledef);
 
   if (module == NULL)
   {
-    MODINITERROR;
+    return NULL;
   }
 
-  version_string = PyString_FromString (UJSON_VERSION);
+  version_string = PyUnicode_FromString (UJSON_VERSION);
   PyModule_AddObject (module, "__version__", version_string);
 
-#if PY_MAJOR_VERSION >= 3
   return module;
-#endif
 }

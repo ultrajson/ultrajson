@@ -2,25 +2,21 @@ language: python
 cache: pip
 
 arch:
-  - amd64
-  - arm64
   - ppc64le
+  - arm64
   - s390x
 
 python:
-  - "2.7"
   - "3.5"
-  - "3.6"
-  - "3.7"
   - "3.8"
   - "3.9-dev"
 
-matrix:
+jobs:
   fast_finish: true
 
 install:
   - pip install -U pip
-  - pip install -U six blist
+  - pip install -U pytest
   - pip install .
 
-script: python tests/tests.py
+script: pytest

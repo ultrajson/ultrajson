@@ -1,5 +1,4 @@
 ﻿# coding=UTF-8
-from __future__ import division, print_function, unicode_literals
 
 import json
 import os
@@ -25,10 +24,11 @@ FRIENDS = [USER, USER, USER, USER, USER, USER, USER, USER]
 
 decode_data = None
 test_object = None
-skip_lib_comparisons = True
+skip_lib_comparisons = False
 if not skip_lib_comparisons:
+    import nujson
+    import orjson
     import simplejson
-    import yajl
 
 benchmark_results = []
 
@@ -51,20 +51,20 @@ def results_record_result(callback, is_encode, count):
             repeat=10,
             number=count,
         )
-    except TypeError:
+    except (TypeError, json.decoder.JSONDecodeError):
         return
     result = count / min(results)
     benchmark_results[-1][1 if is_encode else 2][library] = result
 
     print(
-        "{} {}: {:.02f} calls/sec".format(
+        "{} {}: {:,.02f} calls/sec".format(
             library, "encode" if is_encode else "decode", result
         )
     )
 
 
 def results_output_table():
-    LIBRARIES = ("ujson", "yajl", "simplejson", "json")
+    LIBRARIES = ("ujson", "nujson", "orjson", "simplejson", "json")
 
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
     print()
@@ -83,10 +83,11 @@ def results_output_table():
             platform.python_implementation(), sys.version.replace("\n", "")
         )
     )
-    print("- blist     : 1.3.6")
-    print("- simplejson: 3.8.1")
-    print("- ujson     : 1.34")
-    print("- yajl      : 0.3.5")
+    if not skip_lib_comparisons:
+        print("- nujson    : {}".format(nujson.__version__))
+        print("- orjson    : {}".format(orjson.__version__))
+        print("- simplejson: {}".format(simplejson.__version__))
+    print("- ujson     : {}".format(ujson.__version__))
     print()
 
     column_widths = [max(len(r[0]) for r in benchmark_results)]
@@ -111,7 +112,7 @@ def results_output_table():
         columns[0] = " encode".ljust(column_widths[0] + 2)
         for i, library in enumerate(LIBRARIES):
             if library in encodes:
-                columns[i + 1] = "{:.2f} ".format(encodes[library]).rjust(
+                columns[i + 1] = "{:,.0f} ".format(encodes[library]).rjust(
                     column_widths[i + 1] + 2
                 )
             else:
@@ -124,7 +125,7 @@ def results_output_table():
             columns[0] = " decode".ljust(column_widths[0] + 2)
             for i, library in enumerate(LIBRARIES):
                 if library in decodes:
-                    columns[i + 1] = "{:.2f} ".format(decodes[library]).rjust(
+                    columns[i + 1] = "{:,.0f} ".format(decodes[library]).rjust(
                         column_widths[i + 1] + 2
                     )
                 else:
@@ -140,16 +141,20 @@ def dumps_with_json():
     json.dumps(test_object)
 
 
+def dumps_with_nujson():
+    nujson.dumps(test_object)
+
+
+def dumps_with_orjson():
+    orjson.dumps(test_object)
+
+
 def dumps_with_simplejson():
     simplejson.dumps(test_object)
 
 
 def dumps_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False)
-
-
-def dumps_with_yajl():
-    yajl.dumps(test_object)
 
 
 # =============================================================================
@@ -163,6 +168,14 @@ def dumps_sorted_with_simplejson():
     simplejson.dumps(test_object, sort_keys=True)
 
 
+def dumps_sorted_with_nujson():
+    nujson.dumps(test_object, sort_keys=True)
+
+
+def dumps_sorted_with_orjson():
+    orjson.dumps(test_object, sort_keys=True)
+
+
 def dumps_sorted_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False, sort_keys=True)
 
@@ -174,16 +187,20 @@ def loads_with_json():
     json.loads(decode_data)
 
 
+def loads_with_nujson():
+    nujson.loads(decode_data)
+
+
+def loads_with_orjson():
+    orjson.loads(decode_data)
+
+
 def loads_with_simplejson():
     simplejson.loads(decode_data)
 
 
 def loads_with_ujson():
     ujson.loads(decode_data)
-
-
-def loads_with_yajl():
-    yajl.loads(decode_data)
 
 
 # =============================================================================
@@ -193,7 +210,8 @@ def run_decode(count):
     results_record_result(loads_with_ujson, False, count)
     if not skip_lib_comparisons:
         results_record_result(loads_with_simplejson, False, count)
-        results_record_result(loads_with_yajl, False, count)
+        results_record_result(loads_with_nujson, False, count)
+        results_record_result(loads_with_orjson, False, count)
         results_record_result(loads_with_json, False, count)
 
 
@@ -201,7 +219,8 @@ def run_encode(count):
     results_record_result(dumps_with_ujson, True, count)
     if not skip_lib_comparisons:
         results_record_result(dumps_with_simplejson, True, count)
-        results_record_result(dumps_with_yajl, True, count)
+        results_record_result(dumps_with_nujson, True, count)
+        results_record_result(dumps_with_orjson, True, count)
         results_record_result(dumps_with_json, True, count)
 
 
@@ -209,6 +228,8 @@ def run_encode_sort_keys(count):
     results_record_result(dumps_sorted_with_ujson, True, count)
     if not skip_lib_comparisons:
         results_record_result(dumps_sorted_with_simplejson, True, count)
+        results_record_result(dumps_sorted_with_nujson, True, count)
+        results_record_result(dumps_sorted_with_orjson, True, count)
         results_record_result(dumps_sorted_with_json, True, count)
 
 
@@ -354,7 +375,7 @@ def benchmark_complex_object():
     results_new_benchmark("Complex object")
     COUNT = 100
 
-    with open(os.path.join(os.path.dirname(__file__), "sample.json"), "r") as f:
+    with open(os.path.join(os.path.dirname(__file__), "sample.json")) as f:
         test_object = json.load(f)
     run_encode(COUNT)
 

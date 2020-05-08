@@ -25,7 +25,7 @@ for PYBIN in /opt/python/cp3[5678]*/bin; do
 #    break
 done
 
-"$PYBIN/pip" install -q auditwheel 
+"$PYBIN/pip" install -q auditwheel
 
 # Wheels aren't considered manylinux unless they have been through 
 # auditwheel. Audited wheels go in /io/dist/.
@@ -34,4 +34,3 @@ mkdir -p /io/dist/
 for whl in /io/temp-wheels/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
-

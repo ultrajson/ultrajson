@@ -16,9 +16,7 @@ mkdir -p /io/pip-cache
 mkdir -p /io/temp-wheels
 
 # Clean out any old existing wheels.
-for whl in /io/temp-wheels/*.whl; do
-    rm "$whl"
-done
+find /io/temp-wheels/ -type f -delete
 
 for PYBIN in /opt/python/cp3[5678]*/bin; do
     "${PYBIN}/pip" install -q -U setuptools wheel pytest --cache-dir /io/pip-cache

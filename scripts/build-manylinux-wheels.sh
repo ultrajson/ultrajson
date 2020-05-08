@@ -9,8 +9,7 @@ set -e -x
 # The -e just defines an evironment variable PLAT=[docker name] inside the docker - auditwheel can't detect the docker name automatically.
 # The -v gives a directory alias for passing files in and out of the docker. (/io is arbitrary). E.g the setup.py script can be accessed in the docker via /io/setup.py
 # quay.io/pypa/manylinux1_x86_64 is the full docker image name. docker downloads it automatically.
-# The last argument is a shell command that the docker will execute. Filenames must be from the docker's perspective.
-
+# The last argument is a shell command that the Docker will execute. Filenames must be from the Docker's perspective.
 
 # Wheels are initially generated as you would usually, but put in a temp directory temp-wheels.
 # The pip-cache is optional but can speed up local builds having a real permanent pip-cache dir.

@@ -525,10 +525,10 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyBytes_Check(obj))
+  if (UNLIKELY(PyBytes_Check(obj)))
   {
     PRINTMARK();
-    if (UNLIKELY(enc->rejectBytes))
+    if (enc->rejectBytes)
     {
       PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AS_STRING(obj));
       goto INVALID;
@@ -759,7 +759,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   int allowNan = -1;
-  PyObject *orejectBytes = NULL;
+  int orejectBytes = -1;
 
   JSONObjectEncoder encoder =
   {
@@ -785,14 +785,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //sortKeys
     0, //indent
     1, //allowNan
-    0, //rejectBytes
+    1, //rejectBytes
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOpiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOpii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
   {
     return NULL;
   }
@@ -828,9 +828,9 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     csNan = "NaN";
   }
 
-  if (orejectBytes != NULL && PyObject_IsTrue(orejectBytes))
+  if (orejectBytes != -1)
   {
-    encoder.rejectBytes = 1;
+    encoder.rejectBytes = orejectBytes;
   }
 
 

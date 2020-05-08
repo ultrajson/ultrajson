@@ -3,7 +3,6 @@ set -e -x
 
 # This is to be run by Docker inside a Docker image.
 # You can test it locally on a Linux machine by installing docker and running from this repo's root:
-# $ sudo chmod 777 scripts/build-manylinux-wheels.sh
 # $ sudo docker run  -e PLAT=manylinux1_x86_64  -v `pwd`:/io  quay.io/pypa/manylinux1_x86_64   /io/scripts/build-manylinux-wheels.sh
 
 # The -e just defines an evironment variable PLAT=[docker name] inside the docker - auditwheel can't detect the docker name automatically.

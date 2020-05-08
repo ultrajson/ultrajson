@@ -32,8 +32,7 @@ done
 mkdir -p /io/dist/
 
 for whl in /io/temp-wheels/*.whl; do
-    auditwheel repair "$whl" --plat $PLAT -w /io/dist/        
+    auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
-
 
 

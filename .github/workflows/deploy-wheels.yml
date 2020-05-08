@@ -21,7 +21,7 @@ jobs:
         include: 
           - os: ubuntu-latest
             python-version: 3.8
-          
+
     steps:
     - uses: actions/checkout@v2
     - run: |
@@ -30,32 +30,32 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade -q pip pytest wheel setuptools twine
-        
+
     - name: Test with pytest
       if: matrix.os != 'ubuntu-latest'
       run: |
         pip install .
         pytest
-        
+
     - name: Build macOS/Windows wheel
       if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
-              
+
     - name: Build Linux wheels
       if: matrix.os == 'ubuntu-latest'
       run: |
         docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
-        docker run  -e PLAT=manylinux1_i686  -v `pwd`:/io quay.io/pypa/manylinux1_i686   /io/scripts/build-manylinux-wheels.sh
-      
+        docker run  -e PLAT=manylinux1_i686 -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
+
     - uses: actions/upload-artifact@v2
       with:
         name: Upload as build artifacts
         path: dist/*.whl
-        
+
     - name: Publish package to PyPI
       if: github.event.action == 'published'
       env: 
@@ -69,4 +69,5 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
       run: |
-        twine upload  --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+        twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+

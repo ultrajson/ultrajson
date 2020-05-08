@@ -45,7 +45,7 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
               
-    - name: Build wheels ubuntu
+    - name: Build Linux wheels
       if: matrix.os == 'ubuntu-latest'
       run: |
         chmod 777 scripts/build-manylinux-wheels.sh

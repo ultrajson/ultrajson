@@ -36,7 +36,7 @@ namespace double_conversion
         d2s_instance = NULL;
     }
 
-    void dconv_s2d_init(int flags, double empty_string_value, 
+    void dconv_s2d_init(int flags, double empty_string_value,
                         double junk_string_value, const char* infinity_symbol,
                         const char* nan_symbol)
     {

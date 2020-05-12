@@ -39,3 +39,5 @@ repos:
       - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
+      - id: trailing-whitespace
+        exclude: "^.github/.*_TEMPLATE.md"

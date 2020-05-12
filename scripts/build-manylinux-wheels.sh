@@ -27,7 +27,7 @@ done
 
 "$PYBIN/pip" install -q auditwheel
 
-# Wheels aren't considered manylinux unless they have been through 
+# Wheels aren't considered manylinux unless they have been through
 # auditwheel. Audited wheels go in /io/dist/.
 mkdir -p /io/dist/
 

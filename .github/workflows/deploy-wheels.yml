@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, macOS-latest]
-        python-version: [3.5, 3.6, 3.7, 3.8] 
-        include: 
+        python-version: [3.5, 3.6, 3.7, 3.8]
+        include:
           - os: ubuntu-latest
             python-version: 3.8
 
@@ -50,7 +50,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
-        docker run  -e PLAT=manylinux1_i686 -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
+        docker run -e PLAT=manylinux1_i686 -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
 
     - uses: actions/upload-artifact@v2
       with:
@@ -59,7 +59,7 @@ jobs:
 
     - name: Publish package to PyPI
       if: github.event.action == 'published'
-      env: 
+      env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
       run: twine upload --skip-existing dist/*.whl

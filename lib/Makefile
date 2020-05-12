@@ -3,7 +3,7 @@ CPP=gcc
 LIBS=-lm
 SOURCE=.
 OBJS=ultrajsonenc.o ultrajsondec.o
-LINKFLAGS=-shared 
+LINKFLAGS=-shared
 #-Wl,-soname,libultrajson.so.1
 
 CPPFLAGS=-D_REENTRANT -D_LINUX

@@ -20,4 +20,3 @@ libultrajson : $(OBJS)
 clean:
 	rm -rf *.o
 	rm -rf $(PROGRAM)
-

@@ -13,21 +13,12 @@
 
 - [ ] Publish release
 
-- [ ] Check the tagged
-      [GitHub Actions build](https://github.com/ultrajson/ultrajson/actions?query=workflow%3ADeploy)
-      has deployed to [PyPI](https://pypi.org/project/ujson/#history)
-
-* [ ] Create wheels in a freshly cloned repo, replace x.y.z with real version:
-
-```bash
-cd /tmp
-rm -rf ultrajson
-git clone https://github.com/ultrajson/ultrajson
-cd ultrajson
-python3 scripts/build-manylinux.py x.y.z
-twine check dist/*
-twine upload dist/*
-```
+- [ ] Check the tagged GitHub Actions builds have deployed
+      [source](https://github.com/ultrajson/ultrajson/actions?query=workflow%3ADeploy)
+      and
+      [wheels](https://github.com/ultrajson/ultrajson/actions?query=workflow%3A%22Deploy+wheels%22)
+      to
+      [PyPI](https://pypi.org/project/ujson/#history)
 
 - [ ] Check installation:
 

@@ -614,18 +614,17 @@ def test_dumps_raises(test_input, expected_exception, expected_message):
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_exception, expected_message",
+    "test_input, expected_exception",
     [
-        (float("nan"), OverflowError, "Invalid value when encoding double"),
-        (float("inf"), OverflowError, "Invalid value when encoding double"),
-        (-float("inf"), OverflowError, "Invalid value when encoding double"),
-        (12839128391289382193812939, OverflowError, "int too big to convert"),
+        (float("nan"), OverflowError),
+        (float("inf"), OverflowError),
+        (-float("inf"), OverflowError),
+        (12839128391289382193812939, OverflowError),
     ],
 )
-def test_encode_raises_allow_nan(test_input, expected_exception, expected_message):
-    with pytest.raises(expected_exception) as e:
+def test_encode_raises_allow_nan(test_input, expected_exception):
+    with pytest.raises(expected_exception):
         ujson.dumps(test_input, allow_nan=False)
-    assert str(e.value) == expected_message
 
 
 @pytest.mark.parametrize(

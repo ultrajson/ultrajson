@@ -215,6 +215,9 @@ def test_encode_dict_conversion():
     assert test_input == ujson.decode(output)
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+)
 def test_encode_dict_values_ref_counting():
     import gc
 
@@ -226,6 +229,9 @@ def test_encode_dict_values_ref_counting():
     assert ref_count == sys.getrefcount(value)
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+)
 def test_encode_dict_key_ref_counting():
     import gc
 

@@ -1,5 +1,3 @@
-﻿# coding=UTF-8
-
 import decimal
 import io
 import json

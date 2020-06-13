@@ -13,9 +13,6 @@ python:
 
 jobs:
   fast_finish: true
-  include:
-    - arch: amd64
-      python: pypy3
 
 install:
   - pip install -U pip

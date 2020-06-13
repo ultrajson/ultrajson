@@ -28,7 +28,7 @@ jobs:
     - run: |
         git fetch --prune --unshallow
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 

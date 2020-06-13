@@ -17,39 +17,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          python -m pip install -U "pip>=20.1"
+          echo "::set-output name=dir::$(pip cache dir)"
 
-      - name: Ubuntu cache
-        uses: actions/cache@v1
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: pip cache
+        uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
+          path: ${{ steps.pip-cache.outputs.dir }}
           key:
-            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
-            }}
+            ${{ matrix.os }}-${{ matrix.python-version }}-v2-${{
+            hashFiles('**/setup.py') }}
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.python-version }}-
+            ${{ matrix.os }}-${{ matrix.python-version }}-v2-
 
-      - name: macOS cache
-        uses: actions/cache@v1
-        if: startsWith(matrix.os, 'macos')
-        with:
-          path: ~/Library/Caches/pip
-          key:
-            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
-            }}
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.python-version }}-
-
-      - name: Windows cache
-        uses: actions/cache@v1
-        if: startsWith(matrix.os, 'windows')
-        with:
-          path: ~\AppData\Local\pip\Cache
-          key:
-            ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/setup.py')
-            }}
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.python-version }}-
 
       - name: Install Python 3.9
         if: matrix.python-version == '3.9'
@@ -70,8 +53,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade pytest
+          python -m pip install -U pip
+          python -m pip install -U pytest
           python -m pip install .
 
       - name: Tests

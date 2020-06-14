@@ -8,12 +8,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.5", "3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.5", "3.6", "3.7", "3.8", "3.9", "pypy3"]
         os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
         exclude:
-          - { python-version: 3.9, os: ubuntu-16.04 }
-          - { python-version: 3.9, os: macos-latest }
-          - { python-version: 3.9, os: windows-2019 }
+          - { python-version: "3.9", os: ubuntu-16.04 }
+          - { python-version: "3.9", os: macos-latest }
+          - { python-version: "3.9", os: windows-2019 }
+          - { python-version: "pypy3", os: macos-latest }
+          - { python-version: "pypy3", os: windows-2019 }
 
     steps:
       - uses: actions/checkout@v2

@@ -11,8 +11,11 @@ jobs:
         python-version: ["3.5", "3.6", "3.7", "3.8"]
         os: [ubuntu-18.04, ubuntu-16.04, macos-latest, windows-2019]
         include:
+          # PyPy3
+          - { python-version: "pypy3", os: ubuntu-18.04 }
+          - { python-version: "pypy3", os: ubuntu-16.04 }
           # Dev versions
-          - { python-version: 3.9-dev, os: ubuntu-18.04 }
+          - { python-version: "3.9-dev", os: ubuntu-18.04 }
 
     steps:
       - uses: actions/checkout@v2

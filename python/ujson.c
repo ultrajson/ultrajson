@@ -41,7 +41,6 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 /* objToJSON */
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs);
-void initObjToJSON(void);
 
 /* JSONToObj */
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs);
@@ -69,30 +68,125 @@ static PyMethodDef ujsonMethods[] = {
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 
-static int ujson_exec(PyObject *module) {
-  PyModule_AddStringConstant(module, "__version__", UJSON_VERSION);
-  return 0;
-}
+typedef struct {
+  PyObject *type_decimal;
+} modulestate;
 
-static PyModuleDef_Slot ujson_slots[] = {
-  {Py_mod_exec, ujson_exec},
-  {0, NULL}
-};
+static int module_traverse(PyObject *m, visitproc visit, void *arg);
+static int module_clear(PyObject *m);
+static void module_free(void *m);
 
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
   "ujson",
-  0,              /* m_doc */
-  NULL,             /* m_size */
-  ujsonMethods,   /* m_methods */
-  ujson_slots,    /* m_slots */
-  NULL,           /* m_traverse */
-  NULL,           /* m_clear */
-  NULL            /* m_free */
+  0,                    /* m_doc */
+  sizeof(modulestate),  /* m_size */
+  ujsonMethods,         /* m_methods */
+  NULL,                 /* m_slots */
+  module_traverse,      /* m_traverse */
+  module_clear,         /* m_clear */
+  module_free           /* m_free */
 };
 
-PyObject *PyInit_ujson(void)
+#define modulestate(o) ((modulestate *)PyModule_GetState(o))
+#define modulestate_global modulestate(PyState_FindModule(&moduledef))
+
+#ifndef PYPY_VERSION
+/* Used in objToJSON.c */
+int object_is_decimal_type(PyObject *obj)
 {
-  initObjToJSON();
-  return PyModuleDef_Init(&moduledef);
+  PyObject *module = PyState_FindModule(&moduledef);
+  if (module == NULL) return 0;
+  modulestate *state = modulestate(module);
+  if (state == NULL) return 0;
+  PyObject *type_decimal = state->type_decimal;
+  if (type_decimal == NULL) {
+    PyErr_Clear();
+    return 0;
+  }
+  int result = PyObject_IsInstance(obj, type_decimal);
+  if (result == -1) {
+    PyErr_Clear();
+    return 0;
+  }
+  return result;
+}
+#else
+/* Used in objToJSON.c */
+int object_is_decimal_type(PyObject *obj)
+{
+  PyObject *module = PyImport_ImportModule("decimal");
+  if (module == NULL) {
+    PyErr_Clear();
+    return 0;
+  }
+  PyObject *type_decimal = PyObject_GetAttrString(module, "Decimal");
+  if (type_decimal == NULL) {
+    Py_DECREF(module);
+    PyErr_Clear();
+    return 0;
+  }
+  int result = PyObject_IsInstance(obj, type_decimal);
+  if (result == -1) {
+    Py_DECREF(module);
+    Py_DECREF(type_decimal);
+    PyErr_Clear();
+    return 0;
+  }
+  return result;
+}
+#endif
+
+static int module_traverse(PyObject *m, visitproc visit, void *arg)
+{
+  Py_VISIT(modulestate(m)->type_decimal);
+  return 0;
+}
+
+static int module_clear(PyObject *m)
+{
+  Py_CLEAR(modulestate(m)->type_decimal);
+  return 0;
+}
+
+static void module_free(void *m)
+{
+  module_clear((PyObject *)m);
+}
+
+PyMODINIT_FUNC PyInit_ujson(void)
+{
+  PyObject* module;
+
+#ifndef PYPY_VERSION
+  // This function is not supported in PyPy.
+  if ((module = PyState_FindModule(&moduledef)) != NULL)
+  {
+    Py_INCREF(module);
+    return module;
+  }
+#endif
+
+  module = PyModule_Create(&moduledef);
+  if (module == NULL)
+  {
+    return NULL;
+  }
+
+  PyModule_AddStringConstant(module, "__version__", UJSON_VERSION);
+
+#ifndef PYPY_VERSION
+  PyObject *mod_decimal = PyImport_ImportModule("decimal");
+  if (mod_decimal)
+  {
+    PyObject* type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
+    assert(type_decimal != NULL);
+    modulestate(module)->type_decimal = type_decimal;
+    Py_DECREF(mod_decimal);
+  }
+  else
+    PyErr_Clear();
+#endif
+
+  return module;
 }

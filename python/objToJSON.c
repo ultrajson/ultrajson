@@ -41,9 +41,10 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <ultrajson.h>
 
 #define EPOCH_ORD 719163
-static PyObject* type_decimal = NULL;
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
+
+int object_is_decimal_type(PyObject *obj);
 
 typedef struct __TypeContext
 {
@@ -80,19 +81,6 @@ struct PyDictIterState
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
-
-void initObjToJSON(void)
-{
-  PyObject* mod_decimal = PyImport_ImportModule("decimal");
-  if (mod_decimal)
-  {
-    type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
-    Py_INCREF(type_decimal);
-    Py_DECREF(mod_decimal);
-  }
-  else
-    PyErr_Clear();
-}
 
 #ifdef _LP64
 static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -132,14 +120,15 @@ static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
-  *_outLen = PyBytes_GET_SIZE(obj);
-  return PyBytes_AS_STRING(obj);
+  *_outLen = PyBytes_Size(obj);
+  return PyBytes_AsString(obj);
 }
 
 static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
   PyObject *newObj;
+#ifndef Py_LIMITED_API
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
     Py_ssize_t len;
@@ -147,6 +136,7 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
     *_outLen = len;
     return data;
   }
+#endif
   newObj = PyUnicode_AsUTF8String(obj);
   if(!newObj)
   {
@@ -155,8 +145,8 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 
   GET_TC(tc)->newObj = newObj;
 
-  *_outLen = PyBytes_GET_SIZE(newObj);
-  return PyBytes_AS_STRING(newObj);
+  *_outLen = PyBytes_Size(newObj);
+  return PyBytes_AsString(newObj);
 }
 
 static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -181,7 +171,7 @@ static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  item = PyTuple_GET_ITEM (obj, GET_TC(tc)->index);
+  item = PyTuple_GetItem (obj, GET_TC(tc)->index);
 
   GET_TC(tc)->itemValue = item;
   GET_TC(tc)->index ++;
@@ -210,7 +200,7 @@ static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyList_GET_ITEM (obj, GET_TC(tc)->index);
+  GET_TC(tc)->itemValue = PyList_GetItem (obj, GET_TC(tc)->index);
   GET_TC(tc)->index ++;
   return 1;
 }
@@ -304,8 +294,8 @@ static JSOBJ Dict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 
 static char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
-  *outLen = PyBytes_GET_SIZE(GET_TC(tc)->itemName);
-  return PyBytes_AS_STRING(GET_TC(tc)->itemName);
+  *outLen = PyBytes_Size(GET_TC(tc)->itemName);
+  return PyBytes_AsString(GET_TC(tc)->itemName);
 }
 
 static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
@@ -338,10 +328,10 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     }
 
     // Obtain the value for each key, and pack a list of (key, value) 2-tuples.
-    nitems = PyList_GET_SIZE(items);
+    nitems = PyList_Size(items);
     for (i = 0; i < nitems; i++)
     {
-      key = PyList_GET_ITEM(items, i);
+      key = PyList_GetItem(items, i);
       value = PyDict_GetItem(GET_TC(tc)->dictObj, key);
 
       // Subject the key to the same type restrictions and conversions as in Dict_iterGetValue.
@@ -384,9 +374,9 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  item = PyList_GET_ITEM(GET_TC(tc)->newObj, GET_TC(tc)->index);
-  GET_TC(tc)->itemName = PyTuple_GET_ITEM(item, 0);
-  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(item, 1);
+  item = PyList_GetItem(GET_TC(tc)->newObj, GET_TC(tc)->index);
+  GET_TC(tc)->itemName = PyTuple_GetItem(item, 0);
+  GET_TC(tc)->itemValue = PyTuple_GetItem(item, 1);
   GET_TC(tc)->index++;
   return 1;
 
@@ -413,8 +403,8 @@ static JSOBJ SortedDict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 
 static char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
-  *outLen = PyBytes_GET_SIZE(GET_TC(tc)->itemName);
-  return PyBytes_AS_STRING(GET_TC(tc)->itemName);
+  *outLen = PyBytes_Size(GET_TC(tc)->itemName);
+  return PyBytes_AsString(GET_TC(tc)->itemName);
 }
 
 static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
@@ -530,7 +520,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     PRINTMARK();
     if (enc->rejectBytes)
     {
-      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AS_STRING(obj));
+      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AsString(obj));
       goto INVALID;
     }
     else
@@ -547,7 +537,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyFloat_Check(obj) || (type_decimal && PyObject_IsInstance(obj, type_decimal)))
+  if (PyFloat_Check(obj) || object_is_decimal_type(obj))
   {
     PRINTMARK();
     pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
@@ -560,6 +550,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     tc->type = JT_NULL;
     return;
   }
+
 
 ISITERABLE:
   if (PyDict_Check(obj))
@@ -580,7 +571,7 @@ ISITERABLE:
     pc->iterGetValue = List_iterGetValue;
     pc->iterGetName = List_iterGetName;
     GET_TC(tc)->index =  0;
-    GET_TC(tc)->size = PyList_GET_SIZE( (PyObject *) obj);
+    GET_TC(tc)->size = PyList_Size( (PyObject *) obj);
     return;
   }
   else
@@ -593,7 +584,7 @@ ISITERABLE:
     pc->iterGetValue = Tuple_iterGetValue;
     pc->iterGetName = Tuple_iterGetName;
     GET_TC(tc)->index = 0;
-    GET_TC(tc)->size = PyTuple_GET_SIZE( (PyObject *) obj);
+    GET_TC(tc)->size = PyTuple_Size( (PyObject *) obj);
     GET_TC(tc)->itemValue = NULL;
 
     return;
@@ -663,7 +654,7 @@ ISITERABLE:
 
   objRepr = PyObject_Repr(obj);
   PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "~E~");
-  PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AS_STRING(str));
+  PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AsString(str));
   Py_XDECREF(str);
   Py_DECREF(objRepr);
 

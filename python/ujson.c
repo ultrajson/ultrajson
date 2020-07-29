@@ -73,7 +73,7 @@ static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
   "ujson",
   0,              /* m_doc */
-  -1,             /* m_size */
+  NULL,             /* m_size */
   ujsonMethods,   /* m_methods */
   NULL,           /* m_reload */
   NULL,           /* m_traverse */
@@ -83,19 +83,6 @@ static struct PyModuleDef moduledef = {
 
 PyObject *PyInit_ujson(void)
 {
-  PyObject *module;
-  PyObject *version_string;
-
   initObjToJSON();
-  module = PyModule_Create(&moduledef);
-
-  if (module == NULL)
-  {
-    return NULL;
-  }
-
-  version_string = PyUnicode_FromString (UJSON_VERSION);
-  PyModule_AddObject (module, "__version__", version_string);
-
-  return module;
+  return PyModuleDef_Init(&moduledef);
 }

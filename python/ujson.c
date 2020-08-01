@@ -69,13 +69,23 @@ static PyMethodDef ujsonMethods[] = {
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 
+static int ujson_exec(PyObject *module) {
+  PyModule_AddStringConstant(module, "__version__", UJSON_VERSION);
+  return 0;
+}
+
+static PyModuleDef_Slot ujson_slots[] = {
+  {Py_mod_exec, ujson_exec},
+  {0, NULL}
+};
+
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
   "ujson",
   0,              /* m_doc */
-  -1,             /* m_size */
+  NULL,             /* m_size */
   ujsonMethods,   /* m_methods */
-  NULL,           /* m_reload */
+  ujson_slots,    /* m_slots */
   NULL,           /* m_traverse */
   NULL,           /* m_clear */
   NULL            /* m_free */
@@ -83,19 +93,6 @@ static struct PyModuleDef moduledef = {
 
 PyObject *PyInit_ujson(void)
 {
-  PyObject *module;
-  PyObject *version_string;
-
   initObjToJSON();
-  module = PyModule_Create(&moduledef);
-
-  if (module == NULL)
-  {
-    return NULL;
-  }
-
-  version_string = PyUnicode_FromString (UJSON_VERSION);
-  PyModule_AddObject (module, "__version__", version_string);
-
-  return module;
+  return PyModuleDef_Init(&moduledef);
 }

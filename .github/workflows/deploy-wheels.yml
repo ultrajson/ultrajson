@@ -31,6 +31,14 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Docker Buildx
+      if: matrix.os == 'ubuntu-latest'
+      id: buildx
+      uses: crazy-max/ghaction-docker-buildx@v3.3.0
+      with:
+        buildx-version: latest
+        qemu-version: latest
+
 
     - name: Install dependencies
       run: |
@@ -46,7 +54,15 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
       run: python setup.py -q bdist_wheel
 
-    - name: Build Linux wheels
+    - name: Build ManyLinux2014_aarch64 wheels
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        docker buildx build --platform linux/arm64 \
+        -t ujson_aarch64 --output tmpwheelhouse -f scripts/Dockerfile_aarch64 .
+        mkdir -p dist
+        mv tmpwheelhouse/wheelhouse/*.whl dist/
+
+    - name: Build x86 Linux wheels
       if: matrix.os == 'ubuntu-latest'
       run: |
         docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh

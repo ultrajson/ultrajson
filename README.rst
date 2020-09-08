@@ -32,11 +32,11 @@ UltraJSON
 UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for
 Python 3.6+.
 
-To install it just run pip as usual:
+Install with pip:
 
 .. code-block:: sh
 
-    $ pip install ujson
+    $ python -m pip install ujson
 
 ============
 Usage

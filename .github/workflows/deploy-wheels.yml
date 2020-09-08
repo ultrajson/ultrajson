@@ -22,15 +22,21 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: 3.8
+            wheel: aarch64
+          - os: ubuntu-latest
+            python-version: 3.8
+            wheel: x86
 
     steps:
     - uses: actions/checkout@v2
     - run: |
         git fetch --prune --unshallow
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Docker Buildx
       if: matrix.os == 'ubuntu-latest'
       id: buildx
@@ -38,7 +44,6 @@ jobs:
       with:
         buildx-version: latest
         qemu-version: latest
-
 
     - name: Install dependencies
       run: |
@@ -55,7 +60,7 @@ jobs:
       run: python setup.py -q bdist_wheel
 
     - name: Build ManyLinux2014_aarch64 wheels
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.wheel == 'aarch64'
       run: |
         docker buildx build --platform linux/arm64 \
         -t ujson_aarch64 --output tmpwheelhouse -f scripts/Dockerfile_aarch64 .
@@ -63,14 +68,15 @@ jobs:
         mv tmpwheelhouse/wheelhouse/*.whl dist/
 
     - name: Build x86 Linux wheels
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.wheel == 'x86'
       run: |
         docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
         docker run -e PLAT=manylinux1_i686 -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
 
-    - uses: actions/upload-artifact@v2
+    - name: Upload as build artifacts
+      uses: actions/upload-artifact@v2
       with:
-        name: Upload as build artifacts
+        name: wheels
         path: dist/*.whl
 
     - name: Publish package to PyPI

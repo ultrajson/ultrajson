@@ -1,5 +1,3 @@
-import os.path
-import re
 from glob import glob
 
 from setuptools import Extension, setup
@@ -35,25 +33,8 @@ module1 = Extension(
 )
 
 
-def get_version():
-    filename = os.path.join(os.path.dirname(__file__), "./python/version.h")
-    file = None
-    try:
-        file = open(filename)
-        header = file.read()
-    finally:
-        if file:
-            file.close()
-    m = re.search(r'#define\s+UJSON_VERSION\s+"(\d+\.\d+(?:\.\d+)?)"', header)
-    assert m, "version.h must contain UJSON_VERSION macro"
-    return m.group(1)
-
-
-f = open("README.rst")
-try:
-    README = f.read()
-finally:
-    f.close()
+with open("README.rst") as f:
+    long_description = f.read()
 
 
 with open("python/version_template.h") as f:
@@ -69,7 +50,7 @@ def local_scheme(version):
 setup(
     name="ujson",
     description="Ultra fast JSON encoder and decoder for Python",
-    long_description=README,
+    long_description=long_description,
     ext_modules=[module1],
     author="Jonas Tarnstrom",
     download_url="https://github.com/ultrajson/ultrajson",

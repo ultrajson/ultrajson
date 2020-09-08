@@ -73,9 +73,10 @@ jobs:
         docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
         docker run -e PLAT=manylinux1_i686 -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
 
-    - uses: actions/upload-artifact@v2
+    - name: Upload as build artifacts
+      uses: actions/upload-artifact@v2
       with:
-        name: Upload as build artifacts
+        name: wheels
         path: dist/*.whl
 
     - name: Publish package to PyPI

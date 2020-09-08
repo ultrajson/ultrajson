@@ -10,7 +10,6 @@ Intended Audience :: Developers
 License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
@@ -83,6 +82,6 @@ setup(
         "write_to_template": version_template,
     },
     setup_requires=["setuptools_scm"],
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     classifiers=[x for x in CLASSIFIERS.split("\n") if x],
 )

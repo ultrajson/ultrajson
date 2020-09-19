@@ -783,7 +783,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOpii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
   {
     return NULL;
   }

@@ -249,6 +249,13 @@ def test_encode_to_utf8():
     assert dec == json.loads(enc)
 
 
+def test_encode_indent():
+    test_input = '{\n    "obj": 31337\n}'
+    obj = ujson.decode(test_input)
+    output = ujson.encode(obj, indent=4)
+    assert test_input == output
+
+
 def test_decode_from_unicode():
     test_input = '{"obj": 31337}'
     dec1 = ujson.decode(test_input)

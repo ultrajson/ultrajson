@@ -46,8 +46,8 @@ def results_record_result(callback, is_encode, count):
     library = callback_name.split("_")[-1]
     try:
         results = timeit.repeat(
-            "{}()".format(callback_name),
-            "from __main__ import {}".format(callback_name),
+            f"{callback_name}()",
+            f"from __main__ import {callback_name}",
             repeat=10,
             number=count,
         )
@@ -84,10 +84,10 @@ def results_output_table():
         )
     )
     if not skip_lib_comparisons:
-        print("- nujson    : {}".format(nujson.__version__))
-        print("- orjson    : {}".format(orjson.__version__))
-        print("- simplejson: {}".format(simplejson.__version__))
-    print("- ujson     : {}".format(ujson.__version__))
+        print(f"- nujson    : {nujson.__version__}")
+        print(f"- orjson    : {orjson.__version__}")
+        print(f"- simplejson: {simplejson.__version__}")
+    print(f"- ujson     : {ujson.__version__}")
     print()
 
     column_widths = [max(len(r[0]) for r in benchmark_results)]

@@ -2,28 +2,27 @@ name: Lint
 
 on: [push, pull_request]
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: pip cache
+      - name: Cache
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
-          key: lint-pip-${{ hashFiles('**/setup.py') }}
+          path: |
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key:
+            lint-${{ hashFiles('**/setup.py') }}-${{
+            hashFiles('**/.pre-commit-config.yaml') }}
           restore-keys: |
-            lint-pip-
-
-      - name: pre-commit cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pre-commit
-          key: lint-pre-commit-v1-${{ hashFiles('**/.pre-commit-config.yaml') }}
-          restore-keys: |
-            lint-pre-commit-v1-
+            lint-
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -37,3 +36,5 @@ jobs:
 
       - name: Lint
         run: pre-commit run --all-files
+        env:
+          PRE_COMMIT_COLOR: always

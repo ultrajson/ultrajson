@@ -34,7 +34,7 @@ module1 = Extension(
 )
 
 
-with open("README.rst") as f:
+with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
 
 

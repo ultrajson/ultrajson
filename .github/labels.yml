@@ -61,6 +61,12 @@
 - color: e28acf
   description: ""
   name: documentation
+- color: f4660e
+  description: ""
+  name: Hacktoberfest
+- color: f4660e
+  description: "To credit accepted Hacktoberfest PRs"
+  name: hacktoberfest-accepted
 - color: caffaf
   description: ""
   name: release

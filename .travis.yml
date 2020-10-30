@@ -9,7 +9,7 @@ arch:
 python:
   - "3.6"
   - "3.8"
-  - "3.9-dev"
+  - "3.9"
 
 jobs:
   fast_finish: true

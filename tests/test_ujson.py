@@ -806,6 +806,11 @@ def test_reject_bytes_false():
     assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
 
 
+def test_encode_none_key():
+    data = {None: None}
+    assert ujson.dumps(data) == '{"null":null}'
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

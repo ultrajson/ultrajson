@@ -258,7 +258,9 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   {
     if (UNLIKELY(GET_TC(tc)->itemName == Py_None))
     {
-      GET_TC(tc)->itemName = PyUnicode_FromString("null");
+      itemNameTmp = PyUnicode_FromString("null");
+      GET_TC(tc)->itemName = PyUnicode_AsUTF8String(itemNameTmp);
+      Py_DECREF(Py_None);
       return 1;
     }
 
@@ -537,17 +539,17 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   else
-  if (PyFloat_Check(obj) || object_is_decimal_type(obj))
-  {
-    PRINTMARK();
-    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
-    return;
-  }
-  else
   if (obj == Py_None)
   {
     PRINTMARK();
     tc->type = JT_NULL;
+    return;
+  }
+  else
+  if (PyFloat_Check(obj) || object_is_decimal_type(obj))
+  {
+    PRINTMARK();
+    pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
     return;
   }
 

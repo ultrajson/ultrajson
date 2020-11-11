@@ -90,6 +90,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
+  int hasError = 0;
   JSUINT64 intValue;
   JSUINT64 prevIntValue;
   int chr;
@@ -130,11 +131,11 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
 
         if (intNeg == 1 && prevIntValue > intValue)
         {
-          return SetError(ds, -1, "Value is too big!");
+          hasError = 1;
         }
         else if (intNeg == -1 && intValue > overflowLimit)
         {
-          return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small");
+          hasError = 1;
         }
 
         offset ++;
@@ -154,6 +155,17 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
 
       default:
       {
+        if (hasError)
+        {
+          if (intNeg == 1)
+          {
+            return SetError(ds, -1, "Value is too big!");
+          }
+          else if (intNeg == -1)
+          {
+            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small");
+          }
+        }
         goto BREAK_INT_LOOP;
         break;
       }

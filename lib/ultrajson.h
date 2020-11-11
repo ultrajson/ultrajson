@@ -337,7 +337,6 @@ EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffe
 
 #define DCONV_DECIMAL_IN_SHORTEST_LOW -4
 #define DCONV_DECIMAL_IN_SHORTEST_HIGH 16
-#
 
 enum dconv_d2s_flags {
   DCONV_D2S_NO_FLAGS = 0,

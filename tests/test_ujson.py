@@ -78,7 +78,8 @@ def test_double_long_decimal_issue():
     assert sut == decoded
 
 
-@pytest.mark.parametrize("val", [1e-4, 1e0, 1e10, 1e15, 1e16, 1e20])
+# NOTE: can't match exponents -9 to -5; Python 0-pads
+@pytest.mark.parametrize("val", [1e-10, 1e-4, 1e10, 1e15, 1e16, 1e30])
 def test_encode_float_string_rep(val):
     assert ujson.dumps(val) == json.dumps(val)
 

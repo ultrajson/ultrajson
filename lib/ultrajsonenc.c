@@ -665,7 +665,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       count = 0;
 
       Buffer_AppendCharUnchecked (enc, '[');
-      Buffer_AppendIndentNewlineUnchecked (enc);
 
       while (enc->iterNext(obj, &tc))
       {
@@ -675,8 +674,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 #ifndef JSON_NO_EXTRA_WHITESPACE
           Buffer_AppendCharUnchecked (enc, ' ');
 #endif
-          Buffer_AppendIndentNewlineUnchecked (enc);
         }
+        Buffer_AppendIndentNewlineUnchecked (enc);
 
         iterObj = enc->iterGetValue(obj, &tc);
 
@@ -687,8 +686,11 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       }
 
       enc->iterEnd(obj, &tc);
-      Buffer_AppendIndentNewlineUnchecked (enc);
-      Buffer_AppendIndentUnchecked (enc, enc->level);
+
+      if (count > 0) {
+        Buffer_AppendIndentNewlineUnchecked (enc);
+        Buffer_AppendIndentUnchecked (enc, enc->level);
+      }
       Buffer_AppendCharUnchecked (enc, ']');
       break;
     }
@@ -698,7 +700,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       count = 0;
 
       Buffer_AppendCharUnchecked (enc, '{');
-      Buffer_AppendIndentNewlineUnchecked (enc);
 
       while ((res = enc->iterNext(obj, &tc)))
       {
@@ -716,8 +717,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 #ifndef JSON_NO_EXTRA_WHITESPACE
           Buffer_AppendCharUnchecked (enc, ' ');
 #endif
-          Buffer_AppendIndentNewlineUnchecked (enc);
         }
+        Buffer_AppendIndentNewlineUnchecked (enc);
 
         iterObj = enc->iterGetValue(obj, &tc);
         objName = enc->iterGetName(obj, &tc, &szlen);
@@ -729,8 +730,11 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       }
 
       enc->iterEnd(obj, &tc);
-      Buffer_AppendIndentNewlineUnchecked (enc);
-      Buffer_AppendIndentUnchecked (enc, enc->level);
+
+      if (count > 0) {
+        Buffer_AppendIndentNewlineUnchecked (enc);
+        Buffer_AppendIndentUnchecked (enc, enc->level);
+      }
       Buffer_AppendCharUnchecked (enc, '}');
       break;
     }

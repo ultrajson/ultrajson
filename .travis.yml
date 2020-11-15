@@ -6,9 +6,9 @@ arch:
   - arm64
   - s390x
 
+# Only test oldest and newest supported versions
 python:
   - "3.6"
-  - "3.8"
   - "3.9"
 
 jobs:

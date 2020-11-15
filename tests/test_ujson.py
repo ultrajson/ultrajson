@@ -249,11 +249,21 @@ def test_encode_to_utf8():
     assert dec == json.loads(enc)
 
 
-def test_encode_indent():
-    test_input = '{\n    "obj": 31337\n}'
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        '{\n    "obj": 31337\n}',
+        "{}",
+        "[]",
+        '{\n    "a": {}\n}',
+        "[\n    []\n]",
+    ],
+)
+def test_encode_indent(test_input):
     obj = ujson.decode(test_input)
     output = ujson.encode(obj, indent=4)
     assert test_input == output
+    assert output == json.dumps(obj, indent=4)
 
 
 def test_decode_from_unicode():

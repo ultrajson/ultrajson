@@ -525,6 +525,7 @@ def test_decode_no_assert(test_input):
     [
         ("31337", 31337),
         ("-31337", -31337),
+        ("100000000000000000000.0", 1e20),
     ],
 )
 def test_decode(test_input, expected):
@@ -547,10 +548,6 @@ def test_decode(test_input, expected):
 def test_decode_numeric_int_exp(test_input):
     output = ujson.decode(test_input)
     assert output == json.loads(test_input)
-
-
-def test_decode_long_float():
-    assert ujson.decode("100000000000000000000.0") == 1e20
 
 
 @pytest.mark.parametrize(

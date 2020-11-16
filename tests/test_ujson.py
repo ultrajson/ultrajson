@@ -525,6 +525,7 @@ def test_decode_no_assert(test_input):
     [
         ("31337", 31337),
         ("-31337", -31337),
+        ("100000000000000000000.0", 1e20),
     ],
 )
 def test_decode(test_input, expected):

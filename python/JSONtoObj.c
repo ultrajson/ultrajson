@@ -49,7 +49,7 @@ static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
   HPy h_obj = HPy_FromVoidP(obj);
   HPy h_name = HPy_FromVoidP(name);
   HPy h_value = HPy_FromVoidP(value);
-  HPyDict_SetItem(ctx, h_obj, h_name, h_value);
+  HPy_SetItem(ctx, h_obj, h_name, h_value);
   HPy_Close(ctx, h_name);
   HPy_Close(ctx, h_value);
   return;
@@ -144,7 +144,27 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
 
 //static char *g_kwlist[] = {"obj", NULL};
 
-HPy_DEF_METH_O(JSONToObj)
+HPyDef_METH(JSONToObj, "loads", JSONToObj_impl, HPyFunc_O,
+            .doc="Converts JSON as string to dict object structure. "
+                 "Use precise_float=True to use high precision float decoder.");
+
+// ujson.c does something a bit weird: it defines two Python-level methods
+// ("encode" and "loads") for the same C-level function
+// ("JSONToObj_impl"). HPyDef_METH does not support this use case, but we can
+// define our HPyDef by hand: HPyDef_METH is just a convenience macro and the
+// structure and fields of HPyDef is part of the publich API
+HPyDef JSONToObj_decode = {
+    .kind = HPyDef_Kind_Meth,
+    .meth = {
+        .name = "decode",
+        .impl = JSONToObj_impl,
+        .cpy_trampoline = JSONToObj_trampoline,
+        .signature = HPyFunc_O,
+        .doc = ("Converts JSON as string to dict object structure. "
+                "Use precise_float=True to use high precision float decoder."),
+    }
+};
+
 static HPy
 JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
 {
@@ -227,7 +247,9 @@ JSONToObj_impl(HPyContext ctx, HPy self, HPy arg)
   return h_ret;
 }
 
-HPy_DEF_METH_O(JSONFileToObj)
+HPyDef_METH(JSONFileToObj, "load", JSONFileToObj_impl, HPyFunc_O,
+            .doc="Converts JSON as file to dict object structure. "
+                 "Use precise_float=True to use high precision float decoder.")
 static HPy
 JSONFileToObj_impl(HPyContext ctx, HPy self, HPy h_arg)
 {

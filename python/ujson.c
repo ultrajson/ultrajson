@@ -47,27 +47,24 @@ void initObjToJSON(void);
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 
 extern HPyDef JSONToObj;
+extern HPyDef JSONToObj_decode;
 extern HPyDef JSONFileToObj;
 
 static HPyDef *module_defines[] = {
     &JSONToObj,
+    &JSONToObj_decode,
     &JSONFileToObj,
     NULL
 };
 
-/*
 #define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision of doubles. Set encode_html_chars=True to encode < > & as unicode escape sequences. Set escape_forward_slashes=False to prevent escaping / characters."
 
-static HPyMethodDef ujsonMethods[] = {
-  {"encode", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"decode", JSONToObj, HPy_METH_O, "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
-  {"dumps", (HPyMeth) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"loads", JSONToObj, HPy_METH_O,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
-  {"dump", (HPyMeth) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
-  {"load", JSONFileToObj, HPy_METH_O, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
-  {NULL, NULL, 0, NULL}
+static PyMethodDef ujsonMethods[] = {
+  {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
+  {"dumps", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
+  {"dump", (PyCFunction) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
+  {NULL, NULL, 0, NULL}       /* Sentinel */
 };
-*/
 
 static HPyModuleDef moduledef = {
   HPyModuleDef_HEAD_INIT,
@@ -75,6 +72,7 @@ static HPyModuleDef moduledef = {
   .m_doc = 0,
   .m_size = -1,
   .defines = module_defines,
+  .legacy_methods = ujsonMethods,
 };
 
 

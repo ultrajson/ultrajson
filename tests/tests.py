@@ -18,12 +18,7 @@ else:
     import unittest
 
 import os
-if os.getenv('HPY_UNIVERSAL') == '1':
-    print('USING THE UNIVERSAL EXTENSION')
-    from tests.support import import_ujson_universal
-    ujson = import_ujson_universal()
-else:
-    import ujson_hpy as ujson
+import ujson_hpy as ujson
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 

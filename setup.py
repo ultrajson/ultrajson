@@ -8,8 +8,8 @@ from distutils.command.build_clib import build_clib
 from distutils.command.build_ext import build_ext
 import os.path
 import re
+import sys
 from glob import glob
-import hpy.devel
 
 CLASSIFIERS = filter(None, map(str.strip,
 """
@@ -49,23 +49,6 @@ class build_clib_without_warnings(build_clib):
         build_clib.build_libraries(self, libraries)
 
 
-# this is a hack: we need a proper way to tell setup.py whether we want an
-# universal module or not
-if os.getenv('HPY_UNIVERSAL') == '1':
-    EXTRA_COMPILE_ARGS = ['-DHPY_UNIVERSAL_ABI']
-    # hack hack hack: convince distutils to use the .hpy.so suffix. There is
-    # probably a better way :)
-    try:
-      from distutils import sysconfig_pypy as sysconfig
-    except ImportError:
-      from distutils import sysconfig
-    sysconfig.get_config_var('EXT_SUFFIX')
-    sysconfig._config_vars['EXT_SUFFIX'] = '.hpy.so'
-else:
-    EXTRA_COMPILE_ARGS = []
-
-#EXTRA_COMPILE_ARGS += ['-g', '-O0']
-
 module1 = Extension(
     'ujson_hpy',
      sources = [
@@ -75,8 +58,8 @@ module1 = Extension(
          './lib/ultrajsonenc.c',
          './lib/ultrajsondec.c'
      ],
-     include_dirs = ['./python', './lib', hpy.devel.get_include()],
-     extra_compile_args = ['-D_GNU_SOURCE'] + EXTRA_COMPILE_ARGS,
+     include_dirs = ['./python', './lib'],
+     extra_compile_args = ['-D_GNU_SOURCE'],
      extra_link_args = ['-lstdc++', '-lm']
 )
 
@@ -104,11 +87,12 @@ finally:
 
 setup(
     name = 'ujson-hpy',
+    setup_requires=['hpy.devel'],
     version = get_version(),
     description = "Ultra fast JSON encoder and decoder for Python",
     long_description = README,
     libraries = [libdoubleconversion],
-    ext_modules = [module1],
+    hpy_ext_modules = [module1],
     author="Jonas Tarnstrom",
     author_email="jonas.tarnstrom@esn.me",
     download_url="http://github.com/esnme/ultrajson",

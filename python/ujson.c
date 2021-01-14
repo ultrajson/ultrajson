@@ -46,10 +46,16 @@ void initObjToJSON(void);
 /* objToJSONFile */
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
 
-HPy_DECL_METH_O(JSONToObj)
-HPy_DECL_METH_O(JSONFileToObj)
+extern HPyDef JSONToObj;
+extern HPyDef JSONFileToObj;
 
+static HPyDef *module_defines[] = {
+    &JSONToObj,
+    &JSONFileToObj,
+    NULL
+};
 
+/*
 #define ENCODER_HELP_TEXT "Use ensure_ascii=false to output UTF-8. Pass in double_precision to alter the maximum digit precision of doubles. Set encode_html_chars=True to encode < > & as unicode escape sequences. Set escape_forward_slashes=False to prevent escaping / characters."
 
 static HPyMethodDef ujsonMethods[] = {
@@ -59,15 +65,16 @@ static HPyMethodDef ujsonMethods[] = {
   {"loads", JSONToObj, HPy_METH_O,  "Converts JSON as string to dict object structure. Use precise_float=True to use high precision float decoder."},
   {"dump", (HPyMeth) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
   {"load", JSONFileToObj, HPy_METH_O, "Converts JSON as file to dict object structure. Use precise_float=True to use high precision float decoder."},
-  {NULL, NULL, 0, NULL}       /* Sentinel */
+  {NULL, NULL, 0, NULL}
 };
+*/
 
 static HPyModuleDef moduledef = {
   HPyModuleDef_HEAD_INIT,
   .m_name = "ujson_hpy",
   .m_doc = 0,
   .m_size = -1,
-  .m_methods = ujsonMethods,
+  .defines = module_defines,
 };
 
 

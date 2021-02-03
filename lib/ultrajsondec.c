@@ -364,7 +364,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
     {
       case DS_ISNULL:
       {
-        return SetError(ds, -1, "Unmatched ''\"' when when decoding 'string'");
+        return SetError(ds, -1, "Unmatched '\"' when decoding 'string'");
       }
       case DS_ISQUOTE:
       {

@@ -4,10 +4,7 @@ set -e -x
 # This is to be run by Docker inside a Docker image.
 # You can test it locally on a Linux machine by installing Docker and running from this
 # repo's root:
-# $ docker run -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
-
-# The -e just defines an environment variable PLAT=[docker name] inside the Docker:
-# auditwheel can't detect the Docker name automatically.
+# $ docker run -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
 
 # The -v gives a directory alias for passing files in and out of the Docker.
 # (/io is arbitrary). E.g the setup.py script can be accessed in the Docker via
@@ -39,5 +36,5 @@ done
 mkdir -p /io/dist/
 
 for whl in /io/temp-wheels/*.whl; do
-    auditwheel repair "$whl" --plat $PLAT -w /io/dist/
+    auditwheel repair "$whl" -w /io/dist/
 done

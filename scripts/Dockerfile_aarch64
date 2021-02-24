@@ -1,6 +1,5 @@
 FROM quay.io/pypa/manylinux2014_aarch64 as build
 
-ENV PLAT=manylinux2014_aarch64
 RUN mkdir -p /io/
 COPY . /io/
 WORKDIR /io/

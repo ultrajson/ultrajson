@@ -47,6 +47,5 @@ jobs:
           python -m pip install .
 
       - name: Tests
-        shell: bash
         run: |
           pytest

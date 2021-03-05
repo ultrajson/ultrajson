@@ -11,17 +11,17 @@ on:
 jobs:
   build:
     if: github.repository == 'ultrajson/ultrajson'
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
       - run: |
             git fetch --prune --unshallow
 
-      - name: Set up Python 3.8
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install dependencies
         run: |

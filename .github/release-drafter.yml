@@ -1,5 +1,5 @@
-name-template: "$NEXT_PATCH_VERSION"
-tag-template: "$NEXT_PATCH_VERSION"
+name-template: "$RESOLVED_VERSION"
+tag-template: "$RESOLVED_VERSION"
 
 categories:
   - title: "Added"
@@ -23,6 +23,21 @@ exclude-labels:
   - "changelog: skip"
 
 template: |
-  ## Changes
-
   $CHANGES
+
+version-resolver:
+  major:
+    labels:
+      - "changelog: Removed"
+  minor:
+    labels:
+      - "changelog: Added"
+      - "changelog: Changed"
+      - "changelog: Deprecated"
+      - "enhancement"
+
+  patch:
+    labels:
+      - "changelog: Fixed"
+      - "bug"
+  default: minor

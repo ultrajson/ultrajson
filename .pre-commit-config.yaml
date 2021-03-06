@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+    rev: v2.10.0
     hooks:
       - id: pyupgrade
         args: ["--py36-plus"]
@@ -12,27 +12,27 @@ repos:
         args: ["--target-version", "py36"]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.5.1
+    rev: 5.7.0
     hooks:
       - id: isort
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.8.4
     hooks:
       - id: flake8
         additional_dependencies: [flake8-2020, flake8-implicit-str-concat]
 
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.6.0
+    rev: v1.8.0
     hooks:
       - id: python-check-blanket-noqa
       - id: rst-backticks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v3.4.0
     hooks:
-      - id: check-merge-conflict
       - id: check-json
+      - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer

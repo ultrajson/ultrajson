@@ -36,7 +36,7 @@ Install with pip:
 
 .. code-block:: sh
 
-    $ python -m pip install ujson
+    python -m pip install ujson
 
 ============
 Usage

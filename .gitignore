@@ -141,3 +141,9 @@ python/version.h
 # Docker wheel build
 pip-cache/
 temp-wheels/
+
+# gcov coverage files
+cov
+*.gcov
+*.gcda
+*.gcno

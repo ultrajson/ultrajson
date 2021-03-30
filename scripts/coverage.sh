@@ -10,7 +10,7 @@
 # The exact arguments depend on whether we're using LLVM's gcov or GNU's.
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)     gcov_options=(--relative-only -k);;
+    Linux*)     gcov_options=(--relative-only);;
     Darwin*)    gcov_options=(--color);;
     *)          echo "Unsupported OS ${unameOut}"; exit 1;;
 esac

@@ -49,3 +49,15 @@ jobs:
       - name: Tests
         run: |
           pytest
+
+      - name: Test with coverage
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.python-version == '3.9' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          pip install -e .
+          pip install coverage
+          CFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
+          coverage run -m pytest
+          ./scripts/coverage.sh
+          bash <(curl -s https://codecov.io/bash) -X gcov

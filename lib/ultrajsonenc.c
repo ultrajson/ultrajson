@@ -73,7 +73,6 @@ The extra 2 bytes are for the quotes around the string
 */
 #define RESERVE_STRING(_len) (2 + ((_len) * 6))
 
-static const double g_pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000};
 static const char g_hexChars[] = "0123456789abcdef";
 static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 

@@ -112,7 +112,7 @@ def results_output_table():
         columns[0] = " encode".ljust(column_widths[0] + 2)
         for i, library in enumerate(LIBRARIES):
             if library in encodes:
-                columns[i + 1] = "{:,.0f} ".format(encodes[library]).rjust(
+                columns[i + 1] = f"{encodes[library]:,.0f} ".rjust(
                     column_widths[i + 1] + 2
                 )
             else:
@@ -125,7 +125,7 @@ def results_output_table():
             columns[0] = " decode".ljust(column_widths[0] + 2)
             for i, library in enumerate(LIBRARIES):
                 if library in decodes:
-                    columns[i + 1] = "{:,.0f} ".format(decodes[library]).rjust(
+                    columns[i + 1] = f"{decodes[library]:,.0f} ".rjust(
                         column_widths[i + 1] + 2
                     )
                 else:

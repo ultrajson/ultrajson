@@ -38,3 +38,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
+
+ci:
+  autoupdate_schedule: monthly

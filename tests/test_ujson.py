@@ -827,6 +827,10 @@ def test_encode_none_key():
     data = {None: None}
     assert ujson.dumps(data) == '{"null":null}'
 
+def test_drop_none():
+    data = [{"key1": "value", "key2": None}, 81, None, {"test": None}]
+    assert ujson.dumps(data, drop_none=False) == '[{"key1":"value","key2":null},81,null,{"test":null}]'
+    assert ujson.dumps(data, drop_none=True) == '[{"key1":"value"},81]'
 
 """
 def test_decode_numeric_int_frc_overflow():

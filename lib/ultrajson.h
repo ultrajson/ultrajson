@@ -258,6 +258,10 @@ typedef struct __JSONObjectEncoder
   int sortKeys;
 
   /*
+  If true, None values are not exported. */
+  int dropNone;
+
+  /*
   Configuration for spaces of indent */
   int indent;
 

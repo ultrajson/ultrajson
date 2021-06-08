@@ -581,6 +581,41 @@ static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double va
   return TRUE;
 }
 
+void Buffer_AppendName(JSONObjectEncoder *enc, JSOBJ obj, const char *name,
+                        size_t cbName) {
+  if (name)
+  {
+    Buffer_AppendCharUnchecked(enc, '\"');
+
+    if (enc->forceASCII)
+    {
+      if (!Buffer_EscapeStringValidated(obj, enc, name, name + cbName))
+      {
+        return;
+      }
+    }
+    else
+    {
+      if (!Buffer_EscapeStringUnvalidated(enc, name, name + cbName))
+      {
+        return;
+      }
+    }
+
+    Buffer_AppendCharUnchecked(enc, '\"');
+
+    Buffer_AppendCharUnchecked (enc, ':');
+#ifdef JSON_NO_EXTRA_WHITESPACE
+    if (enc->indent)
+    {
+      Buffer_AppendCharUnchecked (enc, ' ');
+    }
+#else
+    Buffer_AppendCharUnchecked (enc, ' ');
+#endif
+  }
+}
+
 /*
 FIXME:
 Handle integration functions returning NULL here */
@@ -617,38 +652,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     return;
   }
 
-  if (name)
-  {
-    Buffer_AppendCharUnchecked(enc, '\"');
-
-    if (enc->forceASCII)
-    {
-      if (!Buffer_EscapeStringValidated(obj, enc, name, name + cbName))
-      {
-        return;
-      }
-    }
-    else
-    {
-      if (!Buffer_EscapeStringUnvalidated(enc, name, name + cbName))
-      {
-        return;
-      }
-    }
-
-    Buffer_AppendCharUnchecked(enc, '\"');
-
-    Buffer_AppendCharUnchecked (enc, ':');
-#ifdef JSON_NO_EXTRA_WHITESPACE
-    if (enc->indent)
-    {
-      Buffer_AppendCharUnchecked (enc, ' ');
-    }
-#else
-    Buffer_AppendCharUnchecked (enc, ' ');
-#endif
-  }
-
   tc.encoder_prv = enc->prv;
   enc->beginTypeContext(obj, &tc, enc);
 
@@ -662,6 +665,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_ARRAY:
     {
       count = 0;
+
+      Buffer_AppendName(enc, obj, name, cbName);
 
       Buffer_AppendCharUnchecked (enc, '[');
 
@@ -740,24 +745,28 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_LONG:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
       break;
     }
 
     case JT_ULONG:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
       break;
     }
 
     case JT_INT:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       Buffer_AppendIntUnchecked (enc, enc->getIntValue(obj, &tc));
       break;
     }
 
     case JT_TRUE:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       Buffer_AppendCharUnchecked (enc, 't');
       Buffer_AppendCharUnchecked (enc, 'r');
       Buffer_AppendCharUnchecked (enc, 'u');
@@ -767,6 +776,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_FALSE:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       Buffer_AppendCharUnchecked (enc, 'f');
       Buffer_AppendCharUnchecked (enc, 'a');
       Buffer_AppendCharUnchecked (enc, 'l');
@@ -777,15 +787,20 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_NULL:
     {
-      Buffer_AppendCharUnchecked (enc, 'n');
-      Buffer_AppendCharUnchecked (enc, 'u');
-      Buffer_AppendCharUnchecked (enc, 'l');
-      Buffer_AppendCharUnchecked (enc, 'l');
+      if (!enc->dropNone)
+      {
+        Buffer_AppendName(enc, obj, name, cbName);
+        Buffer_AppendCharUnchecked (enc, 'n');
+        Buffer_AppendCharUnchecked (enc, 'u');
+        Buffer_AppendCharUnchecked (enc, 'l');
+        Buffer_AppendCharUnchecked (enc, 'l');
+      }
       break;
     }
 
     case JT_DOUBLE:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       if (!Buffer_AppendDoubleDconv(obj, enc, enc->getDoubleValue(obj, &tc)))
       {
         enc->endTypeContext(obj, &tc);
@@ -797,6 +812,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_UTF8:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       value = enc->getStringValue(obj, &tc, &szlen);
       if(!value)
       {
@@ -837,6 +853,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_RAW:
     {
+      Buffer_AppendName(enc, obj, name, cbName);
       value = enc->getStringValue(obj, &tc, &szlen);
       if(!value)
       {

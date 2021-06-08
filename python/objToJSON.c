@@ -740,7 +740,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "drop_none", "indent", "allow_nan", "reject_bytes", NULL };
 
   char buffer[65536];
   char *ret;
@@ -751,6 +751,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oencodeHTMLChars = NULL;
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
+  PyObject *odropNone = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
 
@@ -776,16 +777,16 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //encodeHTMLChars
     1, //escapeForwardSlashes
     0, //sortKeys
+    0, //dropNone
     0, //indent
     1, //allowNan
     1, //rejectBytes
     NULL, //prv
   };
 
-
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOOiii", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &odropNone, &encoder.indent, &allowNan, &orejectBytes))
   {
     return NULL;
   }
@@ -808,6 +809,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (odropNone != NULL && PyObject_IsTrue(odropNone))
+  {
+    encoder.dropNone = 1;
   }
 
   if (allowNan != -1)

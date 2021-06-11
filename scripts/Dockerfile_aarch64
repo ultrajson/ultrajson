@@ -4,7 +4,7 @@ RUN mkdir -p /io/
 COPY . /io/
 WORKDIR /io/
 
-RUN ./scripts/build-manylinux-wheels.sh
+RUN bash ./scripts/build-manylinux-wheels.sh
 
 FROM scratch as release
 COPY --from=build /io/dist /wheelhouse

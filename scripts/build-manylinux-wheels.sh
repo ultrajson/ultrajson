@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e -x
 
 # This is to be run by Docker inside a Docker image.

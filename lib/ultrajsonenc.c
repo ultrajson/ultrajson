@@ -569,7 +569,7 @@ static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double va
 {
   char buf[128];
   int strlength;
-  if(!dconv_d2s(value, buf, sizeof(buf), &strlength))
+  if(!dconv_d2s(enc->d2s, value, buf, sizeof(buf), &strlength))
   {
     SetError (obj, enc, "Invalid value when encoding double");
     return FALSE;

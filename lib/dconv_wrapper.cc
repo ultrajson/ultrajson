@@ -2,12 +2,10 @@
 
 namespace double_conversion
 {
-  static StringToDoubleConverter* s2d_instance = NULL;
-  static DoubleToStringConverter* d2s_instance = NULL;
-
   extern "C"
   {
-    void dconv_d2s_init(int flags,
+    void dconv_d2s_init(void **d2s,
+                        int flags,
                         const char* infinity_symbol,
                         const char* nan_symbol,
                         char exponent_character,
@@ -16,43 +14,43 @@ namespace double_conversion
                         int max_leading_padding_zeroes_in_precision_mode,
                         int max_trailing_padding_zeroes_in_precision_mode)
     {
-        d2s_instance = new DoubleToStringConverter(flags, infinity_symbol, nan_symbol,
+        *d2s = new DoubleToStringConverter(flags, infinity_symbol, nan_symbol,
                                         exponent_character, decimal_in_shortest_low,
                                         decimal_in_shortest_high, max_leading_padding_zeroes_in_precision_mode,
                                         max_trailing_padding_zeroes_in_precision_mode);
     }
 
-    int dconv_d2s(double value, char* buf, int buflen, int* strlength)
+    int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength)
     {
         StringBuilder sb(buf, buflen);
-        int success =  static_cast<int>(d2s_instance->ToShortest(value, &sb));
+        int success =  static_cast<int>(static_cast<DoubleToStringConverter*>(d2s)->ToShortest(value, &sb));
         *strlength = success ? sb.position() : -1;
         return success;
     }
 
-    void dconv_d2s_free()
+    void dconv_d2s_free(void **d2s)
     {
-        delete d2s_instance;
-        d2s_instance = NULL;
+        delete static_cast<DoubleToStringConverter*>(*d2s);
+        *d2s = NULL;
     }
 
-    void dconv_s2d_init(int flags, double empty_string_value,
+    void dconv_s2d_init(void **s2d, int flags, double empty_string_value,
                         double junk_string_value, const char* infinity_symbol,
                         const char* nan_symbol)
     {
-        s2d_instance = new StringToDoubleConverter(flags, empty_string_value,
+        *s2d = new StringToDoubleConverter(flags, empty_string_value,
                             junk_string_value, infinity_symbol, nan_symbol);
     }
 
-    double dconv_s2d(const char* buffer, int length, int* processed_characters_count)
+    double dconv_s2d(void *s2d, const char* buffer, int length, int* processed_characters_count)
     {
-        return s2d_instance->StringToDouble(buffer, length, processed_characters_count);
+        return static_cast<StringToDoubleConverter*>(s2d)->StringToDouble(buffer, length, processed_characters_count);
     }
 
-    void dconv_s2d_free()
+    void dconv_s2d_free(void **s2d)
     {
-        delete s2d_instance;
-        s2d_instance = NULL;
+        delete static_cast<StringToDoubleConverter*>(*s2d);
+        *s2d = NULL;
     }
   }
 }

@@ -81,7 +81,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
 {
   int processed_characters_count;
   int len = (int)(ds->end - ds->start);
-  double value = dconv_s2d(ds->start, len, &processed_characters_count);
+  double value = dconv_s2d(ds->dec->s2d, ds->start, len, &processed_characters_count);
   ds->lastType = JT_DOUBLE;
   ds->start += processed_characters_count;
   return ds->dec->newDouble(ds->prv, value);

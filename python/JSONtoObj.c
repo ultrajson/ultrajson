@@ -170,11 +170,12 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   decoder.errorStr = NULL;
   decoder.errorOffset = NULL;
 
-  dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
+  decoder.s2d = NULL;
+  dconv_s2d_init(&decoder.s2d, DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
   ret = JSON_DecodeObject(&decoder, PyBytes_AsString(sarg), PyBytes_Size(sarg));
 
-  dconv_s2d_free();
+  dconv_s2d_free(&decoder.s2d);
 
   if (sarg != arg)
   {

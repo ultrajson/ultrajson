@@ -40,4 +40,4 @@ repos:
         exclude: "^.github/.*_TEMPLATE.md"
 
 ci:
-  autoupdate_schedule: monthly
+  autoupdate_schedule: quarterly

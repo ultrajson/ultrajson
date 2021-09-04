@@ -8,12 +8,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10-dev", "pypy3"]
         os: [ubuntu-20.04, ubuntu-18.04, macos-latest, windows-2019]
-        include:
-          # PyPy3
-          - { python-version: "pypy3", os: ubuntu-20.04 }
-          - { python-version: "pypy3", os: ubuntu-18.04 }
+        exclude:
+          - { python-version: "pypy3", os: macos-latest }
 
     steps:
       - uses: actions/checkout@v2

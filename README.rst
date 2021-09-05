@@ -17,7 +17,7 @@ UltraJSON
     :alt: GitHub Actions status
     :target: https://github.com/ultrajson/ultrajson/actions?query=workflow%3ATest
 
-.. image:: https://travis-ci.com/ultrajson/ultrajson.svg?branch=master
+.. image:: https://travis-ci.com/ultrajson/ultrajson.svg?branch=main
     :alt: Travis CI status
     :target: https://travis-ci.com/ultrajson/ultrajson
 

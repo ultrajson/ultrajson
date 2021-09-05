@@ -6,7 +6,7 @@ name: Deploy wheels
 on:
   push:
     branches:
-      - master
+      - main
   release:
     types:
       - published

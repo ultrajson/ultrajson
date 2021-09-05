@@ -1,11 +1,11 @@
 # Release Checklist
 
-- [ ] Get master to the appropriate code release state.
+- [ ] Get `main` to the appropriate code release state.
       [GitHub Actions](https://github.com/ultrajson/ultrajson/actions) and
       [Travis CI](https://travis-ci.com/ultrajson/ultrajson) should be running
-      cleanly for all merges to master.
+      cleanly for all merges to `main`.
       [![GitHub Actions status](https://github.com/ultrajson/ultrajson/workflows/Test/badge.svg)](https://github.com/ultrajson/ultrajson/actions)
-      [![Build Status](https://travis-ci.org/ultrajson/ultrajson.svg?branch=master)](https://travis-ci.org/ultrajson/ultrajson)
+      [![Build Status](https://travis-ci.org/ultrajson/ultrajson.svg?branch=main)](https://travis-ci.org/ultrajson/ultrajson)
 
 - [ ] Edit release draft, adjust text if needed: https://github.com/ultrajson/ultrajson/releases
 

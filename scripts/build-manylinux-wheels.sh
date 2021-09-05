@@ -4,11 +4,11 @@ set -e -x
 # This is to be run by Docker inside a Docker image.
 # You can test it locally on a Linux machine by installing Docker and running from this
 # repo's root:
-# $ docker run -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
+# $ docker run -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 /io/scripts/build-manylinux-wheels.sh
 
 # The -v gives a directory alias for passing files in and out of the Docker.
 # (/io is arbitrary). E.g the setup.py script can be accessed in the Docker via
-# /io/setup.py quay.io/pypa/manylinux1_x86_64 is the full Docker image name. Docker
+# /io/setup.py quay.io/pypa/manylinux2014_x86_64 is the full Docker image name. Docker
 # downloads it automatically.
 
 # The last argument is a shell command that the Docker will execute. Filenames must be
@@ -22,7 +22,7 @@ mkdir -p /io/temp-wheels
 # Clean out any old existing wheels.
 find /io/temp-wheels/ -type f -delete
 
-for PYBIN in /opt/python/cp3[6789]*/bin; do
+for PYBIN in /opt/python/cp3[678910]*/bin; do
     "${PYBIN}/pip" install -q -U setuptools wheel pytest --cache-dir /io/pip-cache
     (cd /io/ && "${PYBIN}/python" -m pip install .)
     (cd /io/ && "${PYBIN}/python" -m pytest)

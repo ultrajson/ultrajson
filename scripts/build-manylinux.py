@@ -37,7 +37,7 @@ def main():
                 # so files are not root-owned
                 "--user", f"{os.getuid()}:{os.getgid()}",
                 "--volume", f'{os.path.abspath("dist")}:/dist:rw',
-                "quay.io/pypa/manylinux1_x86_64:latest",
+                "quay.io/pypa/manylinux2014_x86_64:latest",
                 "bash", "-euxc",
                 f"{pip} wheel -w /tmp/wheels --no-deps {pkg} && "
                 f"auditwheel repair -w /dist /tmp/wheels/*.whl",

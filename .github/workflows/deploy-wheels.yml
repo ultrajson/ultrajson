@@ -70,8 +70,8 @@ jobs:
     - name: Build x86 Linux wheels
       if: matrix.wheel == 'x86'
       run: |
-        docker run -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/build-manylinux-wheels.sh
-        docker run -v `pwd`:/io quay.io/pypa/manylinux1_i686 /io/scripts/build-manylinux-wheels.sh
+        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 /io/scripts/build-manylinux-wheels.sh
+        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_i686 /io/scripts/build-manylinux-wheels.sh
 
     - name: Upload as build artifacts
       uses: actions/upload-artifact@v2

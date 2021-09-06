@@ -1,9 +1,11 @@
+import datetime as dt
 import decimal
 import io
 import json
 import math
 import re
 import sys
+import uuid
 from collections import OrderedDict
 
 import pytest
@@ -826,6 +828,41 @@ def test_reject_bytes_false():
 def test_encode_none_key():
     data = {None: None}
     assert ujson.dumps(data) == '{"null":null}'
+
+
+def test_default_function():
+    iso8601_time_format = "%Y-%m-%dT%H:%M:%S.%f"
+
+    class CustomObject:
+        pass
+
+    class UnjsonableObject:
+        pass
+
+    def default(value):
+        if isinstance(value, dt.datetime):
+            return value.strftime(iso8601_time_format)
+        elif isinstance(value, uuid.UUID):
+            return value.hex
+        elif isinstance(value, CustomObject):
+            raise ValueError("invalid value")
+        return value
+
+    now = dt.datetime.now()
+    expected_output = '"%s"' % now.strftime(iso8601_time_format)
+    assert ujson.dumps(now, default=default) == expected_output
+
+    uuid4 = uuid.uuid4()
+    expected_output = '"%s"' % uuid4.hex
+    assert ujson.dumps(uuid4, default=default) == expected_output
+
+    custom_obj = CustomObject()
+    with pytest.raises(ValueError, match="invalid value"):
+        ujson.dumps(custom_obj, default=default)
+
+    unjsonable_obj = UnjsonableObject()
+    with pytest.raises(TypeError, match="maximum recursion depth exceeded"):
+        ujson.dumps(unjsonable_obj, default=default)
 
 
 """

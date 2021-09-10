@@ -14,12 +14,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macOS-latest]
+        os: [windows-latest, macOS-latest, ubuntu-latest]
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
         include:
-          - {os: ubuntu-latest, python-version: "3.9", wheel: aarch64}
-          - {os: ubuntu-latest, python-version: "3.9", wheel: i686}
-          - {os: ubuntu-latest, python-version: "3.9", wheel: x86_64}
+          # Add version-tag variable to existing jobs. Only used for Linux.
+          - { python-version: "3.6", version-tag: "cp36-cp36m" }
+          - { python-version: "3.7", version-tag: "cp37-cp37m" }
+          - { python-version: "3.8", version-tag: "cp38-cp38" }
+          - { python-version: "3.9", version-tag: "cp39-cp39" }
+          - { python-version: "3.10-dev", version-tag: "cp310-cp310" }
 
     steps:
     - uses: actions/checkout@v2
@@ -53,15 +56,23 @@ jobs:
         buildx-version: latest
         qemu-version: latest
 
+    - name: Build x86_64 Linux wheels
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      # Build all at once
+      run: |
+        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 /io/scripts/build-manylinux-wheels.sh
+
     - name: Build i686 Linux wheels
-      if: matrix.wheel == 'i686'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      # Build all at once
       run: |
         docker run -v `pwd`:/io quay.io/pypa/manylinux2014_i686 /io/scripts/build-manylinux-wheels.sh
 
-    - name: Build x86_64 Linux wheels
-      if: matrix.wheel == 'x86_64'
+    - name: Build aarch64 Linux wheels
+      if: matrix.os == 'ubuntu-latest'
+      # aarch64 building is slow, let's pass version-tag to build each Python version in parallel
       run: |
-        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64  /io/scripts/build-manylinux-wheels.sh
+        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_aarch64 /io/scripts/build-manylinux-wheels.sh ${{ matrix.version-tag }}
 
     - name: Upload as build artifacts
       uses: actions/upload-artifact@v2

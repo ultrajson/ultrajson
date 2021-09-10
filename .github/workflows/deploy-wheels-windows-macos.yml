@@ -1,7 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Deploy wheels
+name: Deploy Windows/macOS wheels
 
 on:
   push:
@@ -10,22 +7,15 @@ on:
   release:
     types:
       - published
+
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, macOS-latest]
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
-        include:
-          - os: ubuntu-latest
-            python-version: 3.8
-            wheel: aarch64
-          - os: ubuntu-latest
-            python-version: 3.8
-            wheel: x86
 
     steps:
     - uses: actions/checkout@v2
@@ -37,41 +27,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Docker Buildx
-      if: matrix.os == 'ubuntu-latest'
-      id: buildx
-      uses: crazy-max/ghaction-docker-buildx@v3.3.0
-      with:
-        buildx-version: latest
-        qemu-version: latest
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade -q pip pytest wheel setuptools twine
 
     - name: Test with pytest
-      if: matrix.os != 'ubuntu-latest'
       run: |
         pip install .
         pytest
 
-    - name: Build macOS/Windows wheel
-      if: matrix.os != 'ubuntu-latest'
+    - name: Build wheel
       run: python setup.py -q bdist_wheel
-
-    - name: Build ManyLinux2014_aarch64 wheels
-      if: matrix.wheel == 'aarch64'
-      run: |
-        docker buildx build --platform linux/arm64 \
-        -t ujson_aarch64 --output tmpwheelhouse -f scripts/Dockerfile_aarch64 .
-        mkdir -p dist
-        mv tmpwheelhouse/wheelhouse/*.whl dist/
-
-    - name: Build x86 Linux wheels
-      if: matrix.wheel == 'x86'
-      run: |
-        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_x86_64 /io/scripts/build-manylinux-wheels.sh
-        docker run -v `pwd`:/io quay.io/pypa/manylinux2014_i686 /io/scripts/build-manylinux-wheels.sh
 
     - name: Upload as build artifacts
       uses: actions/upload-artifact@v2

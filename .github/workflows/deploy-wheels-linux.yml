@@ -20,9 +20,10 @@ jobs:
             "manylinux2014_x86_64",
             "musllinux_1_1_x86_64",
         ]
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        python-version: ["pypy3", "3.6", "3.7", "3.8", "3.9", "3.10-dev"]
         include:
           # Add version-tag variable to existing jobs
+          - { python-version: "pypy3", version-tag: "pp37-pypy37_pp73" }
           - { python-version: "3.6", version-tag: "cp36-cp36m" }
           - { python-version: "3.7", version-tag: "cp37-cp37m" }
           - { python-version: "3.8", version-tag: "cp38-cp38" }

@@ -18,6 +18,7 @@ jobs:
             "manylinux2014_aarch64",
             "manylinux2014_i686",
             "manylinux2014_x86_64",
+            "musllinux_1_1_x86_64",
         ]
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
         include:

@@ -33,7 +33,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pip install .
+        python -m pip install .
         pytest
 
     - name: Build wheel

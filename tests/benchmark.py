@@ -68,15 +68,11 @@ def results_output_table():
 
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
     print()
-    print("~~~~~~~~~~~~~")
-    print("Test machine:")
-    print("~~~~~~~~~~~~~")
+    print("### Test machine")
     print()
     print(uname_system, uname_release, uname_processor, uname_version)
     print()
-    print("~~~~~~~~~")
-    print("Versions:")
-    print("~~~~~~~~~")
+    print("### Versions")
     print()
     print(
         "- {} {}".format(
@@ -94,19 +90,24 @@ def results_output_table():
     for library in LIBRARIES:
         column_widths.append(max(10, len(library)))
 
-    line = "+{}+".format("+".join("-" * (width + 2) for width in column_widths))
     columns = [" " * (width + 2) for width in column_widths]
     for i, library in enumerate(LIBRARIES):
         columns[i + 1] = (" " + library).ljust(column_widths[i + 1] + 2)
-    print(line)
     print("|{}|".format("|".join(columns)))
-    print(line.replace("-", "="))
+
+    line = (
+        "|"
+        + "-" * (column_widths[0] + 2)
+        + "|"
+        + ":|".join("-" * (width + 1) for width in column_widths[1:])
+        + ":|"
+    )
+    print(line)
 
     for name, encodes, decodes in benchmark_results:
         columns = [" " * (width + 2) for width in column_widths]
         columns[0] = (" " + name).ljust(column_widths[0] + 2)
         print("|{}|".format("|".join(columns)))
-        print(line)
 
         columns = [None] * len(column_widths)
         columns[0] = " encode".ljust(column_widths[0] + 2)
@@ -118,7 +119,6 @@ def results_output_table():
             else:
                 columns[i + 1] = " " * (column_widths[i + 1] + 2)
         print("|{}|".format("|".join(columns)))
-        print(line)
 
         if decodes:
             columns = [None] * len(column_widths)
@@ -131,7 +131,6 @@ def results_output_table():
                 else:
                     columns[i + 1] = " " * (column_widths[i + 1] + 2)
             print("|{}|".format("|".join(columns)))
-            print(line)
 
 
 # =============================================================================

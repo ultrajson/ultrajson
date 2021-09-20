@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-wheels-linux.yml"
+      - "scripts/build-manylinux-wheels.sh"
   release:
     types:
       - published
@@ -75,7 +79,9 @@ jobs:
       run: twine upload --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
-      if: github.repository == 'ultrajson/ultrajson'
+      if: |
+        github.repository == 'ultrajson/ultrajson' &&
+        github.ref == 'refs/heads/main'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.test_pypi_password }}

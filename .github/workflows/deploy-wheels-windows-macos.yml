@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-wheels-windows-macos.yml"
   release:
     types:
       - published
@@ -14,8 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macOS-latest]
+        os: [windows-latest, macos-latest]
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        architecture: [x64, x86]
+        exclude:
+          - {os: macos-latest, architecture: x86}
 
     steps:
     - uses: actions/checkout@v2
@@ -26,6 +32,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
 
     - name: Install dependencies
       run: |
@@ -53,7 +60,9 @@ jobs:
       run: twine upload --skip-existing dist/*.whl
 
     - name: Publish package to TestPyPI
-      if: github.repository == 'ultrajson/ultrajson'
+      if: |
+        github.repository == 'ultrajson/ultrajson' &&
+        github.ref == 'refs/heads/main'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.test_pypi_password }}

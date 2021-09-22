@@ -14,9 +14,7 @@
 - [ ] Publish release
 
 - [ ] Check the tagged GitHub Actions builds have deployed
-      [source](https://github.com/ultrajson/ultrajson/actions?query=workflow%3ADeploy)
-      and
-      [wheels](https://github.com/ultrajson/ultrajson/actions?query=workflow%3A%22Deploy+wheels%22)
+      [source and wheels](https://github.com/ultrajson/ultrajson/actions?query=workflow%3ADeploy)
       to
       [PyPI](https://pypi.org/project/ujson/#history)
 

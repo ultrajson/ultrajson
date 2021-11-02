@@ -25,7 +25,7 @@ jobs:
             "musllinux_1_1_aarch64",
             "musllinux_1_1_x86_64",
         ]
-        python-version: ["pypy3", "3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        python-version: ["pypy3", "3.6", "3.7", "3.8", "3.9", "3.10"]
         include:
           # Add version-tag variable to existing jobs
           - { python-version: "pypy3", version-tag: "pp37-pypy37_pp73" }
@@ -33,7 +33,7 @@ jobs:
           - { python-version: "3.7", version-tag: "cp37-cp37m" }
           - { python-version: "3.8", version-tag: "cp38-cp38" }
           - { python-version: "3.9", version-tag: "cp39-cp39" }
-          - { python-version: "3.10-dev", version-tag: "cp310-cp310" }
+          - { python-version: "3.10", version-tag: "cp310-cp310" }
         exclude:
           # No PyPy3 on musllinux
           - { python-version: "pypy3", wheel: "musllinux_1_1_aarch64" }

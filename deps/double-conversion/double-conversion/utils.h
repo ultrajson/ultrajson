@@ -76,7 +76,7 @@ inline void abort_noreturn() { abort(); }
     defined(__sparc__) || defined(__sparc) || defined(__s390__) || \
     defined(__SH4__) || defined(__alpha__) || \
     defined(_MIPS_ARCH_MIPS32R2) || \
-    defined(__AARCH64EL__) || defined(__aarch64__) || \
+    defined(__AARCH64EL__) || defined(__aarch64__) || defined(_M_ARM64) || \
     defined(__riscv)
 #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
 #elif defined(__mc68000__)

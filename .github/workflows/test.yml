@@ -1,17 +1,20 @@
 name: Test
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  FORCE_COLOR: 1
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10", "pypy3"]
+        python-version: ["pypy-3.8", "3.7", "3.8", "3.9", "3.10"]
         os: [ubuntu-20.04, ubuntu-18.04, macos-latest, windows-2019]
         exclude:
-          - { python-version: "pypy3", os: macos-latest }
+          - { python-version: "pypy-3.8", os: macos-latest }
 
     steps:
       - uses: actions/checkout@v2
@@ -20,21 +23,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "::set-output name=dir::$(pip cache dir)"
-
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key:
-            ${{ matrix.os }}-${{ matrix.python-version }}-v2-${{
-            hashFiles('**/setup.py') }}
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.python-version }}-v2-
+          cache: pip
+          cache-dependency-path: "setup.py"
 
       - name: Install dependencies
         run: |

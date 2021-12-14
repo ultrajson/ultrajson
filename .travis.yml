@@ -8,8 +8,8 @@ arch:
 
 # Only test oldest and newest supported versions
 python:
-  - "3.6"
-  - "3.9"
+  - "3.7"
+  - "3.10-dev"
 
 jobs:
   fast_finish: true

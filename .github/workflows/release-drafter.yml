@@ -5,10 +5,11 @@ on:
     # branches to consider in the event; optional, defaults to all
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   update_release_draft:
-    if: github.repository == 'ultrajson/ultrajson'
+    if: github.repository_owner == 'ultrajson'
     runs-on: ubuntu-latest
     steps:
       # Drafts your next release notes as pull requests are merged into "main"

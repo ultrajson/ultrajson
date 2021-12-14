@@ -1,12 +1,15 @@
 name: Sync labels
+
 on:
   push:
     branches:
       - main
     paths:
       - .github/labels.yml
+  workflow_dispatch:
+
 jobs:
-  build:
+  sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

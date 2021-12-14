@@ -10,7 +10,7 @@
 [![Code style: Black](https://img.shields.io/badge/code%20style-Black-000000.svg)](https://github.com/psf/black)
 
 UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for
-Python 3.6+.
+Python 3.7+.
 
 Install with pip:
 

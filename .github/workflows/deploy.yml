@@ -11,6 +11,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   build-native-wheels:
@@ -143,19 +144,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: "setup.py"
 
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          python -m pip install -U setuptools twine wheel
+          python -m pip install -U build twine wheel
 
       - name: Build package
         run: |
           git tag
           python setup.py --version
-          python setup.py sdist --format=gztar
-          twine check dist/*
+          python -m build --sdist
+          twine check --strict dist/*
 
       - name: Publish package to PyPI
         if: github.event.action == 'published'

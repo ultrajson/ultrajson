@@ -1,17 +1,139 @@
+---
 name: Deploy
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - ".github/workflows/deploy.yml"
   release:
     types:
       - published
 
 jobs:
-  build:
-    if: github.repository == 'ultrajson/ultrajson'
+  build-native-wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macOS-latest, ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
+      - uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.3.0
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+        # Options are supplied via environment variables:
+        env:
+          # Build separate wheels for macOS's different architectures.
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          # Build only on Linux architectures that don't need qemu emulation.
+          CIBW_ARCHS_LINUX: "x86_64 i686"
+          # Don't build with prerelease Python versions.
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.7,<3.11"
+          # Run the test suite after each build.
+          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_COMMAND: pytest {package}/tests
+
+      - name: Upload as build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist/*.whl
+
+      - name: Publish package to PyPI
+        if: github.event.action == 'published'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        run: twine upload --skip-existing dist/*.whl
+
+      - name: Publish package to TestPyPI
+        if: |
+          github.repository == 'ultrajson/ultrajson' &&
+          github.ref == 'refs/heads/main'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
+        run: |
+          twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+
+  build-QEMU-emulated-wheels:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: ["aarch64"]
+        python-version:
+          - pp37
+          - pp38
+          - cp37
+          - cp38
+          - cp39
+          - cp310
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
+      - uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.3.0
+
+      # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+        # Options are supplied via environment variables:
+        env:
+          # Build only the currently selected Linux architecture (so we can
+          # parallelise for speed).
+          CIBW_ARCHS_LINUX: "${{ matrix.architecture }}"
+          # Likewise, select only one Python version per job to speed this up.
+          CIBW_BUILD: "${{ matrix.python-version }}-*"
+          # Run the test suite after each build.
+          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_COMMAND: pytest {package}/tests
+
+      - name: Upload as build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist/*.whl
+
+      - name: Publish package to PyPI
+        if: github.event.action == 'published'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        run: twine upload --skip-existing dist/*.whl
+
+      - name: Publish package to TestPyPI
+        if: |
+          github.repository == 'ultrajson/ultrajson' &&
+          github.ref == 'refs/heads/main'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
+        run: |
+          twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+
+  build-sdist:
     runs-on: ubuntu-20.04
+    needs: ['build-native-wheels', 'build-QEMU-emulated-wheels']
 
     steps:
       - uses: actions/checkout@v2
@@ -43,6 +165,9 @@ jobs:
           password: ${{ secrets.pypi_password }}
 
       - name: Publish package to TestPyPI
+        if: |
+          github.repository == 'ultrajson/ultrajson' &&
+          github.ref == 'refs/heads/main'
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__

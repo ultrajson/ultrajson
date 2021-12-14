@@ -24,10 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: actions/setup-python@v2
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.3.0
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          cache: pip
+          cache-dependency-path: ".github/workflows/deploy.yml"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install cibuildwheel==2.3.0
+          python -m pip install -U twine
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
@@ -83,10 +90,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: actions/setup-python@v2
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.3.0
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          cache: pip
+          cache-dependency-path: ".github/workflows/deploy.yml"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install cibuildwheel==2.3.0
+          python -m pip install -U twine
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU

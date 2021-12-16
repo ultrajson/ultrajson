@@ -1,5 +1,5 @@
-from glob import glob
 import platform
+from glob import glob
 
 from setuptools import Extension, setup
 

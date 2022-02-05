@@ -614,6 +614,10 @@ def test_decode_raises_for_long_input(test_input, expected):
         ujson.decode(test_input * (1024 * 1024))
 
 
+def test_decode_exception_is_value_error():
+    assert issubclass(ujson.JSONDecodeError, ValueError)
+
+
 @pytest.mark.parametrize(
     "test_input, expected",
     [

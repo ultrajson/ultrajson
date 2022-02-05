@@ -555,46 +555,46 @@ def test_decode_numeric_int_exp(test_input):
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ('{{1337:""}}', ValueError),  # broken dict key type leak test
-        ('{{"key":"}', ValueError),  # broken dict leak test
-        ('{{"key":"}', ValueError),  # broken dict leak test
-        ("[[[true", ValueError),  # broken list leak test
+        ('{{1337:""}}', ujson.JSONDecodeError),  # broken dict key type leak test
+        ('{{"key":"}', ujson.JSONDecodeError),  # broken dict leak test
+        ('{{"key":"}', ujson.JSONDecodeError),  # broken dict leak test
+        ("[[[true", ujson.JSONDecodeError),  # broken list leak test
     ],
 )
 def test_decode_range_raises(test_input, expected):
     for x in range(1000):
-        with pytest.raises(ValueError):
+        with pytest.raises(expected):
             ujson.decode(test_input)
 
 
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ("fdsa sda v9sa fdsa", ValueError),  # jibberish
-        ("[", ValueError),  # broken array start
-        ("{", ValueError),  # broken object start
-        ("]", ValueError),  # broken array end
-        ("}", ValueError),  # broken object end
-        ('{"one":1,}', ValueError),  # object trailing comma fail
-        ('"TESTING', ValueError),  # string unterminated
-        ('"TESTING\\"', ValueError),  # string bad escape
-        ("tru", ValueError),  # true broken
-        ("fa", ValueError),  # false broken
-        ("n", ValueError),  # null broken
-        ("{{{{31337}}}}", ValueError),  # dict with no key
-        ('{{{{"key"}}}}', ValueError),  # dict with no colon or value
-        ('{{{{"key":}}}}', ValueError),  # dict with no value
-        ("[31337,]", ValueError),  # array trailing comma fail
-        ("[,31337]", ValueError),  # array leading comma fail
-        ("[,]", ValueError),  # array only comma fail
-        ("[]]", ValueError),  # array unmatched bracket fail
-        ("18446744073709551616", ValueError),  # too big value
-        ("-90223372036854775809", ValueError),  # too small value
-        ("18446744073709551616", ValueError),  # very too big value
-        ("-90223372036854775809", ValueError),  # very too small value
-        ("{}\n\t a", ValueError),  # with trailing non whitespaces
-        ("[18446744073709551616]", ValueError),  # array with big int
-        ('{"age", 44}', ValueError),  # read bad object syntax
+        ("fdsa sda v9sa fdsa", ujson.JSONDecodeError),  # jibberish
+        ("[", ujson.JSONDecodeError),  # broken array start
+        ("{", ujson.JSONDecodeError),  # broken object start
+        ("]", ujson.JSONDecodeError),  # broken array end
+        ("}", ujson.JSONDecodeError),  # broken object end
+        ('{"one":1,}', ujson.JSONDecodeError),  # object trailing comma fail
+        ('"TESTING', ujson.JSONDecodeError),  # string unterminated
+        ('"TESTING\\"', ujson.JSONDecodeError),  # string bad escape
+        ("tru", ujson.JSONDecodeError),  # true broken
+        ("fa", ujson.JSONDecodeError),  # false broken
+        ("n", ujson.JSONDecodeError),  # null broken
+        ("{{{{31337}}}}", ujson.JSONDecodeError),  # dict with no key
+        ('{{{{"key"}}}}', ujson.JSONDecodeError),  # dict with no colon or value
+        ('{{{{"key":}}}}', ujson.JSONDecodeError),  # dict with no value
+        ("[31337,]", ujson.JSONDecodeError),  # array trailing comma fail
+        ("[,31337]", ujson.JSONDecodeError),  # array leading comma fail
+        ("[,]", ujson.JSONDecodeError),  # array only comma fail
+        ("[]]", ujson.JSONDecodeError),  # array unmatched bracket fail
+        ("18446744073709551616", ujson.JSONDecodeError),  # too big value
+        ("-90223372036854775809", ujson.JSONDecodeError),  # too small value
+        ("18446744073709551616", ujson.JSONDecodeError),  # very too big value
+        ("-90223372036854775809", ujson.JSONDecodeError),  # very too small value
+        ("{}\n\t a", ujson.JSONDecodeError),  # with trailing non whitespaces
+        ("[18446744073709551616]", ujson.JSONDecodeError),  # array with big int
+        ('{"age", 44}', ujson.JSONDecodeError),  # read bad object syntax
     ],
 )
 def test_decode_raises(test_input, expected):
@@ -605,8 +605,8 @@ def test_decode_raises(test_input, expected):
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ("[", ValueError),  # array depth too big
-        ("{", ValueError),  # object depth too big
+        ("[", ujson.JSONDecodeError),  # array depth too big
+        ("{", ujson.JSONDecodeError),  # object depth too big
     ],
 )
 def test_decode_raises_for_long_input(test_input, expected):

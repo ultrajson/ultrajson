@@ -6,6 +6,8 @@ arch:
   - arm64
   - s390x
 
+dist: focal
+
 # Only test oldest and newest supported versions
 python:
   - "3.7"

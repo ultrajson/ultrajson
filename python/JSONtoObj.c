@@ -38,6 +38,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #include <Python.h>
 #include <ultrajson.h>
+#include "ujson.h"
 
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
@@ -187,7 +188,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     /*
     FIXME: It's possible to give a much nicer error message here with actual failing element in input etc*/
 
-    PyErr_Format (PyExc_ValueError, "%s", decoder.errorStr);
+    PyErr_Format (JSONDecodeError, "%s", decoder.errorStr);
 
     if (ret)
     {

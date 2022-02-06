@@ -616,6 +616,7 @@ def test_decode_raises_for_long_input(test_input, expected):
 
 def test_decode_exception_is_value_error():
     assert issubclass(ujson.JSONDecodeError, ValueError)
+    assert ujson.JSONDecodeError is not ValueError
 
 
 @pytest.mark.parametrize(

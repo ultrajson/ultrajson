@@ -41,6 +41,7 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 
 #include <float.h>
@@ -113,14 +114,25 @@ FIXME: Keep track of how big these get across several encoder calls and try to m
 That way we won't run our head into the wall each call */
 static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 {
+  size_t free_space = enc->end - enc->offset;
+  if (free_space >= cbNeeded)
+  {
+    return;
+  }
   size_t curSize = enc->end - enc->start;
-  size_t newSize = curSize * 2;
+  size_t newSize = curSize;
   size_t offset = enc->offset - enc->start;
 
+#ifdef DEBUG
+  // In debug mode, allocate only what is requested so that any miscalculation
+  // shows up plainly as a crash.
+  newSize = (enc->offset - enc->start) + cbNeeded;
+#else
   while (newSize < curSize + cbNeeded)
   {
     newSize *= 2;
   }
+#endif
 
   if (enc->heap)
   {
@@ -146,6 +158,12 @@ static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
   enc->offset = enc->start + offset;
   enc->end = enc->start + newSize;
 }
+
+#define Buffer_Reserve(__enc, __len) \
+    if ( (size_t) ((__enc)->end - (__enc)->offset) < (size_t) (__len))  \
+    {   \
+      Buffer_Realloc((__enc), (__len));\
+    }   \
 
 static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
 {
@@ -261,11 +279,19 @@ static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *i
 
 static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
+  Buffer_Reserve(enc, RESERVE_STRING(end - io));
+
   JSUTF32 ucs;
   char *of = (char *) enc->offset;
 
   for (;;)
   {
+#ifdef DEBUG
+  if ((io < end) && (enc->end - of < RESERVE_STRING(1))) {
+    fprintf(stderr, "Ran out of buffer space during Buffer_EscapeStringValidated()\n");
+    abort();
+  }
+#endif
     JSUINT8 utflen = g_asciiOutputTable[(unsigned char) *io];
 
     switch (utflen)
@@ -487,15 +513,28 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
   }
 }
 
-#define Buffer_Reserve(__enc, __len) \
-    if ( (size_t) ((__enc)->end - (__enc)->offset) < (size_t) (__len))  \
-    {   \
-      Buffer_Realloc((__enc), (__len));\
-    }   \
 
-
-#define Buffer_AppendCharUnchecked(__enc, __chr) \
-                *((__enc)->offset++) = __chr; \
+static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendCharUnchecked(JSONObjectEncoder *enc, char chr)
+{
+#ifdef DEBUG
+  if (enc->end <= enc->offset)
+  {
+    fprintf(stderr, "Overflow writing byte %d '%c'. The last few characters were:\n'''", chr, chr);
+    char * recent = enc->offset - 1000;
+    if (enc->start > recent)
+    {
+      recent = enc->start;
+    }
+    for (; recent < enc->offset; recent++)
+    {
+      fprintf(stderr, "%c", *recent);
+    }
+    fprintf(stderr, "'''\n");
+    abort();
+  }
+#endif
+  *(enc->offset++) = chr;
+}
 
 static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end)
 {
@@ -679,6 +718,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         iterObj = enc->iterGetValue(obj, &tc);
 
         enc->level ++;
+        Buffer_Reserve (enc, enc->indent * enc->level);
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, NULL, 0);
         count ++;
@@ -687,6 +727,9 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
+        // Reserve space for the indentation plus the newline and the closing
+        // bracket.
+        Buffer_Reserve (enc, enc->indent * enc->level + 2);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }
@@ -702,6 +745,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       while ((res = enc->iterNext(obj, &tc)))
       {
+        Buffer_Reserve (enc, 3 + (enc->indent * (enc->level + 1)));
         if(res < 0)
         {
           enc->iterEnd(obj, &tc);
@@ -723,6 +767,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         objName = enc->iterGetName(obj, &tc, &szlen);
 
         enc->level ++;
+        Buffer_Reserve (enc, enc->indent * enc->level);
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, objName, szlen);
         count ++;
@@ -731,6 +776,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
+        Buffer_Reserve (enc, enc->indent * enc->level + 4);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

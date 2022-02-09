@@ -31,9 +31,17 @@ jobs:
           python -m pip install -U pip
           python -m pip install -U pytest
           python -m pip install .
+        env:
+          CFLAGS: '-DDEBUG'
 
       - name: Tests
         run: |
+          pytest -s
+
+      - name: Test without debug mode
+        run: |
+          git clean -Xfd
+          python -m pip install --force-reinstall .
           pytest
 
       - name: Test with coverage

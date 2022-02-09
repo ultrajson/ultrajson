@@ -7,6 +7,7 @@ import re
 import sys
 import uuid
 from collections import OrderedDict
+from pathlib import Path
 
 import pytest
 import ujson
@@ -945,6 +946,29 @@ def test_default_function():
     unjsonable_obj = UnjsonableObject()
     with pytest.raises(TypeError, match="maximum recursion depth exceeded"):
         ujson.dumps(unjsonable_obj, default=default)
+
+
+def test_dump_huge_indent():
+    ujson.encode({"a": True}, indent=65539)
+
+
+def test_dump_long_string():
+    ujson.dumps(["aaaa", "\x00" * 10921])
+
+
+def test_dump_indented_nested_list():
+    a = _a = []
+    for i in range(20):
+        _a.append(list(range(i)))
+        _a = _a[-1]
+        ujson.dumps(a, indent=i)
+
+
+@pytest.mark.parametrize("indent", [0, 1, 2, 4, 5, 8, 49])
+def test_issue_334(indent):
+    path = Path(__file__).with_name("334-reproducer.json")
+    a = ujson.loads(path.read_bytes())
+    ujson.dumps(a, indent=indent)
 
 
 """

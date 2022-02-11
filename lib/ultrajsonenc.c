@@ -175,6 +175,7 @@ static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnche
 
 static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
 {
+  Buffer_Reserve(enc, RESERVE_STRING(end - io));
   char *of = (char *) enc->offset;
 
   for (;;)
@@ -720,7 +721,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       if (count > 0) {
         // Reserve space for the indentation plus the newline and the closing
         // bracket.
-        Buffer_Reserve (enc, enc->indent * enc->level + 2);
+        Buffer_Reserve (enc, enc->indent * enc->level + 4);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

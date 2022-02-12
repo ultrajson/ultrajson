@@ -56,9 +56,6 @@ tree doesn't have cyclic references.
 #include <stdio.h>
 #include <wchar.h>
 
-// Don't output any extra whitespaces when encoding
-#define JSON_NO_EXTRA_WHITESPACE
-
 // Max decimals to encode double floating point numbers with
 #ifndef JSON_DOUBLE_MAX_DECIMALS
     #define JSON_DOUBLE_MAX_DECIMALS 15

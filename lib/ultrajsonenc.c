@@ -662,14 +662,10 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     Buffer_AppendCharUnchecked(enc, '\"');
 
     Buffer_AppendCharUnchecked (enc, ':');
-#ifdef JSON_NO_EXTRA_WHITESPACE
     if (enc->indent)
     {
       Buffer_AppendCharUnchecked (enc, ' ');
     }
-#else
-    Buffer_AppendCharUnchecked (enc, ' ');
-#endif
   }
 
   tc.encoder_prv = enc->prv;
@@ -700,9 +696,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         if (count > 0)
         {
           Buffer_AppendCharUnchecked (enc, ',');
-#ifndef JSON_NO_EXTRA_WHITESPACE
-          Buffer_AppendCharUnchecked (enc, ' ');
-#endif
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 
@@ -755,9 +748,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         if (count > 0)
         {
           Buffer_AppendCharUnchecked (enc, ',');
-#ifndef JSON_NO_EXTRA_WHITESPACE
-          Buffer_AppendCharUnchecked (enc, ' ');
-#endif
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 

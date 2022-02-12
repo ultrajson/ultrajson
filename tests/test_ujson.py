@@ -659,6 +659,10 @@ def test_dumps_raises(test_input, expected_exception, expected_message):
         (float("inf"), OverflowError),
         (-float("inf"), OverflowError),
         (12839128391289382193812939, OverflowError),
+        ([12839128391289382193812939], OverflowError),
+        ([12839128391289382193812939, 42], OverflowError),
+        ({"a": 12839128391289382193812939}, OverflowError),
+        ({"a": 12839128391289382193812939, "b": 42}, OverflowError),
     ],
 )
 def test_encode_raises_allow_nan(test_input, expected_exception):

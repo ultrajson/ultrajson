@@ -505,11 +505,17 @@ BEGIN:
       GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
 
       exc = PyErr_Occurred();
-      if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
+      if (exc)
       {
         PRINTMARK();
         goto INVALID;
       }
+    }
+    else
+    if (exc)
+    {
+      PRINTMARK();
+      goto INVALID;
     }
 
     return;

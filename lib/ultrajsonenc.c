@@ -656,6 +656,11 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
   {
     case JT_INVALID:
     {
+      /*
+      There should already be an exception at the Python level.
+      This however sets the errorMsg so recursion on arrays and objects stops.
+      */
+      SetError (obj, enc, "Invalid type");
       return;
     }
 
@@ -681,6 +686,10 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         enc->level ++;
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, NULL, 0);
+        if (enc->errorMsg)
+        {
+          return;
+        }
         count ++;
       }
 
@@ -725,6 +734,10 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         enc->level ++;
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, objName, szlen);
+        if (enc->errorMsg)
+        {
+          return;
+        }
         count ++;
       }
 

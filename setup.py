@@ -7,9 +7,10 @@ from setuptools import Extension, setup
 dconv_source_files = glob("./deps/double-conversion/double-conversion/*.cc")
 dconv_source_files.append("./lib/dconv_wrapper.cc")
 
-if platform.system() == "Linux" and environ.get(
-    "UJSON_BUILD_NO_STRIP", "0"
-) not in ("1", "True"):
+if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not in (
+    "1",
+    "True",
+):
     strip_flags = ["-Wl,--strip-all"]
 else:
     strip_flags = []

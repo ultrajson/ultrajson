@@ -1,6 +1,7 @@
 import platform
 from glob import glob
-from os import environ
+from os import environ, pathsep
+import shlex
 
 from setuptools import Extension, setup
 
@@ -29,10 +30,10 @@ module1 = Extension(
     + environ.get(
         "UJSON_BUILD_DC_INCLUDES",
         "./deps/double-conversion/double-conversion",
-    ).split(),
+    ).split(pathsep),
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"]
-    + environ.get("UJSON_BUILD_DC_LIBS", "").split()
+    + shlex.split(environ.get("UJSON_BUILD_DC_LIBS", ""))
     + strip_flags,
 )
 

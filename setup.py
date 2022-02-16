@@ -1,7 +1,7 @@
 import platform
+import shlex
 from glob import glob
 from os import environ, pathsep
-import shlex
 
 from setuptools import Extension, setup
 
@@ -12,9 +12,7 @@ dconv_includes = environ.get(
 dconv_libs = shlex.split(environ.get("UJSON_BUILD_DC_LIBS", ""))
 dconv_source_files = []
 if not dconv_libs:
-    dconv_source_files.extend(
-        glob("./deps/double-conversion/double-conversion/*.cc")
-    )
+    dconv_source_files.extend(glob("./deps/double-conversion/double-conversion/*.cc"))
 dconv_source_files.append("./lib/dconv_wrapper.cc")
 
 if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not in (

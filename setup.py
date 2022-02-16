@@ -25,9 +25,15 @@ module1 = Extension(
         "./lib/ultrajsonenc.c",
         "./lib/ultrajsondec.c",
     ],
-    include_dirs=["./python", "./lib", "./deps/double-conversion/double-conversion"],
+    include_dirs=["./python", "./lib"]
+    + environ.get(
+        "UJSON_BUILD_DC_INCLUDES",
+        "./deps/double-conversion/double-conversion",
+    ).split(),
     extra_compile_args=["-D_GNU_SOURCE"],
-    extra_link_args=["-lstdc++", "-lm"] + strip_flags,
+    extra_link_args=["-lstdc++", "-lm"]
+    + environ.get("UJSON_BUILD_DC_LIBS", "").split()
+    + strip_flags,
 )
 
 with open("python/version_template.h") as f:

@@ -124,3 +124,39 @@ Linux 5.0.0-1032-azure x86_64 #34-Ubuntu SMP Mon Feb 10 19:37:25 UTC 2020
 | Complex object                                                                |            |            |            |            |            |
 | encode                                                                        |        533 |        582 |            |        408 |        431 |
 | decode                                                                        |        466 |        454 |            |        154 |        164 |
+
+## Build options
+
+For those with particular needs, such as Linux distribution packagers, several
+build options are provided in the form of environment variables.
+
+### Debugging symbols
+
+#### UJSON_BUILD_NO_STRIP
+
+By default, debugging symbols are stripped on Linux platforms. Setting this
+environment variable with a value of `1` or `True` disables this behavior.
+
+### Using an external or system copy of the double-conversion library
+
+These two environment variables are typically used together, something like:
+
+```sh
+export UJSON_BUILD_DC_INCLUDES='/usr/include/double-conversion'
+export UJSON_BUILD_DC_LIBS='-ldouble-conversion'
+```
+
+Users planning to link against an external shared library should be aware of
+the ABI-compatibility requirements this introduces when upgrading system
+libraries or copying compiled wheels to other machines.
+
+#### UJSON_BUILD_DC_INCLUDES
+
+One or more directories, delimited by `os.pathsep` (same as the `PATH`
+environment variable), in which to look for `double-conversion` header files;
+the default is to use the bundled copy.
+
+#### UJSON_BUILD_DC_LIBS
+
+Compiler flags needed to link the `double-conversion` library; the default
+is to use the bundled copy.

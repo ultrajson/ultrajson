@@ -5,10 +5,14 @@ from os import environ, pathsep
 
 from setuptools import Extension, setup
 
-dconv_includes = environ.get(
-    "UJSON_BUILD_DC_INCLUDES",
-    "./deps/double-conversion/double-conversion",
-).split(pathsep)
+dconv_includes = [
+    dir
+    for dir in environ.get(
+        "UJSON_BUILD_DC_INCLUDES",
+        "./deps/double-conversion/double-conversion",
+    ).split(pathsep)
+    if dir
+]
 dconv_libs = shlex.split(environ.get("UJSON_BUILD_DC_LIBS", ""))
 dconv_source_files = []
 if not dconv_libs:

@@ -88,22 +88,6 @@ struct PyDictIterState
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
-#ifdef _LP64
-static void *PyIntToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
-{
-  PyObject *obj = (PyObject *) _obj;
-  *((JSINT64 *) outValue) = PyLong_AsLong (obj);
-  return NULL;
-}
-#else
-static void *PyIntToINT32(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
-{
-  PyObject *obj = (PyObject *) _obj;
-  *((JSINT32 *) outValue) = PyLong_AsLong (obj);
-  return NULL;
-}
-#endif
-
 static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   *((JSINT64 *) outValue) = GET_TC(tc)->longValue;
@@ -521,17 +505,6 @@ BEGIN:
     return;
   }
   else
-  if (PyLong_Check(obj))
-  {
-    PRINTMARK();
-#ifdef _LP64
-    pc->PyTypeToJSON = PyIntToINT64; tc->type = JT_LONG;
-#else
-    pc->PyTypeToJSON = PyIntToINT32; tc->type = JT_INT;
-#endif
-    return;
-  }
-  else
   if (UNLIKELY(PyBytes_Check(obj)))
   {
     PRINTMARK();
@@ -741,14 +714,6 @@ static JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
-{
-  JSINT32 ret;
-  obj = GET_OBJ(obj, tc);
-  GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
-  return ret;
-}
-
 static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
 {
   double ret;
@@ -810,7 +775,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_getStringValue,
     Object_getLongValue,
     Object_getUnsignedLongValue,
-    Object_getIntValue,
     Object_getDoubleValue,
     Object_iterNext,
     Object_iterEnd,

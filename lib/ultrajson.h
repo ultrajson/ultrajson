@@ -198,7 +198,6 @@ typedef struct __JSONObjectEncoder
   const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
   JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
   JSUINT64 (*getUnsignedLongValue)(JSOBJ obj, JSONTypeContext *tc);
-  JSINT32 (*getIntValue)(JSOBJ obj, JSONTypeContext *tc);
   double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 
   /*

@@ -518,22 +518,6 @@ static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
         Buffer_AppendCharUnchecked(enc, ' ');
 }
 
-static void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
-{
-  char* wstr;
-  JSUINT32 uvalue = (value < 0) ? -value : value;
-
-  wstr = enc->offset;
-  // Conversion. Number is reversed.
-
-  do *wstr++ = (char)(48 + (uvalue % 10)); while(uvalue /= 10);
-  if (value < 0) *wstr++ = '-';
-
-  // Reverse string
-  strreverse(enc->offset,wstr - 1);
-  enc->offset += (wstr - (enc->offset));
-}
-
 static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 {
   char* wstr;
@@ -768,12 +752,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_ULONG:
     {
       Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
-      break;
-    }
-
-    case JT_INT:
-    {
-      Buffer_AppendIntUnchecked (enc, enc->getIntValue(obj, &tc));
       break;
     }
 

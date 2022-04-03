@@ -670,6 +670,14 @@ def test_encode_raises_allow_nan(test_input, expected_exception):
         ujson.dumps(test_input, allow_nan=False)
 
 
+def test_nan_inf_support():
+    text = '["a", NaN, "NaN", Infinity, "Infinity", -Infinity, "-Infinity"]'
+    data = ujson.loads(text)
+    expected = ["a", float('nan'), "NaN", float('inf'), "Infinity", -float('inf'), "-Infinity"]
+    for a, b in zip(data, expected):
+        assert a == b or a is b
+
+
 @pytest.mark.parametrize(
     "test_input",
     [

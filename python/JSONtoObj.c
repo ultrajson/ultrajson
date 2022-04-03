@@ -79,12 +79,17 @@ static JSOBJ Object_newNull(void *prv)
   Py_RETURN_NONE;
 }
 
-JSOBJ Object_newPosInf(void *prv)
+static JSOBJ Object_newNaN(void *prv)
+{
+    return PyFloat_FromDouble(Py_NAN);
+}
+
+static JSOBJ Object_newPosInf(void *prv)
 {
     return PyFloat_FromDouble(Py_HUGE_VAL);
 }
 
-JSOBJ Object_newNegInf(void *prv)
+static JSOBJ Object_newNegInf(void *prv)
 {
     return PyFloat_FromDouble(-Py_HUGE_VAL);
 }
@@ -139,6 +144,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_newTrue,
     Object_newFalse,
     Object_newNull,
+    Object_newNaN,
     Object_newPosInf,
     Object_newNegInf,
     Object_newObject,

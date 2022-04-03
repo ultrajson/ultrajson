@@ -672,10 +672,18 @@ def test_encode_raises_allow_nan(test_input, expected_exception):
 
 def test_nan_inf_support():
     import math
+
     text = '["a", NaN, "NaN", Infinity, "Infinity", -Infinity, "-Infinity"]'
     data = ujson.loads(text)
-    expected = ["a", float('nan'), "NaN", float('inf'), "Infinity",
-                -float('inf'), "-Infinity"]
+    expected = [
+        "a",
+        float("nan"),
+        "NaN",
+        float("inf"),
+        "Infinity",
+        -float("inf"),
+        "-Infinity",
+    ]
     for a, b in zip(data, expected):
         assert a == b or math.isnan(a) and math.isnan(b)
 

@@ -396,11 +396,11 @@ def test_decode_number_with32bit_sign_bit():
     # sign bit set (2**31 <= x < 2**32) are decoded properly.
     docs = (
         '{"id": 3590016419}',
-        '{"id": %s}' % 2 ** 31,
-        '{"id": %s}' % 2 ** 32,
-        '{"id": %s}' % ((2 ** 32) - 1),
+        '{"id": %s}' % 2**31,
+        '{"id": %s}' % 2**32,
+        '{"id": %s}' % ((2**32) - 1),
     )
-    results = (3590016419, 2 ** 31, 2 ** 32, 2 ** 32 - 1)
+    results = (3590016419, 2**31, 2**32, 2**32 - 1)
     for doc, result in zip(docs, results):
         assert ujson.decode(doc)["id"] == result
 

@@ -785,6 +785,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   PyObject *odefaultFn = NULL;
+  PyObject *oindent = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
   size_t retLen;
@@ -819,7 +820,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOOiiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &oindent, &allowNan, &orejectBytes, &odefaultFn))
   {
     return NULL;
   }
@@ -842,6 +843,39 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (oindent != NULL)
+  {
+    // Handle multiple input types
+    if (oindent == Py_None)
+    {
+        encoder.indent = 0;
+    }
+    else if (PyLong_Check(oindent))
+    {
+        encoder.indent = PyLong_AsLong(oindent);
+    }
+    else if (PyUnicode_Check(oindent))
+    {
+        encoder.indent = PyObject_Length(oindent);
+        // ujson can only handle the case where the indent is only
+        // spaces, verify that this is the case or raise a ValueError
+        PyObject *py_space = PyUnicode_FromString(" ");
+        PyObject *py_count_fn = PyObject_GetAttrString(oindent, "count");
+        PyObject *py_count_val = PyObject_CallOneArg(py_count_fn, py_space);
+        int count_val = PyLong_AsLong(py_count_val);
+        if (count_val != encoder.indent)
+        {
+            PyErr_SetString(PyExc_ValueError, "indent may only contain spaces");
+            return NULL;
+        }
+    }
+    else
+    {
+        PyErr_Format (PyExc_TypeError, "expected integer, None, or str indent");
+        return NULL;
+    }
   }
 
   if (allowNan != -1)

@@ -670,6 +670,79 @@ def test_encode_raises_allow_nan(test_input, expected_exception):
         ujson.dumps(test_input, allow_nan=False)
 
 
+def test_nan_inf_support():
+    # Test ported from pandas
+    text = '["a", NaN, "NaN", Infinity, "Infinity", -Infinity, "-Infinity"]'
+    data = ujson.loads(text)
+    expected = [
+        "a",
+        float("nan"),
+        "NaN",
+        float("inf"),
+        "Infinity",
+        -float("inf"),
+        "-Infinity",
+    ]
+    for a, b in zip(data, expected):
+        assert a == b or math.isnan(a) and math.isnan(b)
+
+
+def test_special_singletons():
+    pos_inf = ujson.loads("Infinity")
+    neg_inf = ujson.loads("-Infinity")
+    nan = ujson.loads("NaN")
+    null = ujson.loads("null")
+    assert math.isinf(pos_inf) and pos_inf > 0
+    assert math.isinf(neg_inf) and neg_inf < 0
+    assert math.isnan(nan)
+    assert null is None
+
+
+@pytest.mark.parametrize(
+    "test_input, expected_message",
+    [
+        ("n", "Unexpected character .* 'null'"),
+        ("N", "Unexpected character .*'NaN'"),
+        ("NA", "Unexpected character .* 'NaN'"),
+        ("Na N", "Unexpected character .* 'NaN'"),
+        ("nan", "Unexpected character .* 'null'"),
+        ("none", "Unexpected character .* 'null'"),
+        ("i", "Expected object or value"),
+        ("I", "Unexpected character .* 'Infinity'"),
+        ("Inf", "Unexpected character .* 'Infinity'"),
+        ("InfinitY", "Unexpected character .* 'Infinity'"),
+        ("-i", "Trailing data"),
+        ("-I", "Unexpected character .* '-Infinity'"),
+        ("-Inf", "Unexpected character .* '-Infinity'"),
+        ("-InfinitY", "Unexpected character .* '-Infinity'"),
+        ("- i", "Trailing data"),
+        ("- I", "Trailing data"),
+        ("- Inf", "Trailing data"),
+        ("- InfinitY", "Trailing data"),
+    ],
+)
+def test_incomplete_special_inputs(test_input, expected_message):
+    with pytest.raises(ujson.JSONDecodeError, match=expected_message):
+        print(f"test_input = {test_input!r}")
+        ujson.loads(test_input)
+
+
+@pytest.mark.parametrize(
+    "test_input, expected_message",
+    [
+        ("NaNaNaN", "Trailing data"),
+        ("Infinity and Beyond", "Trailing data"),
+        ("-Infinity-and-Beyond", "Trailing data"),
+        ("NaN!", "Trailing data"),
+        ("Infinity!", "Trailing data"),
+        ("-Infinity!", "Trailing data"),
+    ],
+)
+def test_overcomplete_special_inputs(test_input, expected_message):
+    with pytest.raises(ujson.JSONDecodeError, match=expected_message):
+        ujson.loads(test_input)
+
+
 @pytest.mark.parametrize(
     "test_input",
     [

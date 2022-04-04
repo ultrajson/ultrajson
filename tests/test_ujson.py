@@ -699,47 +699,47 @@ def test_special_singletons():
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_exception, expected_message",
+    "test_input, expected_message",
     [
-        ("n", ujson.JSONDecodeError, "Unexpected character .* 'null'"),
-        ("N", ujson.JSONDecodeError, "Unexpected character .*'NaN'"),
-        ("NA", ujson.JSONDecodeError, "Unexpected character .* 'NaN'"),
-        ("Na N", ujson.JSONDecodeError, "Unexpected character .* 'NaN'"),
-        ("nan", ujson.JSONDecodeError, "Unexpected character .* 'null'"),
-        ("none", ujson.JSONDecodeError, "Unexpected character .* 'null'"),
-        ("i", ujson.JSONDecodeError, "Expected object or value"),
-        ("I", ujson.JSONDecodeError, "Unexpected character .* 'Infinity'"),
-        ("Inf", ujson.JSONDecodeError, "Unexpected character .* 'Infinity'"),
-        ("InfinitY", ujson.JSONDecodeError, "Unexpected character .* 'Infinity'"),
-        ("-i", ujson.JSONDecodeError, "Trailing data"),
-        ("-I", ujson.JSONDecodeError, "Unexpected character .* '-Infinity'"),
-        ("-Inf", ujson.JSONDecodeError, "Unexpected character .* '-Infinity'"),
-        ("-InfinitY", ujson.JSONDecodeError, "Unexpected character .* '-Infinity'"),
-        ("- i", ujson.JSONDecodeError, "Trailing data"),
-        ("- I", ujson.JSONDecodeError, "Trailing data"),
-        ("- Inf", ujson.JSONDecodeError, "Trailing data"),
-        ("- InfinitY", ujson.JSONDecodeError, "Trailing data"),
+        ("n", "Unexpected character .* 'null'"),
+        ("N", "Unexpected character .*'NaN'"),
+        ("NA", "Unexpected character .* 'NaN'"),
+        ("Na N", "Unexpected character .* 'NaN'"),
+        ("nan", "Unexpected character .* 'null'"),
+        ("none", "Unexpected character .* 'null'"),
+        ("i", "Expected object or value"),
+        ("I", "Unexpected character .* 'Infinity'"),
+        ("Inf", "Unexpected character .* 'Infinity'"),
+        ("InfinitY", "Unexpected character .* 'Infinity'"),
+        ("-i", "Trailing data"),
+        ("-I", "Unexpected character .* '-Infinity'"),
+        ("-Inf", "Unexpected character .* '-Infinity'"),
+        ("-InfinitY", "Unexpected character .* '-Infinity'"),
+        ("- i", "Trailing data"),
+        ("- I", "Trailing data"),
+        ("- Inf", "Trailing data"),
+        ("- InfinitY", "Trailing data"),
     ],
 )
-def test_incomplete_special_inputs(test_input, expected_exception, expected_message):
-    with pytest.raises(expected_exception, match=expected_message):
-        print(f"test_input = {test_input!r}")
+def test_incomplete_special_inputs(test_input, expected_message):
+    with pytest.raises(ujson.JSONDecodeError, match=expected_message):
+        print("test_input = {!r}".format(test_input))
         ujson.loads(test_input)
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_exception, expected_message",
+    "test_input, expected_message",
     [
-        ("NaNaNaN", ujson.JSONDecodeError, "Trailing data"),
-        ("Infinity and Beyond", ujson.JSONDecodeError, "Trailing data"),
-        ("-Infinity-and-Beyond", ujson.JSONDecodeError, "Trailing data"),
-        ("NaN!", ujson.JSONDecodeError, "Trailing data"),
-        ("Infinity!", ujson.JSONDecodeError, "Trailing data"),
-        ("-Infinity!", ujson.JSONDecodeError, "Trailing data"),
+        ("NaNaNaN", "Trailing data"),
+        ("Infinity and Beyond", "Trailing data"),
+        ("-Infinity-and-Beyond", "Trailing data"),
+        ("NaN!", "Trailing data"),
+        ("Infinity!", "Trailing data"),
+        ("-Infinity!", "Trailing data"),
     ],
 )
-def test_overcomplete_special_inputs(test_input, expected_exception, expected_message):
-    with pytest.raises(expected_exception, match=expected_message):
+def test_overcomplete_special_inputs(test_input, expected_message):
+    with pytest.raises(ujson.JSONDecodeError, match=expected_message):
         ujson.loads(test_input)
 
 

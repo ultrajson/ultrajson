@@ -276,6 +276,35 @@ def test_encode_indent(test_input):
     assert output == json.dumps(obj, indent=4)
 
 
+def test_indent_types():
+    # Python json allows indent to be an int, str, or None.
+    # Check that ujson handles this as well.
+    data = [1, 2, 3]
+    output0a = ujson.encode(data)
+    output0b = ujson.encode(data, indent=None)
+    output0c = ujson.encode(data, indent="")
+    output0d = ujson.encode(data, indent=0)
+
+    output4a = ujson.encode(data, indent=4)
+    output4b = ujson.encode(data, indent="    ")
+
+    assert output0a == output0c
+    assert output0a == output0b
+    assert output0a == output0d
+
+    assert output4a == output4b
+
+    assert output0a != output4a
+
+
+def test_nonspace_indent():
+    # Indent can only contain spaces if it is a string
+    # This is a break with the Python json module, so maybe the
+    # expected result of this tests changes in the future.
+    with pytest.raises(ValueError):
+        ujson.encode([], indent="  aa ")
+
+
 def test_decode_from_unicode():
     test_input = '{"obj": 31337}'
     dec1 = ujson.decode(test_input)

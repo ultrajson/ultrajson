@@ -723,7 +723,7 @@ def test_special_singletons():
 )
 def test_incomplete_special_inputs(test_input, expected_message):
     with pytest.raises(ujson.JSONDecodeError, match=expected_message):
-        print("test_input = {!r}".format(test_input))
+        print(f"test_input = {test_input!r}")
         ujson.loads(test_input)
 
 

@@ -128,7 +128,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
     Py_ssize_t len;
-    char *data = PyUnicode_AsUTF8AndSize(obj, &len);
+    const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
     *_outLen = len;
     return data;
   }
@@ -764,6 +764,30 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
 
+
+static const char *_PyUnicodeToChars(PyObject *obj, size_t *_outLen)
+{
+  // helper for indent only
+  PyObject *newObj;
+#ifndef Py_LIMITED_API
+  if (PyUnicode_IS_COMPACT_ASCII(obj))
+  {
+    Py_ssize_t len;
+    const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
+    *_outLen = len;
+    return data;
+  }
+#endif
+  newObj = PyUnicode_AsUTF8String(obj);
+  if(!newObj)
+  {
+    return NULL;
+  }
+
+  *_outLen = PyBytes_Size(newObj);
+  return PyBytes_AsString(newObj);
+}
+
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", NULL };
@@ -805,6 +829,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     1, //escapeForwardSlashes
     0, //sortKeys
     0, //indent
+    NULL, //indent chars
     1, //allowNan
     1, //rejectBytes
     NULL, //prv
@@ -851,18 +876,13 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     }
     else if (PyUnicode_Check(oindent))
     {
-        encoder.indent = PyObject_Length(oindent);
-        // ujson can only handle the case where the indent is only
-        // spaces, verify that this is the case or raise a ValueError
-        PyObject *py_space = PyUnicode_FromString(" ");
-        PyObject *py_count_fn = PyObject_GetAttrString(oindent, "count");
-        PyObject *py_count_args = PyTuple_New(1);
-        PyTuple_SetItem(py_count_args, 0, py_space);
-        PyObject *py_count_val = PyObject_Call(py_count_fn, py_count_args, NULL);
-        int count_val = PyLong_AsLong(py_count_val);
-        if (count_val != encoder.indent)
+        // set a custom indent string
+        size_t olen = 0;
+        encoder.indentChars = _PyUnicodeToChars(oindent, &olen);
+        encoder.indent = (int) olen;
+        if(encoder.indentChars == NULL)
         {
-            PyErr_SetString(PyExc_ValueError, "indent may only contain spaces");
+            PyErr_SetString(PyExc_ValueError, "indent was malformed");
             return NULL;
         }
     }

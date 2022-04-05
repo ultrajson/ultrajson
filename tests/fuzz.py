@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 A brute force fuzzer for detecting memory issues in ujson.dumps(). To use, first
 compile ujson in debug mode:

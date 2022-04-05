@@ -298,11 +298,30 @@ def test_indent_types():
 
 
 def test_nonspace_indent():
-    # Indent can only contain spaces if it is a string
-    # This is a break with the Python json module, so maybe the
-    # expected result of this tests changes in the future.
-    with pytest.raises(ValueError):
-        ujson.encode([], indent="  aa ")
+    # Nonspace inputs are allowed
+    assert ujson.encode([1], indent="900") == "[\n9001\n]"
+    assert ujson.encode([1], indent="\t") == "[\n\t1\n]"
+    assert ujson.encode([1], indent="\n  \t") == "[\n\n  \t1\n]"
+    indent = b"\xe6\x97\xa5\xd1\x88".decode("utf-8")
+    assert ujson.encode([1], indent=indent) == b"[\n\xe6\x97\xa5\xd1\x881\n]".decode(
+        "utf-8"
+    )
+    assert ujson.encode([1], indent="\udc80") == "[\n\udc801\n]"
+
+
+@pytest.mark.parametrize(
+    "indent",
+    [
+        b" ",  # simple byte indent
+        b"\xfd\xbf\xbf\xbf\xbf\xbf",  # complex byte indent
+        3.2,
+        object,
+    ],
+)
+def test_indent_type_errors(indent):
+    # Ensure we throw a type error when indent gets a bad input
+    with pytest.raises(TypeError):
+        ujson.encode([1], indent=indent)
 
 
 def test_decode_from_unicode():

@@ -576,9 +576,20 @@ static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
   int i;
   if (enc->indent > 0)
-    while (value-- > 0)
-      for (i = 0; i < enc->indent; i++)
-        Buffer_AppendCharUnchecked(enc, ' ');
+  {
+    if (enc->indentChars == NULL)
+    {
+      while (value-- > 0)
+        for (i = 0; i < enc->indent; i++)
+          Buffer_AppendCharUnchecked(enc, ' ');
+    }
+    else
+    {
+      while (value-- > 0)
+        for (i = 0; i < enc->indent; i++)
+          Buffer_AppendCharUnchecked(enc, enc->indentChars[i]);
+    }
+  }
 }
 
 static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)

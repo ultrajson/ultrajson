@@ -856,7 +856,9 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
         // spaces, verify that this is the case or raise a ValueError
         PyObject *py_space = PyUnicode_FromString(" ");
         PyObject *py_count_fn = PyObject_GetAttrString(oindent, "count");
-        PyObject *py_count_val = PyObject_CallOneArg(py_count_fn, py_space);
+        PyObject *py_count_args = PyTuple_New(1);
+        PyTuple_SetItem(py_count_args, 0, py_space);
+        PyObject *py_count_val = PyObject_Call(py_count_fn, py_count_args, NULL);
         int count_val = PyLong_AsLong(py_count_val);
         if (count_val != encoder.indent)
         {

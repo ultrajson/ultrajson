@@ -948,12 +948,15 @@ def test_default_function():
         ujson.dumps(unjsonable_obj, default=default)
 
 
-def test_dump_huge_indent():
-    ujson.encode({"a": True}, indent=65539)
+@pytest.mark.parametrize("indent", list(range(65537, 65542)))
+def test_dump_huge_indent(indent):
+    ujson.encode({"a": True}, indent=indent)
 
 
-def test_dump_long_string():
-    ujson.dumps(["aaaa", "\x00" * 10921])
+@pytest.mark.parametrize("first_length", list(range(2, 7)))
+@pytest.mark.parametrize("second_length", list(range(10919, 10924)))
+def test_dump_long_string(first_length, second_length):
+    ujson.dumps(["a" * first_length, "\x00" * second_length])
 
 
 def test_dump_indented_nested_list():

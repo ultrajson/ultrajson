@@ -974,6 +974,28 @@ def test_issue_334(indent):
     ujson.dumps(a, indent=indent)
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+)
+def test_default_ref_counting():
+    class DefaultRefCountingClass:
+        def __init__(self, value):
+            self._value = value
+
+        def convert(self):
+            if self._value > 1:
+                return type(self)(self._value - 1)
+            return 0
+
+    import gc
+
+    gc.collect()
+    ujson.dumps(DefaultRefCountingClass(3), default=lambda x: x.convert())
+    assert not any(
+        type(o).__name__ == "DefaultRefCountingClass" for o in gc.get_objects()
+    )
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

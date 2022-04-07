@@ -648,6 +648,7 @@ DEFAULT:
     if (newObj)
     {
       PRINTMARK();
+      Py_XDECREF(pc->newObj);
       obj = pc->newObj = newObj;
       level += 1;
       goto BEGIN;

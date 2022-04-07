@@ -239,11 +239,11 @@ def test_encode_dict_values_ref_counting():
 @pytest.mark.skipif(
     hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
 )
-def test_encode_dict_key_ref_counting():
+@pytest.mark.parametrize("key", ["key", b"key", 1, True, None])
+def test_encode_dict_key_ref_counting(key):
     import gc
 
     gc.collect()
-    key = "key"
     data = {key: "abc"}
     ref_count = sys.getrefcount(key)
     ujson.dumps(data)

@@ -254,14 +254,12 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       return 1;
     }
 
+    itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
+    Py_DECREF(itemNameTmp);
     itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
     Py_DECREF(itemNameTmp);
-  }
-  else
-  {
-    Py_INCREF(GET_TC(tc)->itemName);
   }
   PRINTMARK();
   return 1;

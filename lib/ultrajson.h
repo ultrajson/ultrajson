@@ -258,7 +258,7 @@ typedef struct __JSONObjectEncoder
 
   /*
   Configuration for spaces of indent */
-  int indent;
+  int indentLength;
   const char* indentChars;
 
   /*

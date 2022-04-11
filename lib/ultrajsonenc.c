@@ -544,26 +544,26 @@ static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, ch
 
 static void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
 {
-  if (enc->indent > 0) Buffer_AppendCharUnchecked(enc, '\n');
+  if (enc->indentLength > -1) Buffer_AppendCharUnchecked(enc, '\n');
 }
 
 static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
   int i;
-  if (enc->indent > 0)
+  if (enc->indentLength > -1)
   {
-    if (enc->indentChars == NULL)
-    {
+    /*if (enc->indentChars == NULL)              */
+    /*{                                          */
+    /*  while (value-- > 0)                      */
+    /*    for (i = 0; i < enc->indentLength; i++)*/
+    /*      Buffer_AppendCharUnchecked(enc, ' ');*/
+    /*}                                          */
+    /*else                                       */
+    /*{                                          */
       while (value-- > 0)
-        for (i = 0; i < enc->indent; i++)
-          Buffer_AppendCharUnchecked(enc, ' ');
-    }
-    else
-    {
-      while (value-- > 0)
-        for (i = 0; i < enc->indent; i++)
+        for (i = 0; i < enc->indentLength; i++)
           Buffer_AppendCharUnchecked(enc, enc->indentChars[i]);
-    }
+    /*}*/
   }
 }
 
@@ -666,7 +666,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     Buffer_AppendCharUnchecked(enc, '\"');
 
     Buffer_AppendCharUnchecked (enc, ':');
-    if (enc->indent)
+    if (enc->indentLength)
     {
       Buffer_AppendCharUnchecked (enc, ' ');
     }
@@ -709,7 +709,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while (enc->iterNext(obj, &tc))
       {
         // The extra 2 bytes cover the comma and (optional) newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
 
         if (count > 0)
         {
@@ -736,7 +736,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       if (count > 0) {
         // Reserve space for the indentation plus the newline.
-        Buffer_Reserve (enc, enc->indent * enc->level + 1);
+        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }
@@ -754,7 +754,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while ((res = enc->iterNext(obj, &tc)))
       {
         // The extra 2 bytes cover the comma and optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
 
         if(res < 0)
         {
@@ -789,7 +789,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
-        Buffer_Reserve (enc, enc->indent * enc->level + 1);
+        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

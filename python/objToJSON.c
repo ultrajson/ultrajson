@@ -765,22 +765,24 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 }
 
 
-static const char *_PyUnicodeToChars(PyObject *obj, size_t *_outLen)
+static const char *_PyUnicodeToChars(PyObject *obj, int *_outLen)
 {
   // helper for indent only
+  // an error occurs when the return is NULL and _outLen is 0
   PyObject *newObj;
-#ifndef Py_LIMITED_API
+/*#ifndef Py_LIMITED_API*/
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
-    Py_ssize_t len;
+    Py_ssize_t len = 0;
     const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
     *_outLen = len;
     return data;
   }
-#endif
+/*#endif*/
   newObj = PyUnicode_AsUTF8String(obj);
   if(!newObj)
   {
+    *_outLen = 0;
     return NULL;
   }
 
@@ -868,21 +870,32 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     // Handle multiple input types
     if (oindent == Py_None)
     {
-        encoder.indent = 0;
+        encoder.indentLength = -1;
+        /*sprintf(encoder.indentChars, "");  // how to do this right in C?*/
     }
     else if (PyLong_Check(oindent))
     {
-        encoder.indent = PyLong_AsLong(oindent);
+        encoder.indentLength = PyLong_AsLong(oindent);
+        sprintf(encoder.indentChars, " ");  // how to do this right in C?
     }
     else if (PyUnicode_Check(oindent))
     {
         // set a custom indent string
-        size_t olen = 0;
+        int olen = -1;
+
+        printf("\nIndent Print: '''\n");
+        PyObject_Print(oindent, stdout, 0);
+        printf("\n'''\n");
+        printf("before olen = %d\n", olen);
         encoder.indentChars = _PyUnicodeToChars(oindent, &olen);
-        encoder.indent = (int) olen;
-        if(encoder.indentChars == NULL)
+        printf("after olen = %d\n", olen);
+        encoder.indentLength = (int) olen;
+        printf("encoder.indentChars = '%s'\n", encoder.indentChars);
+        printf("encoder.indentLength = %d\n", encoder.indentLength);
+
+        if(encoder.indentChars == NULL && encoder.indentLength == -1)
         {
-            PyErr_SetString(PyExc_ValueError, "indent was malformed");
+            PyErr_SetString(PyExc_ValueError, "malformed indent");
             return NULL;
         }
     }
@@ -920,16 +933,20 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
                  csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
 
   PRINTMARK();
+  printf("a retLen = %d\n", retLen);
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer), &retLen);
+  printf("b retLen = %d\n", retLen);
   PRINTMARK();
 
   dconv_d2s_free(&encoder.d2s);
 
+  printf("a\n");
   if (PyErr_Occurred())
   {
     return NULL;
   }
 
+  printf("a\n");
   if (encoder.errorMsg)
   {
     if (ret != buffer)
@@ -949,6 +966,10 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   PRINTMARK();
+
+  printf("\newobj : '''\n");
+  PyObject_Print(newobj, stdout, 0);
+  printf("\n'''\n");
 
   return newobj;
 }

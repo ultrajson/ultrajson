@@ -240,13 +240,14 @@ def test_encode_dict_values_ref_counting():
     hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
 )
 @pytest.mark.parametrize("key", ["key", b"key", 1, True, None])
-def test_encode_dict_key_ref_counting(key):
+@pytest.mark.parametrize("sort_keys", [False, True])
+def test_encode_dict_key_ref_counting(key, sort_keys):
     import gc
 
     gc.collect()
     data = {key: "abc"}
     ref_count = sys.getrefcount(key)
-    ujson.dumps(data)
+    ujson.dumps(data, sort_keys=sort_keys)
     assert ref_count == sys.getrefcount(key)
 
 

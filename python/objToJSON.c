@@ -257,6 +257,11 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
     Py_DECREF(itemNameTmp);
+    if (PyErr_Occurred())
+    {
+      PRINTMARK();
+      return -1;
+    }
     itemNameTmp = GET_TC(tc)->itemName;
     GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
     Py_DECREF(itemNameTmp);
@@ -332,6 +337,10 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       else if (!PyBytes_Check(key))
       {
         key = PyObject_Str(key);
+        if (PyErr_Occurred())
+        {
+          goto error;
+        }
         keyTmp = key;
         key = PyUnicode_AsUTF8String(key);
         Py_DECREF(keyTmp);

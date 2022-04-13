@@ -996,6 +996,16 @@ def test_default_ref_counting():
     )
 
 
+@pytest.mark.parametrize("sort_keys", [False, True])
+def test_obj_str_exception(sort_keys):
+    class Obj:
+        def __str__(self):
+            raise NotImplementedError
+
+    with pytest.raises(NotImplementedError):
+        ujson.dumps({Obj(): 1}, sort_keys=sort_keys)
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

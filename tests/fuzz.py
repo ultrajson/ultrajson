@@ -19,11 +19,13 @@ serialise as either a Python literal or in JSON.
 """
 
 import argparse
+import gc
 import itertools
 import json
 import math
 import random
 import re
+import sys
 from pprint import pprint
 
 import ujson
@@ -160,9 +162,51 @@ def fuzz(seeds, **options):
             for permutation in itertools.product(*options.values()):
                 _options = dict(zip(options.keys(), permutation))
                 print(f"--seed {seed}", *(f"--{k} {v}" for (k, v) in _options.items()))
+
+                data_objects = collect_all_objects(data)
+                # Exclude ints because they get referenced by the lists below.
+                data_objects = [o for o in data_objects if not isinstance(o, int)]
+                gc.collect()
+                data_ref_counts_before = [sys.getrefcount(o) for o in data_objects]
                 ujson.dumps(data, **_options)
+                gc.collect()
+                data_ref_counts_after = [sys.getrefcount(o) for o in data_objects]
+                if data_ref_counts_before != data_ref_counts_after:
+                    for o, before, after in zip(
+                        data_objects, data_ref_counts_before, data_ref_counts_after
+                    ):
+                        if before != after:
+                            print(f"Ref count of {o!r} went from {before} to {after}")
+                    raise ValueError("ref counts changed")
     except KeyboardInterrupt:
         pass
+
+
+def collect_all_objects(obj):
+    """Given an object, return a list of all objects referenced by it."""
+
+    if hasattr(sys, "pypy_version_info"):
+        # PyPy's GC works differently (no ref counting), so this wouldn't be useful.
+        # Simply returning an empty list effectively disables the refcount test.
+        return []
+
+    def _inner(o):
+        yield o
+        if isinstance(o, list):
+            for v in o:
+                yield from _inner(v)
+        elif isinstance(o, dict):
+            for k, v in o.items():
+                yield from _inner(k)
+                yield from _inner(v)
+
+    out = []
+    seen = set()
+    for o in _inner(obj):
+        if id(o) not in seen:
+            seen.add(id(o))
+            out.append(o)
+    return out
 
 
 if __name__ == "__main__":

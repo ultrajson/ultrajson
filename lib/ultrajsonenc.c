@@ -165,6 +165,20 @@ static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
       Buffer_Realloc((__enc), (__len));\
     }   \
 
+static void *Buffer_memcpy (JSONObjectEncoder *enc, const void *src, size_t n)
+{
+  void *out;
+#ifdef DEBUG
+  if ((size_t) (enc->end - enc->offset) < n) {
+    fprintf(stderr, "Ran out of buffer space during Buffer_memcpy()\n");
+    abort();
+  }
+#endif
+  out = memcpy(enc->offset, src, n);
+  enc->offset += n;
+  return out;
+}
+
 static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
 {
   *(outputOffset++) = g_hexChars[(value & 0xf000) >> 12];
@@ -179,6 +193,13 @@ static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *i
 
   for (;;)
   {
+#ifdef DEBUG
+    // 6 is the maximum length of a single character (cf. RESERVE_STRING).
+    if ((io < end) && (enc->end - of < 6)) {
+      fprintf(stderr, "Ran out of buffer space during Buffer_EscapeStringUnvalidated()\n");
+      abort();
+    }
+#endif
     switch (*io)
     {
       case 0x00:
@@ -285,11 +306,15 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
   for (;;)
   {
 #ifdef DEBUG
-  // 6 is the maximum length of a single character (cf. RESERVE_STRING).
-  if ((io < end) && (enc->end - of < 6)) {
-    fprintf(stderr, "Ran out of buffer space during Buffer_EscapeStringValidated()\n");
-    abort();
-  }
+    /*
+    6 is the maximum length of a single character (cf. RESERVE_STRING).
+    Note that the loop below may consume more than one input char and produce a UTF-16 surrogate pair.
+    In that case, more than 6 characters would be needed on the output buffer.
+    So this calculates the maximum length of the entire remaining input buffer instead. */
+    if (enc->end - enc->offset < 6 * (end - io)) {
+      fprintf(stderr, "Ran out of buffer space during Buffer_EscapeStringValidated()\n");
+      abort();
+    }
 #endif
     JSUINT8 utflen = g_asciiOutputTable[(unsigned char) *io];
 
@@ -562,6 +587,13 @@ static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
   JSUINT64 uvalue = (value < 0) ? -value : value;
 
   wstr = enc->offset;
+#ifdef DEBUG
+  // 20 is the maximum length of a JSINT64 (minus sign plus 19 digits)
+  if (enc->end - enc->offset < 20) {
+    fprintf(stderr, "Ran out of buffer space during Buffer_AppendLongUnchecked()\n");
+    abort();
+  }
+#endif
   // Conversion. Number is reversed.
 
   do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
@@ -578,6 +610,13 @@ static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 
   JSUINT64 uvalue = value;
 
   wstr = enc->offset;
+#ifdef DEBUG
+  // 21 is the maximum length of a JSUINT64 (minus sign plus 20 digits)
+  if (enc->end - enc->offset < 21) {
+    fprintf(stderr, "Ran out of buffer space during Buffer_AppendUnsignedLongUnchecked()\n");
+    abort();
+  }
+#endif
   // Conversion. Number is reversed.
 
   do *wstr++ = (char)(48 + (uvalue % 10ULL)); while(uvalue /= 10ULL);
@@ -591,14 +630,19 @@ static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double va
 {
   char buf[128];
   int strlength;
+#ifdef DEBUG
+  if ((size_t) (enc->end - enc->offset) < sizeof(buf)) {
+    fprintf(stderr, "Ran out of buffer space during Buffer_AppendDoubleDconv()\n");
+    abort();
+  }
+#endif
   if(!dconv_d2s(enc->d2s, value, buf, sizeof(buf), &strlength))
   {
     SetError (obj, enc, "Invalid value when encoding double");
     return FALSE;
   }
 
-  memcpy(enc->offset, buf, strlength);
-  enc->offset += strlength;
+  Buffer_memcpy(enc, buf, strlength);
 
   return TRUE;
 }
@@ -894,8 +938,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         return;
       }
 
-      memcpy(enc->offset, value, szlen);
-      enc->offset += szlen;
+      Buffer_memcpy(enc, value, szlen);
 
       break;
     }

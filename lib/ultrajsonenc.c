@@ -905,7 +905,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
   enc->level--;
 }
 
-char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer)
+char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
 {
   enc->malloc = enc->malloc ? enc->malloc : malloc;
   enc->free =  enc->free ? enc->free : free;
@@ -941,12 +941,11 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 
   encode (obj, enc, NULL, 0);
 
-  Buffer_Reserve(enc, 1);
   if (enc->errorMsg)
   {
     return NULL;
   }
-  Buffer_AppendCharUnchecked(enc, '\0');
 
+  *_outLen = enc->offset - enc->start;
   return enc->start;
 }

@@ -636,8 +636,14 @@ def test_dumps(test_input, expected):
 
 
 class SomeObject:
+    def __init__(self, message, exception=None):
+        self._message = message
+        self._exception = exception
+
     def __repr__(self):
-        return "Some Object"
+        if self._exception:
+            raise self._exception
+        return self._message
 
 
 @pytest.mark.parametrize(
@@ -645,13 +651,16 @@ class SomeObject:
     [
         (set(), TypeError, "set() is not JSON serializable"),
         ({1, 2, 3}, TypeError, "{1, 2, 3} is not JSON serializable"),
-        (SomeObject(), TypeError, "Some Object is not JSON serializable"),
+        (SomeObject("Some Object"), TypeError, "Some Object is not JSON serializable"),
+        (SomeObject("\ud800"), UnicodeEncodeError, None),
+        (SomeObject(None, KeyboardInterrupt), KeyboardInterrupt, None),
     ],
 )
 def test_dumps_raises(test_input, expected_exception, expected_message):
     with pytest.raises(expected_exception) as e:
         ujson.dumps(test_input)
-    assert str(e.value) == expected_message
+    if expected_message:
+        assert str(e.value) == expected_message
 
 
 @pytest.mark.parametrize(

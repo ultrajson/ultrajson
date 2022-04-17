@@ -300,9 +300,10 @@ obj - An anonymous type representing the object
 enc - Function definitions for querying JSOBJ type
 buffer - Preallocated buffer to store result in. If NULL function allocates own buffer
 cbBuffer - Length of buffer (ignored if buffer is NULL)
+outLen - Will store the length of the encoded string
 
 Returns:
-Encoded JSON object as a null terminated char string.
+Encoded JSON object as a char string.
 
 NOTE:
 If the supplied buffer wasn't enough to hold the result the function will allocate a new buffer.
@@ -310,8 +311,10 @@ Life cycle of the provided buffer must still be handled by caller.
 
 If the return value doesn't equal the specified buffer caller must release the memory using
 JSONObjectEncoder.free or free() as specified when calling this function.
+
+If an error occurs during encoding, NULL is returned and no outLen is stored.
 */
-EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer);
+EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
 
 typedef struct __JSONObjectDecoder
 {

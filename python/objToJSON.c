@@ -114,10 +114,16 @@ static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
   return PyBytes_AsString(obj);
 }
 
-static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
 {
+  /*
+  Converts the PyUnicode object to char* whose size is stored in _outLen.
+  This conversion may require the creation of an intermediate PyBytes object.
+  In that case, the returned char* is in fact the internal buffer of that PyBytes object,
+  and when the char* buffer is no longer needed, the bytesObj must be DECREF'd.
+  */
   PyObject *obj = (PyObject *) _obj;
-  PyObject *newObj;
+
 #ifndef Py_LIMITED_API
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
@@ -127,16 +133,20 @@ static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
     return data;
   }
 #endif
-  newObj = PyUnicode_AsUTF8String(obj);
-  if(!newObj)
+
+  bytesObj = PyUnicode_AsEncodedString (obj, "utf-8", "surrogatepass");
+  if (!bytesObj)
   {
     return NULL;
   }
 
-  GET_TC(tc)->newObj = newObj;
+  *_outLen = PyBytes_Size(bytesObj);
+  return PyBytes_AsString(bytesObj);
+}
 
-  *_outLen = PyBytes_Size(newObj);
-  return PyBytes_AsString(newObj);
+static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  return PyUnicodeToUTF8Raw(_obj, _outLen, GET_TC(tc)->newObj);
 }
 
 static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -240,7 +250,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
     itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, "utf-8", "surrogatepass");
     Py_DECREF(itemNameTmp);
   }
   else
@@ -263,7 +273,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       return -1;
     }
     itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsUTF8String (GET_TC(tc)->itemName);
+    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, "utf-8", "surrogatepass");
     Py_DECREF(itemNameTmp);
   }
   PRINTMARK();
@@ -332,7 +342,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       // Subject the key to the same type restrictions and conversions as in Dict_iterGetValue.
       if (PyUnicode_Check(key))
       {
-        key = PyUnicode_AsUTF8String(key);
+        key = PyUnicode_AsEncodedString(key, "utf-8", "surrogatepass");
       }
       else if (!PyBytes_Check(key))
       {
@@ -342,7 +352,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
           goto error;
         }
         keyTmp = key;
-        key = PyUnicode_AsUTF8String(key);
+        key = PyUnicode_AsEncodedString(key, "utf-8", "surrogatepass");
         Py_DECREF(keyTmp);
       }
       else
@@ -777,6 +787,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *odefaultFn = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
+  size_t retLen;
 
   JSONObjectEncoder encoder =
   {
@@ -860,7 +871,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
                  csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
 
   PRINTMARK();
-  ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer));
+  ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer), &retLen);
   PRINTMARK();
 
   dconv_d2s_free(&encoder.d2s);
@@ -881,7 +892,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  newobj = PyUnicode_FromString (ret);
+  newobj = PyUnicode_DecodeUTF8(ret, retLen, "surrogatepass");
 
   if (ret != buffer)
   {

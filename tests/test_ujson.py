@@ -498,10 +498,18 @@ def test_decode_array_empty():
     assert [] == obj
 
 
-def test_encoding_invalid_unicode_character():
-    s = "\udc7f"
-    with pytest.raises(UnicodeEncodeError):
-        ujson.dumps(s)
+def test_encode_surrogate_characters():
+    assert ujson.dumps("\udc7f") == r'"\udc7f"'
+    out = r'{"\ud800":"\udfff"}'
+    assert ujson.dumps({"\ud800": "\udfff"}) == out
+    assert ujson.dumps({"\ud800": "\udfff"}, sort_keys=True) == out
+    o = {b"\xed\xa0\x80": b"\xed\xbf\xbf"}
+    assert ujson.dumps(o, reject_bytes=False) == out
+    assert ujson.dumps(o, reject_bytes=False, sort_keys=True) == out
+
+    out2 = '{"\ud800":"\udfff"}'
+    assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False) == out2
+    assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False, sort_keys=True) == out2
 
 
 def test_sort_keys():

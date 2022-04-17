@@ -670,8 +670,15 @@ DEFAULT:
   PyErr_Clear();
 
   objRepr = PyObject_Repr(obj);
-  PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "~E~");
-  PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AsString(str));
+  if (!objRepr)
+  {
+    goto INVALID;
+  }
+  PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "strict");
+  if (str)
+  {
+    PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AsString(str));
+  }
   Py_XDECREF(str);
   Py_DECREF(objRepr);
 

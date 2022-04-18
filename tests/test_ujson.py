@@ -271,9 +271,9 @@ def test_encode_to_utf8():
 )
 def test_encode_indent(test_input):
     obj = ujson.decode(test_input)
-    print('obj = {!r}'.format(obj))
+    print(f"obj = {obj!r}")
     output = ujson.encode(obj, indent=4)
-    print('output = {!r}'.format(output))
+    print(f"output = {output!r}")
     assert test_input == output
     assert output == json.dumps(obj, indent=4)
 
@@ -290,12 +290,12 @@ def test_indent_types():
     output4a = ujson.encode(data, indent=4)
     output4b = ujson.encode(data, indent="    ")
 
-    assert output0a == '[1,2,3]'
-    assert output0b == '[1,2,3]'
-    assert output0c == '[\n1,\n2,\n3\n]'
-    assert output0d == '[\n1,\n2,\n3\n]'
-    assert output4a == '[\n    1,\n    2,\n    3\n]'
-    assert output4b == '[\n    1,\n    2,\n    3\n]'
+    assert output0a == "[1,2,3]"
+    assert output0b == "[1,2,3]"
+    assert output0c == "[\n1,\n2,\n3\n]"
+    assert output0d == "[\n1,\n2,\n3\n]"
+    assert output4a == "[\n    1,\n    2,\n    3\n]"
+    assert output4b == "[\n    1,\n    2,\n    3\n]"
 
 
 def test_nonspace_indent():
@@ -832,7 +832,10 @@ def test_encode_no_assert(test_input):
     "test_input, expected",
     [
         (1.0, "1.0"),
-        (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1": 1,"0": 0,"8": 8,"2": 2}'),
+        (
+            OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]),
+            '{"1": 1,"0": 0,"8": 8,"2": 2}',
+        ),
         ({"a": float("NaN")}, '{"a": NaN}'),
         ({"a": float("inf")}, '{"a": Inf}'),
         ({"a": -float("inf")}, '{"a": -Inf}'),

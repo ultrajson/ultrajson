@@ -59,12 +59,11 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 // Define a C max function
 // References: https://stackoverflow.com/questions/3437404/min-and-max-in-c
-#define max(a,b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a > _b ? _a : _b;       \
-})
+// Note: there are double eval issues with this macro, but the alternative
+// was not portable.
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
 
 
 /*

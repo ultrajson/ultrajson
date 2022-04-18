@@ -260,6 +260,7 @@ typedef struct __JSONObjectEncoder
   Configuration for spaces of indent */
   int indentLength;
   const char* indentChars;
+  int indentIsSpace;  // encodes if the indent is given in indentChars or if it should just be pure spaces
 
   /*
   If true, NaN will be encoded as a string matching the Python standard library's JSON behavior.

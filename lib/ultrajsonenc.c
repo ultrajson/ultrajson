@@ -577,18 +577,18 @@ static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
   int i;
   if (enc->indentLength > -1)
   {
-    /*if (enc->indentChars == NULL)              */
-    /*{                                          */
-    /*  while (value-- > 0)                      */
-    /*    for (i = 0; i < enc->indentLength; i++)*/
-    /*      Buffer_AppendCharUnchecked(enc, ' ');*/
-    /*}                                          */
-    /*else                                       */
-    /*{                                          */
+    if (enc->indentIsSpace == 1)
+    {
+      while (value-- > 0)
+        for (i = 0; i < enc->indentLength; i++)
+          Buffer_AppendCharUnchecked(enc, ' ');
+    }
+    else
+    {
       while (value-- > 0)
         for (i = 0; i < enc->indentLength; i++)
           Buffer_AppendCharUnchecked(enc, enc->indentChars[i]);
-    /*}*/
+    }
   }
 }
 

@@ -837,8 +837,9 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //encodeHTMLChars
     1, //escapeForwardSlashes
     0, //sortKeys
-    0, //indent
-    NULL, //indent chars
+    -1, //indentLength
+    NULL, //indentChars
+    0, // indentIsSpace
     1, //allowNan
     1, //rejectBytes
     NULL, //prv
@@ -877,29 +878,24 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     // Handle multiple input types
     if (oindent == Py_None)
     {
+        // Case where the indent is specified as None
+        // This should be exactly the same as if oindent is NULL
         encoder.indentLength = -1;
-        /*sprintf(encoder.indentChars, "");  // how to do this right in C?*/
     }
     else if (PyLong_Check(oindent))
     {
+        // Case where the indent is specified as an integer
+        // In this case the indent characters should only be
+        // space chars (i.e. ASCII 32)
         encoder.indentLength = PyLong_AsLong(oindent);
-        sprintf(encoder.indentChars, " ");  // how to do this right in C?
+        encoder.indentIsSpace = 1;
     }
     else if (PyUnicode_Check(oindent))
     {
-        // set a custom indent string
+        // Case where custom UTF-8 indent is specified.
         int olen = -1;
-
-        printf("\nIndent Print: '''\n");
-        PyObject_Print(oindent, stdout, 0);
-        printf("\n'''\n");
-        printf("before olen = %d\n", olen);
         encoder.indentChars = _PyUnicodeToChars(oindent, &olen);
-        printf("after olen = %d\n", olen);
         encoder.indentLength = (int) olen;
-        printf("encoder.indentChars = '%s'\n", encoder.indentChars);
-        printf("encoder.indentLength = %d\n", encoder.indentLength);
-
         if(encoder.indentChars == NULL && encoder.indentLength == -1)
         {
             PyErr_SetString(PyExc_ValueError, "malformed indent");
@@ -940,20 +936,20 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
                  csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
 
   PRINTMARK();
-  printf("a retLen = %d\n", retLen);
+  // printf("a retLen = %d\n", retLen);
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer), &retLen);
-  printf("b retLen = %d\n", retLen);
+  // printf("b retLen = %d\n", retLen);
   PRINTMARK();
 
   dconv_d2s_free(&encoder.d2s);
 
-  printf("a\n");
+  // printf("a\n");
   if (PyErr_Occurred())
   {
     return NULL;
   }
 
-  printf("a\n");
+  // printf("a\n");
   if (encoder.errorMsg)
   {
     if (ret != buffer)
@@ -974,9 +970,9 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  printf("\newobj : '''\n");
-  PyObject_Print(newobj, stdout, 0);
-  printf("\n'''\n");
+  // printf("\newobj : '''\n");
+  // PyObject_Print(newobj, stdout, 0);
+  // printf("\n'''\n");
 
   return newobj;
 }

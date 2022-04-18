@@ -271,7 +271,9 @@ def test_encode_to_utf8():
 )
 def test_encode_indent(test_input):
     obj = ujson.decode(test_input)
+    print('obj = {!r}'.format(obj))
     output = ujson.encode(obj, indent=4)
+    print('output = {!r}'.format(output))
     assert test_input == output
     assert output == json.dumps(obj, indent=4)
 
@@ -288,13 +290,12 @@ def test_indent_types():
     output4a = ujson.encode(data, indent=4)
     output4b = ujson.encode(data, indent="    ")
 
-    assert output0a == output0c
-    assert output0a == output0b
-    assert output0a == output0d
-
-    assert output4a == output4b
-
-    assert output0a != output4a
+    assert output0a == '[1,2,3]'
+    assert output0b == '[1,2,3]'
+    assert output0c == '[\n1,\n2,\n3\n]'
+    assert output0d == '[\n1,\n2,\n3\n]'
+    assert output4a == '[\n    1,\n    2,\n    3\n]'
+    assert output4b == '[\n    1,\n    2,\n    3\n]'
 
 
 def test_nonspace_indent():
@@ -548,7 +549,7 @@ def test_decode_array_empty():
 
 def test_encode_surrogate_characters():
     assert ujson.dumps("\udc7f") == r'"\udc7f"'
-    out = r'{"\ud800":"\udfff"}'
+    out = r'{"\ud800": "\udfff"}'
     assert ujson.dumps({"\ud800": "\udfff"}) == out
     assert ujson.dumps({"\ud800": "\udfff"}, sort_keys=True) == out
     o = {b"\xed\xa0\x80": b"\xed\xbf\xbf"}
@@ -840,10 +841,10 @@ def test_encode_no_assert(test_input):
     "test_input, expected",
     [
         (1.0, "1.0"),
-        (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1":1,"0":0,"8":8,"2":2}'),
-        ({"a": float("NaN")}, '{"a":NaN}'),
-        ({"a": float("inf")}, '{"a":Inf}'),
-        ({"a": -float("inf")}, '{"a":-Inf}'),
+        (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1": 1,"0": 0,"8": 8,"2": 2}'),
+        ({"a": float("NaN")}, '{"a": NaN}'),
+        ({"a": float("inf")}, '{"a": Inf}'),
+        ({"a": -float("inf")}, '{"a": -Inf}'),
     ],
 )
 def test_encode(test_input, expected):
@@ -971,12 +972,12 @@ def test_reject_bytes_true():
 
 def test_reject_bytes_false():
     data = {"a": b"b"}
-    assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
+    assert ujson.dumps(data, reject_bytes=False) == '{"a": "b"}'
 
 
 def test_encode_none_key():
     data = {None: None}
-    assert ujson.dumps(data) == '{"null":null}'
+    assert ujson.dumps(data) == '{"null": null}'
 
 
 def test_default_function():

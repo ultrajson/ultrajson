@@ -57,6 +57,16 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define snprintf sprintf_s
 #endif
 
+// Define a C max function
+// References: https://stackoverflow.com/questions/3437404/min-and-max-in-c
+#define max(a,b)             \
+({                           \
+    __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+    _a > _b ? _a : _b;       \
+})
+
+
 /*
 Worst cases being:
 
@@ -709,7 +719,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while (enc->iterNext(obj, &tc))
       {
         // The extra 2 bytes cover the comma and (optional) newline.
-        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, max(enc->indentLength, 0) * (enc->level + 1) + 2);
 
         if (count > 0)
         {
@@ -736,7 +746,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       if (count > 0) {
         // Reserve space for the indentation plus the newline.
-        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
+        Buffer_Reserve (enc, max(enc->indentLength, 0) * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }
@@ -754,7 +764,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while ((res = enc->iterNext(obj, &tc)))
       {
         // The extra 2 bytes cover the comma and optional newline.
-        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, max(enc->indentLength, 0) * (enc->level + 1) + 2);
 
         if(res < 0)
         {
@@ -789,7 +799,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
-        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
+        Buffer_Reserve (enc, max(enc->indentLength, 0) * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

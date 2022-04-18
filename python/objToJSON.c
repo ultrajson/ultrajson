@@ -779,7 +779,8 @@ static const char *_PyUnicodeToChars(PyObject *obj, int *_outLen)
     return data;
   }
 /*#endif*/
-  newObj = PyUnicode_AsUTF8String(obj);
+  newObj = PyUnicode_AsEncodedString(obj, "utf-8", "surrogatepass");
+  //newObj = PyUnicode_AsUTF8String(obj);
   if(!newObj)
   {
     *_outLen = 0;

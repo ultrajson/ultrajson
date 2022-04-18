@@ -556,7 +556,7 @@ def test_encode_surrogate_characters():
     assert ujson.dumps(o, reject_bytes=False) == out
     assert ujson.dumps(o, reject_bytes=False, sort_keys=True) == out
 
-    out2 = '{"\ud800":"\udfff"}'
+    out2 = '{"\ud800": "\udfff"}'
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False) == out2
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False, sort_keys=True) == out2
 
@@ -564,7 +564,7 @@ def test_encode_surrogate_characters():
 def test_sort_keys():
     data = {"a": 1, "c": 1, "b": 1, "e": 1, "f": 1, "d": 1}
     sorted_keys = ujson.dumps(data, sort_keys=True)
-    assert sorted_keys == '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}'
+    assert sorted_keys == '{"a": 1,"b": 1,"c": 1,"d": 1,"e": 1,"f": 1}'
 
 
 @pytest.mark.parametrize(

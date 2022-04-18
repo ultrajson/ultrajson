@@ -2,6 +2,9 @@ r"""
 
 Compare cases
 
+python -c "import json  as json; print(repr(json.dumps({None: None})))"
+python -c "import ujson as json; print(repr(json.dumps({None: None})))"
+
 python -c "import json         ; print(repr(json.dumps([1], indent='\x000')))"
 python -c "import ujson as json; print(repr(json.dumps([1], indent='\x000')))"
 
@@ -9,7 +12,14 @@ python -c "import json         ; print(repr(json.dumps([1, 2], indent='a \x000 b
 python -c "import ujson as json; print(repr(json.dumps([1, 2], indent='a \x000 b')))"
 
 python -c "import json         ; print(repr(json.dumps([1], indent='\udfff')))"
+python -c "import  json as json; print(repr(json.dumps([1, 2, 3], indent='\udfff')))"
 python -c "import ujson as json; print(repr(json.dumps([1, 2, 3], indent='\udfff')))"
+
+
+python -c "import ujson as json; print(repr(json.dumps([1, 2, 3], indent='\udfff')))"
+
+python -c "import ujson as json; print(repr(json.encode(json.decode('{\n    \"obj\": 31337\n}'), indent=4)))"
+python -c "import ujson as json; print(repr(json.encode([1, 2, 3], indent=4)))"
 
 
 """

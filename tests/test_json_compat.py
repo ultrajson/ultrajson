@@ -50,7 +50,7 @@ def named_product(basis):
         yield kw
 
 
-def test_dumps_compatability():
+def _test_dumps_compatability():
     """
     Test the difference between Python's json module (pjson) and ultrajson
     (ujson) under a grid of different parameters.
@@ -165,4 +165,4 @@ if __name__ == "__main__":
     CommandLine:
         python ~/code/ultrajson/tests/test_json_compat.py
     """
-    test_dumps_compatability()
+    _test_dumps_compatability()

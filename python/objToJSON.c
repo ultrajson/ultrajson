@@ -936,20 +936,16 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
                  csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
 
   PRINTMARK();
-  // printf("a retLen = %d\n", retLen);
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer), &retLen);
-  // printf("b retLen = %d\n", retLen);
   PRINTMARK();
 
   dconv_d2s_free(&encoder.d2s);
 
-  // printf("a\n");
   if (PyErr_Occurred())
   {
     return NULL;
   }
 
-  // printf("a\n");
   if (encoder.errorMsg)
   {
     if (ret != buffer)
@@ -969,11 +965,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   PRINTMARK();
-
-  // printf("\newobj : '''\n");
-  // PyObject_Print(newobj, stdout, 0);
-  // printf("\n'''\n");
-
   return newobj;
 }
 

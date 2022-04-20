@@ -1,10 +1,11 @@
-import sys
 import random
+import sys
+
 import timerit
 
 
 def data_lut(input, size):
-    if input == 'Array with UTF-8 strings':
+    if input == "Array with UTF-8 strings":
         test_object = []
         for x in range(size):
             test_object.append(
@@ -13,7 +14,7 @@ def data_lut(input, size):
                 " الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين "
             )
         return test_object
-    elif input == 'Array with doubles':
+    elif input == "Array with doubles":
         test_object = []
         for x in range(256):
             test_object.append(sys.maxsize * random.random())
@@ -22,10 +23,11 @@ def data_lut(input, size):
 
 
 def benchmark_json_dumps():
-    import ubelt as ub   # can be factored out
-    import pandas as pd  # can be factored out
-    import ujson
     import json
+
+    import pandas as pd  # can be factored out
+    import ubelt as ub  # can be factored out
+    import ujson
 
     JSON_IMPLS = {
         "ujson": ujson,  # Our json
@@ -34,11 +36,14 @@ def benchmark_json_dumps():
 
     if True:
         import nujson
-        JSON_IMPLS['nujson'] = nujson
+
+        JSON_IMPLS["nujson"] = nujson
         import orjson
-        JSON_IMPLS['nujson'] = orjson
+
+        JSON_IMPLS["nujson"] = orjson
         import simplejson
-        JSON_IMPLS['simplejson'] = simplejson
+
+        JSON_IMPLS["simplejson"] = simplejson
 
     def method_lut(impl):
         return JSON_IMPLS[impl].dumps
@@ -52,19 +57,19 @@ def benchmark_json_dumps():
 
     # These are the parameters that we benchmark over
     basis = {
-        'input': [
-             'Array with UTF-8 strings',
-             'Array with doubles',
+        "input": [
+            "Array with UTF-8 strings",
+            "Array with doubles",
         ],
-        'size': [1, 32, 256, 1024, 2048],
-        'impl': list(JSON_IMPLS.keys()),
+        "size": [1, 32, 256, 1024, 2048],
+        "impl": list(JSON_IMPLS.keys()),
     }
-    xlabel = 'size'
+    xlabel = "size"
     # Set these to empty lists if they are not used
     group_labels = {
-        'style': ['input'],
-        'hue': ['impl'],
-        'size': [],
+        "style": ["input"],
+        "hue": ["impl"],
+        "size": [],
     }
     grid_iter = list(ub.named_product(basis))
 
@@ -73,13 +78,14 @@ def benchmark_json_dumps():
     for params in grid_iter:
         group_keys = {}
         for gname, labels in group_labels.items():
-            group_keys[gname + '_key'] = ub.repr2(
-                ub.dict_isect(params, labels), compact=1, si=1)
+            group_keys[gname + "_key"] = ub.repr2(
+                ub.dict_isect(params, labels), compact=1, si=1
+            )
         key = ub.repr2(params, compact=1, si=1)
         # Make any modifications you need to compute input kwargs for each
         # method here.
-        method = method_lut(params['impl'])
-        data = data_lut(params['input'], params['size'])
+        method = method_lut(params["impl"])
+        data = data_lut(params["input"], params["size"])
         # Timerit will run some user-specified number of loops.
         # and compute time stats with similar methodology to timeit
         for timer in ti.reset(key):
@@ -98,23 +104,23 @@ def benchmark_json_dumps():
             for time in times:
                 row = {
                     # 'mean': ti.mean(),
-                    'time': time,
-                    'key': key,
+                    "time": time,
+                    "key": key,
                     **group_keys,
                     **params,
                 }
                 rows.append(row)
         else:
             row = {
-                'mean': ti.mean(),
-                'min': ti.min(),
-                'key': key,
+                "mean": ti.mean(),
+                "min": ti.min(),
+                "key": key,
                 **group_keys,
                 **params,
             }
             rows.append(row)
 
-    time_key = 'time' if RECORD_ALL else 'min'
+    time_key = "time" if RECORD_ALL else "min"
 
     # The rows define a long-form pandas data array.
     # Data in long-form makes it very easy to use seaborn.
@@ -123,10 +129,12 @@ def benchmark_json_dumps():
 
     if RECORD_ALL:
         # Show the min / mean if we record all
-        min_times = data.groupby('key').min().rename({'time': 'min'}, axis=1)
-        mean_times = data.groupby('key')[['time']].mean().rename({'time': 'mean'}, axis=1)
+        min_times = data.groupby("key").min().rename({"time": "min"}, axis=1)
+        mean_times = (
+            data.groupby("key")[["time"]].mean().rename({"time": "mean"}, axis=1)
+        )
         stats_data = pd.concat([min_times, mean_times], axis=1)
-        stats_data = stats_data.sort_values('min')
+        stats_data = stats_data.sort_values("min")
     else:
         stats_data = data
 
@@ -135,17 +143,21 @@ def benchmark_json_dumps():
         # Lets try a real ranking method
         # https://github.com/OpenDebates/openskill.py
         import openskill
-        method_ratings = {m: openskill.Rating() for m in basis['impl']}
 
-    other_keys = sorted(set(stats_data.columns) - {'key', 'impl', 'min', 'mean', 'hue_key', 'size_key', 'style_key'})
+        method_ratings = {m: openskill.Rating() for m in basis["impl"]}
+
+    other_keys = sorted(
+        set(stats_data.columns)
+        - {"key", "impl", "min", "mean", "hue_key", "size_key", "style_key"}
+    )
     for params, variants in stats_data.groupby(other_keys):
-        variants = variants.sort_values('mean')
-        ranking = variants['impl'].reset_index(drop=True)
+        variants = variants.sort_values("mean")
+        ranking = variants["impl"].reset_index(drop=True)
 
-        mean_speedup = variants['mean'].max() / variants['mean']
-        stats_data.loc[mean_speedup.index, 'mean_speedup'] = mean_speedup
-        min_speedup = variants['min'].max() / variants['min']
-        stats_data.loc[min_speedup.index, 'min_speedup'] = min_speedup
+        mean_speedup = variants["mean"].max() / variants["mean"]
+        stats_data.loc[mean_speedup.index, "mean_speedup"] = mean_speedup
+        min_speedup = variants["min"].max() / variants["min"]
+        stats_data.loc[min_speedup.index, "min_speedup"] = min_speedup
 
         if USE_OPENSKILL:
             # The idea is that each setting of parameters is a game, and each
@@ -159,14 +171,17 @@ def benchmark_json_dumps():
             new_ratings = [openskill.Rating(*new[0]) for new in new_values]
             method_ratings.update(ub.dzip(ranking, new_ratings))
 
-    print('Statistics:')
+    print("Statistics:")
     print(stats_data)
 
     if USE_OPENSKILL:
         from openskill import predict_win
+
         win_prob = predict_win([[r] for r in method_ratings.values()])
-        skill_agg = pd.Series(ub.dzip(method_ratings.keys(), win_prob)).sort_values(ascending=False)
-        print('Aggregated Rankings =\n{}'.format(skill_agg))
+        skill_agg = pd.Series(ub.dzip(method_ratings.keys(), win_prob)).sort_values(
+            ascending=False
+        )
+        print(f"Aggregated Rankings =\n{skill_agg}")
 
     plot = True
     if plot:
@@ -174,22 +189,23 @@ def benchmark_json_dumps():
         # kwplot autosns works well for IPython and script execution.
         # not sure about notebooks.
         import kwplot
+
         sns = kwplot.autosns()
         plt = kwplot.autoplt()
 
         plotkw = {}
         for gname, labels in group_labels.items():
             if labels:
-                plotkw[gname] = gname + '_key'
+                plotkw[gname] = gname + "_key"
 
         # Your variables may change
         ax = kwplot.figure(fnum=1, doclf=True).gca()
-        sns.lineplot(data=data, x=xlabel, y=time_key, marker='o', ax=ax, **plotkw)
-        ax.set_title('Benchmark Name')
-        ax.set_xlabel('Size')
-        ax.set_ylabel('Time')
-        ax.set_xscale('log')
-        ax.set_yscale('log')
+        sns.lineplot(data=data, x=xlabel, y=time_key, marker="o", ax=ax, **plotkw)
+        ax.set_title("Benchmark Name")
+        ax.set_xlabel("Size")
+        ax.set_ylabel("Time")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
 
         try:
             __IPYTHON__
@@ -197,7 +213,7 @@ def benchmark_json_dumps():
             plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     CommandLine:
         python ~/code/ultrajson/tests/benchmark2.py

@@ -782,7 +782,7 @@ static const char *_PyUnicodeToChars(PyObject *obj, int *_outLen)
   {
     Py_ssize_t len = 0;
     const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
-    *_outLen = len;
+    *_outLen = (int) len;
     return data;
   }
 /*#endif*/
@@ -837,7 +837,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //encodeHTMLChars
     1, //escapeForwardSlashes
     0, //sortKeys
-    -1, //indentLength
+    0, //indentLength
     NULL, //indentChars
     0, // indentIsSpace
     0, // indentEnabled
@@ -899,6 +899,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     else if (PyUnicode_Check(oindent))
     {
         // Case where custom UTF-8 indent is specified.
+        encoder.indentLength = -1; // set to -1 to indicate an error
         encoder.indentChars = _PyUnicodeToChars(oindent, &encoder.indentLength);
         encoder.indentEnabled = 1;
         if(encoder.indentChars == NULL && encoder.indentLength == -1)

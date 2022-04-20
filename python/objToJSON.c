@@ -840,6 +840,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     -1, //indentLength
     NULL, //indentChars
     0, // indentIsSpace
+    0, // indentEnabled
     1, //allowNan
     1, //rejectBytes
     NULL, //prv
@@ -880,22 +881,26 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     {
         // Case where the indent is specified as None
         // This should be exactly the same as if oindent is NULL
-        encoder.indentLength = -1;
+        encoder.indentLength = 0;
     }
     else if (PyLong_Check(oindent))
     {
         // Case where the indent is specified as an integer
         // In this case the indent characters should only be
-        // space chars (i.e. ASCII 32)
+        // space chars - i.e. chr(32)
         encoder.indentLength = PyLong_AsLong(oindent);
         encoder.indentIsSpace = 1;
+        encoder.indentEnabled = 1;
+        if (encoder.indentLength < 0)
+        {
+            encoder.indentLength = 0;
+        }
     }
     else if (PyUnicode_Check(oindent))
     {
         // Case where custom UTF-8 indent is specified.
-        int olen = -1;
-        encoder.indentChars = _PyUnicodeToChars(oindent, &olen);
-        encoder.indentLength = (int) olen;
+        encoder.indentChars = _PyUnicodeToChars(oindent, &encoder.indentLength);
+        encoder.indentEnabled = 1;
         if(encoder.indentChars == NULL && encoder.indentLength == -1)
         {
             PyErr_SetString(PyExc_ValueError, "malformed indent");

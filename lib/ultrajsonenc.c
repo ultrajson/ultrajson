@@ -57,13 +57,6 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define snprintf sprintf_s
 #endif
 
-// Define a C max function
-// References: https://stackoverflow.com/questions/3437404/min-and-max-in-c
-// Note: there are double eval issues with this macro, but the alternative
-// was not portable.
-#define max(a,b) ((a) > (b) ? (a) : (b))
-#define min(a,b) ((a) < (b) ? (a) : (b))
-
 
 
 /*
@@ -553,13 +546,13 @@ static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, ch
 
 static void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
 {
-  if (enc->indentLength > -1) Buffer_AppendCharUnchecked(enc, '\n');
+  if (enc->indentEnabled) Buffer_AppendCharUnchecked(enc, '\n');
 }
 
 static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
   int i;
-  if (enc->indentLength > -1)
+  if (enc->indentEnabled)
   {
     if (enc->indentIsSpace == 1)
     {
@@ -675,7 +668,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     Buffer_AppendCharUnchecked(enc, '\"');
 
     Buffer_AppendCharUnchecked (enc, ':');
-    if (enc->indentLength)
+    if (enc->indentEnabled)
     {
       Buffer_AppendCharUnchecked (enc, ' ');
     }
@@ -718,7 +711,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while (enc->iterNext(obj, &tc))
       {
         // The extra 2 bytes cover the comma and (optional) newline.
-        Buffer_Reserve (enc, max(enc->indentLength, 0) * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
 
         if (count > 0)
         {
@@ -745,7 +738,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       if (count > 0) {
         // Reserve space for the indentation plus the newline.
-        Buffer_Reserve (enc, max(enc->indentLength, 0) * enc->level + 1);
+        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }
@@ -763,7 +756,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       while ((res = enc->iterNext(obj, &tc)))
       {
         // The extra 2 bytes cover the comma and optional newline.
-        Buffer_Reserve (enc, max(enc->indentLength, 0) * (enc->level + 1) + 2);
+        Buffer_Reserve (enc, enc->indentLength * (enc->level + 1) + 2);
 
         if(res < 0)
         {
@@ -798,7 +791,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
-        Buffer_Reserve (enc, max(enc->indentLength, 0) * enc->level + 1);
+        Buffer_Reserve (enc, enc->indentLength * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

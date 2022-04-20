@@ -38,17 +38,17 @@ def check_dumps_compatability():
     Test the difference between Python's json module (pjson) and ultrajson
     (ujson) under a grid of different parameters.
     """
-    import pprint
     import difflib
+    import pprint
 
     # Define the data we will test
     data_lut = {}
-    data_lut['data0'] = {"a": [1, 2, 3]}
-    data_lut['data1'] = {"a": [1, 2, 3, named_product]}
-    data_lut['data2'] = []
-    data_lut['data3'] = {}
-    data_lut['data4'] = [0]
-    data_lut['data5'] = {'1': []}
+    data_lut["data0"] = {"a": [1, 2, 3]}
+    data_lut["data1"] = {"a": [1, 2, 3, named_product]}
+    data_lut["data2"] = []
+    data_lut["data3"] = {}
+    data_lut["data4"] = [0]
+    data_lut["data5"] = {"1": []}
 
     # Special characters
     NULL_CHAR = "\x00"
@@ -57,9 +57,11 @@ def check_dumps_compatability():
 
     class _NoParamType:
         def __str__(cls):
-            return 'NoParam'
+            return "NoParam"
+
         def __repr__(cls):
-            return 'NoParam'
+            return "NoParam"
+
     # sentinel, remove this from kwargs if we see it
     NoParam = _NoParamType()
 
@@ -111,9 +113,12 @@ def check_dumps_compatability():
         # Useful if we need a unique key per item, but clutter otherwise
         # params_key = pjson.dumps(params, default=repr)
         module = JSON_IMPLS[params["module"]]
-        kwargs = {k: params[k] for k in kwargs_keys
-                  if k in params and params[k] is not NoParam}
-        data = data_lut[params['data']]
+        kwargs = {
+            k: params[k]
+            for k in kwargs_keys
+            if k in params and params[k] is not NoParam
+        }
+        data = data_lut[params["data"]]
         try:
             result = module.dumps(data, **kwargs)
         except Exception as ex:
@@ -147,7 +152,7 @@ def check_dumps_compatability():
     superficial_disagree_keys = []
 
     for group_key, group in grouped_results.items():
-        assert len(group) == 2, '{} - {}'.format(len(group), group)
+        assert len(group) == 2, f"{len(group)} - {group}"
         module_to_row = {r["module"]: r for r in group}
         assert len(module_to_row) == 2
 
@@ -174,7 +179,7 @@ def check_dumps_compatability():
                 u_val = repr(ex)
 
             linediff = list(difflib.ndiff([p_result], [u_result]))
-            hasdiff = any(line[0] in '+-?' for line in linediff)
+            hasdiff = any(line[0] in "+-?" for line in linediff)
             textdiff = "".join(linediff)
 
             if p_val != u_val:
@@ -183,12 +188,12 @@ def check_dumps_compatability():
                 print(f" * p_val = {p_val!r}")
                 print(f" * p_result = {p_result!r}")
                 print(f" * u_result = {u_result!r}")
-                print('--')
+                print("--")
                 try:
                     print(textdiff)
                 except UnicodeEncodeError:
-                    print(textdiff.encode(errors='surrogatepass'))
-                print('--')
+                    print(textdiff.encode(errors="surrogatepass"))
+                print("--")
                 pprint.pprint(group, compact=True, width=128, sort_dicts=0)
                 diagree_keys.append(group_key)
             else:
@@ -198,12 +203,12 @@ def check_dumps_compatability():
                     print(f" * p_val = {p_val!r}")
                     print(f" * p_result = {p_result!r}")
                     print(f" * u_result = {u_result!r}")
-                    print('--')
+                    print("--")
                     try:
                         print(textdiff)
                     except UnicodeEncodeError:
-                        print(textdiff.encode(errors='surrogatepass'))
-                    print('--')
+                        print(textdiff.encode(errors="surrogatepass"))
+                    print("--")
                     pprint.pprint(group, compact=True, width=128, sort_dicts=0)
                     superficial_disagree_keys.append(group_key)
                 agree_keys.append(group_key)

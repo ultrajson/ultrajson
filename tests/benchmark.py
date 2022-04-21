@@ -148,7 +148,7 @@ def results_output_table(libraries):
             print("|{}|".format("|".join(columns)))
 
     print()
-    print('Above metrics are in call/sec, larger is better.')
+    print("Above metrics are in call/sec, larger is better.")
 
 
 # =============================================================================

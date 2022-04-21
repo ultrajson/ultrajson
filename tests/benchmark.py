@@ -7,7 +7,6 @@ import sys
 import timeit
 from collections import defaultdict
 
-import cpuinfo
 import ujson
 
 # Will be set by "main" if user requests them
@@ -82,12 +81,10 @@ def results_record_result(callback, is_encode, count):
 
 def results_output_table(libraries):
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
-    cpu_brand = cpuinfo.get_cpu_info()["brand_raw"]
     print()
     print("### Test machine")
     print()
     print(uname_system, uname_release, uname_processor, uname_version)
-    print(cpu_brand)
     print()
     print("### Versions")
     print()

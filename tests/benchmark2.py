@@ -1,6 +1,7 @@
 import sys
 import random
 import timerit
+import ubelt as ub
 
 
 def data_lut(input, size):
@@ -22,8 +23,7 @@ def data_lut(input, size):
 
 
 def benchmark_json_dumps():
-    import ubelt as ub   # can be factored out
-    import pandas as pd  # can be factored out
+    import pandas as pd
     import ujson
     import json
 
@@ -44,11 +44,12 @@ def benchmark_json_dumps():
         return JSON_IMPLS[impl].dumps
 
     # Change params here to modify number of trials
-    ti = timerit.Timerit(100, bestof=10, verbose=1)
+    ti = timerit.Timerit(10000, bestof=10, verbose=1)
 
     # if True, record every trail run and show variance in seaborn
     # if False, use the standard timerit min/mean measures
     RECORD_ALL = True
+    USE_OPENSKILL = True
 
     # These are the parameters that we benchmark over
     basis = {
@@ -62,7 +63,7 @@ def benchmark_json_dumps():
     xlabel = 'size'
     # Set these to empty lists if they are not used
     group_labels = {
-        'style': ['input'],
+        'col': ['input'],
         'hue': ['impl'],
         'size': [],
     }
@@ -97,7 +98,6 @@ def benchmark_json_dumps():
             times = ti.robust_times()
             for time in times:
                 row = {
-                    # 'mean': ti.mean(),
                     'time': time,
                     'key': key,
                     **group_keys,
@@ -130,12 +130,15 @@ def benchmark_json_dumps():
     else:
         stats_data = data
 
-    USE_OPENSKILL = 1
     if USE_OPENSKILL:
-        # Lets try a real ranking method
-        # https://github.com/OpenDebates/openskill.py
-        import openskill
-        method_ratings = {m: openskill.Rating() for m in basis['impl']}
+        # Track the "skill" of each method
+        # The idea is that each setting of parameters is a game, and each
+        # "impl" is a player. We rank the players by which is fastest, and
+        # update their ranking according to the Weng-Lin Bayes ranking model.
+        # This does not take the fact that some "games" (i.e.  parameter
+        # settings) are more important than others, but it should be fairly
+        # robust on average.
+        skillboard = SkillTracker(basis['impl'])
 
     other_keys = sorted(set(stats_data.columns) - {'key', 'impl', 'min', 'mean', 'hue_key', 'size_key', 'style_key'})
     for params, variants in stats_data.groupby(other_keys):
@@ -148,34 +151,25 @@ def benchmark_json_dumps():
         stats_data.loc[min_speedup.index, 'min_speedup'] = min_speedup
 
         if USE_OPENSKILL:
-            # The idea is that each setting of parameters is a game, and each
-            # "impl" is a player. We rank the players by which is fastest,
-            # and update their ranking according to the Weng-Lin Bayes ranking
-            # model. This does not take the fact that some "games" (i.e.
-            # parameter settings) are more important than others, but it should
-            # be fairly robust on average.
-            old_ratings = [[r] for r in ub.take(method_ratings, ranking)]
-            new_values = openskill.rate(old_ratings)  # Not inplace
-            new_ratings = [openskill.Rating(*new[0]) for new in new_values]
-            method_ratings.update(ub.dzip(ranking, new_ratings))
+            skillboard.observe(ranking)
 
     print('Statistics:')
     print(stats_data)
 
     if USE_OPENSKILL:
-        from openskill import predict_win
-        win_prob = predict_win([[r] for r in method_ratings.values()])
-        skill_agg = pd.Series(ub.dzip(method_ratings.keys(), win_prob)).sort_values(ascending=False)
-        print('Aggregated Rankings =\n{}'.format(skill_agg))
+        win_probs = skillboard.predict_win()
+        win_probs = ub.sorted_vals(win_probs, reverse=True)
+        print('Aggregated Rankings = {}'.format(ub.repr2(
+            win_probs, nl=1, precision=4, align=':')))
 
     plot = True
     if plot:
         # import seaborn as sns
         # kwplot autosns works well for IPython and script execution.
         # not sure about notebooks.
-        import kwplot
-        sns = kwplot.autosns()
-        plt = kwplot.autoplt()
+        import seaborn as sns
+        sns.set()
+        from matplotlib import pyplot as plt
 
         plotkw = {}
         for gname, labels in group_labels.items():
@@ -183,18 +177,88 @@ def benchmark_json_dumps():
                 plotkw[gname] = gname + '_key'
 
         # Your variables may change
-        ax = kwplot.figure(fnum=1, doclf=True).gca()
-        sns.lineplot(data=data, x=xlabel, y=time_key, marker='o', ax=ax, **plotkw)
-        ax.set_title('Benchmark Name')
-        ax.set_xlabel('Size')
-        ax.set_ylabel('Time')
-        ax.set_xscale('log')
-        ax.set_yscale('log')
+        # ax = plt.figure().gca()
+        col = plotkw.pop('col')
+        facet = sns.FacetGrid(data, col=col, sharex=False, sharey=False)
+        facet.map_dataframe(sns.lineplot, x=xlabel, y=time_key, marker='o',
+                            **plotkw)
+        facet.add_legend()
+        # sns.lineplot(data=data, )
+        # ax.set_title('JSON Benchmarks')
+        # ax.set_xlabel('Size')
+        # ax.set_ylabel('Time')
+        # ax.set_xscale('log')
+        # ax.set_yscale('log')
 
         try:
             __IPYTHON__
         except NameError:
             plt.show()
+
+
+class SkillTracker:
+    """
+    Wrapper around openskill
+
+    Args:
+        player_ids (List[T]):
+            a list of ids (usually ints) used to represent each player
+
+    Example:
+        >>> self = SkillTracker([1, 2, 3, 4, 5])
+        >>> self.observe([2, 3])  # Player 2 beat player 3.
+        >>> self.observe([1, 2, 5, 3])  # Player 3 didnt play this round.
+        >>> self.observe([2, 3, 4, 5, 1])  # Everyone played, player 2 won.
+        >>> win_probs = self.predict_win()
+        >>> print('win_probs = {}'.format(ub.repr2(win_probs, nl=1, precision=2)))
+        win_probs = {
+            1: 0.20,
+            2: 0.21,
+            3: 0.19,
+            4: 0.20,
+            5: 0.20,
+        }
+    """
+
+    def __init__(self, player_ids):
+        import openskill
+        self.player_ids = player_ids
+        self.ratings = {m: openskill.Rating() for m in player_ids}
+        self.observations = []
+
+    def predict_win(self):
+        """
+        Estimate the probability that a particular player will win given the
+        current ratings.
+
+        Returns:
+            Dict[T, float]: mapping from player ids to win probabilites
+        """
+        from openskill import predict_win
+        teams = [[p] for p in list(self.ratings.keys())]
+        ratings = [[r] for r in self.ratings.values()]
+        probs = predict_win(ratings)
+        win_probs = {team[0]: prob for team, prob in zip(teams, probs)}
+        return win_probs
+
+    def observe(self, ranking):
+        """
+        After simulating a round, pass the ranked order of who won
+        (winner is first, looser is last) to this function. And it
+        updates the rankings.
+
+        Args:
+            ranking (List[T]):
+                ranking of all the players that played in this round
+                winners are at the front (0-th place) of the list.
+        """
+        import openskill
+        self.observations.append(ranking)
+        ratings = self.ratings
+        team_standings = [[r] for r in ub.take(ratings, ranking)]
+        new_values = openskill.rate(team_standings)  # Not inplace
+        new_ratings = [openskill.Rating(*new[0]) for new in new_values]
+        ratings.update(ub.dzip(ranking, new_ratings))
 
 
 if __name__ == '__main__':

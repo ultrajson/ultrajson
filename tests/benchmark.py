@@ -1,5 +1,4 @@
 ﻿# coding=UTF-8
-import cpuinfo
 import json
 import os
 import platform
@@ -7,6 +6,8 @@ import random
 import sys
 import timeit
 from collections import defaultdict
+
+import cpuinfo
 import ujson
 
 # Will be set by "main" if user requests them
@@ -40,10 +41,12 @@ benchmark_registry = defaultdict(dict)
 # Benchmark registration
 # =============================================================================
 
+
 def register_benchmark(libname, testname):
     def _wrap(func):
         benchmark_registry[testname][libname] = func
         return func
+
     return _wrap
 
 
@@ -79,7 +82,7 @@ def results_record_result(callback, is_encode, count):
 
 def results_output_table(libraries):
     uname_system, _, uname_release, uname_version, _, uname_processor = platform.uname()
-    cpu_brand = cpuinfo.get_cpu_info()['brand_raw']
+    cpu_brand = cpuinfo.get_cpu_info()["brand_raw"]
     print()
     print("### Test machine")
     print()
@@ -149,30 +152,30 @@ def results_output_table(libraries):
 # JSON encoding.
 # =============================================================================
 
-_testname = 'dumps'
+_testname = "dumps"
 
 
-@register_benchmark('json', _testname)
+@register_benchmark("json", _testname)
 def dumps_with_json():
     json.dumps(test_object)
 
 
-@register_benchmark('nujson', _testname)
+@register_benchmark("nujson", _testname)
 def dumps_with_nujson():
     nujson.dumps(test_object)
 
 
-@register_benchmark('orjson', _testname)
+@register_benchmark("orjson", _testname)
 def dumps_with_orjson():
     orjson.dumps(test_object)
 
 
-@register_benchmark('simplejson', _testname)
+@register_benchmark("simplejson", _testname)
 def dumps_with_simplejson():
     simplejson.dumps(test_object)
 
 
-@register_benchmark('ujson', _testname)
+@register_benchmark("ujson", _testname)
 def dumps_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False)
 
@@ -181,30 +184,30 @@ def dumps_with_ujson():
 # JSON encoding with sort_keys=True.
 # =============================================================================
 
-_testname = 'dumps-sort_keys=True'
+_testname = "dumps-sort_keys=True"
 
 
-@register_benchmark('json', _testname)
+@register_benchmark("json", _testname)
 def dumps_sorted_with_json():
     json.dumps(test_object, sort_keys=True)
 
 
-@register_benchmark('simplejson', _testname)
+@register_benchmark("simplejson", _testname)
 def dumps_sorted_with_simplejson():
     simplejson.dumps(test_object, sort_keys=True)
 
 
-@register_benchmark('nujson', _testname)
+@register_benchmark("nujson", _testname)
 def dumps_sorted_with_nujson():
     nujson.dumps(test_object, sort_keys=True)
 
 
-@register_benchmark('orjson', _testname)
+@register_benchmark("orjson", _testname)
 def dumps_sorted_with_orjson():
     orjson.dumps(test_object, sort_keys=True)
 
 
-@register_benchmark('ujson', _testname)
+@register_benchmark("ujson", _testname)
 def dumps_sorted_with_ujson():
     ujson.dumps(test_object, ensure_ascii=False, sort_keys=True)
 
@@ -213,30 +216,30 @@ def dumps_sorted_with_ujson():
 # JSON decoding.
 # =============================================================================
 
-_testname = 'loads'
+_testname = "loads"
 
 
-@register_benchmark('json', _testname)
+@register_benchmark("json", _testname)
 def loads_with_json():
     json.loads(decode_data)
 
 
-@register_benchmark('nujson', _testname)
+@register_benchmark("nujson", _testname)
 def loads_with_nujson():
     nujson.loads(decode_data)
 
 
-@register_benchmark('orjson', _testname)
+@register_benchmark("orjson", _testname)
 def loads_with_orjson():
     orjson.loads(decode_data)
 
 
-@register_benchmark('simplejson', _testname)
+@register_benchmark("simplejson", _testname)
 def loads_with_simplejson():
     simplejson.loads(decode_data)
 
 
-@register_benchmark('ujson', _testname)
+@register_benchmark("ujson", _testname)
 def loads_with_ujson():
     ujson.loads(decode_data)
 
@@ -245,21 +248,21 @@ def loads_with_ujson():
 # Benchmarks.
 # =============================================================================
 def run_decode(count, libraries):
-    _testname = 'loads'
+    _testname = "loads"
     for libname in libraries:
         func = benchmark_registry[_testname][libname]
         results_record_result(func, False, count)
 
 
 def run_encode(count, libraries):
-    _testname = 'dumps'
+    _testname = "dumps"
     for libname in libraries:
         func = benchmark_registry[_testname][libname]
         results_record_result(func, True, count)
 
 
 def run_encode_sort_keys(count, libraries):
-    _testname = 'dumps-sort_keys=True'
+    _testname = "dumps-sort_keys=True"
     for libname in libraries:
         func = benchmark_registry[_testname][libname]
         results_record_result(func, True, count)
@@ -422,33 +425,48 @@ def benchmark_complex_object(libraries, factor=1):
 # Main.
 # =============================================================================
 
+
 def main():
     import argparse
     import importlib
+
     parser = argparse.ArgumentParser(
-        prog='ujson-benchmarks',
-        description='Benchmark ujson against other json implementations')
-
-    known_libraries = [
-        'ujson',
-        'nujson',
-        'orjson',
-        'simplejson',
-        'json',
-    ]
-
-    parser.add_argument('--disable', nargs='+', choices=known_libraries, help=(
-        'Remove specified libraries from the benchmarks')
+        prog="ujson-benchmarks",
+        description="Benchmark ujson against other json implementations",
     )
 
-    parser.add_argument('--factor', type=float, default=1.0, help=(
-        'Specify as a fraction speed up benchmarks for development / testing'
-    ))
+    known_libraries = [
+        "ujson",
+        "nujson",
+        "orjson",
+        "simplejson",
+        "json",
+    ]
 
-    parser.add_argument('command', nargs='?', help=(
-        'Exists for backwards compatibility. '
-        'Can be "skip-lib-comps" to disable computing benchmarks '
-        'for other json libraries.'), default=None)
+    parser.add_argument(
+        "--disable",
+        nargs="+",
+        choices=known_libraries,
+        help=("Remove specified libraries from the benchmarks"),
+    )
+
+    parser.add_argument(
+        "--factor",
+        type=float,
+        default=1.0,
+        help=("Specify as a fraction speed up benchmarks for development / testing"),
+    )
+
+    parser.add_argument(
+        "command",
+        nargs="?",
+        help=(
+            "Exists for backwards compatibility. "
+            'Can be "skip-lib-comps" to disable computing benchmarks '
+            "for other json libraries."
+        ),
+        default=None,
+    )
 
     args = parser.parse_args()
 
@@ -462,13 +480,13 @@ def main():
             try:
                 module = importlib.import_module(libname)
             except ImportError:
-                raise ImportError(f'{libname} is not available')
+                raise ImportError(f"{libname} is not available")
             else:
                 enabled_libraries[libname] = module
 
     # Ensure the modules are avilable in a the global scope
     for libname, module in enabled_libraries.items():
-        print(f'Enabled {libname} benchmarks')
+        print(f"Enabled {libname} benchmarks")
         globals()[libname] = module
 
     libraries = list(enabled_libraries.keys())

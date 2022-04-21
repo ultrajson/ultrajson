@@ -1,5 +1,4 @@
 ﻿# coding=UTF-8
-
 import cpuinfo
 import json
 import os
@@ -8,8 +7,12 @@ import random
 import sys
 import timeit
 from collections import defaultdict
-
 import ujson
+
+# Will be set by "main" if user requests them
+simplejson = None
+nujson = None
+orjson = None
 
 USER = {
     "userId": 3381293,
@@ -26,11 +29,6 @@ FRIENDS = [USER, USER, USER, USER, USER, USER, USER, USER]
 
 decode_data = None
 test_object = None
-skip_lib_comparisons = False
-if not skip_lib_comparisons:
-    import nujson
-    import orjson
-    import simplejson
 
 benchmark_results = []
 
@@ -425,23 +423,56 @@ def benchmark_complex_object(libraries, factor=1):
 # =============================================================================
 
 def main():
-    if len(sys.argv) > 1 and "skip-lib-comps" in sys.argv:
-        # skip_lib_comparisons = True
-        libraries = (
-            "ujson",
-        )
-    else:
-        libraries = (
-            "ujson",
-            "nujson",
-            "orjson",
-            "simplejson",
-            "json"
-        )
+    import argparse
+    import importlib
+    parser = argparse.ArgumentParser(
+        prog='ujson-benchmarks',
+        description='Benchmark ujson against other json implementations')
 
-    # Set to a fraction to speed up benchmarks for development / testing
-    factor = 1.0
+    known_libraries = [
+        'ujson',
+        'nujson',
+        'orjson',
+        'simplejson',
+        'json',
+    ]
 
+    parser.add_argument('--disable', nargs='+', choices=known_libraries, help=(
+        'Remove specified libraries from the benchmarks')
+    )
+
+    parser.add_argument('--factor', type=float, default=1.0, help=(
+        'Specify as a fraction speed up benchmarks for development / testing'
+    ))
+
+    parser.add_argument('command', nargs='?', help=(
+        'Exists for backwards compatibility. '
+        'Can be "skip-lib-comps" to disable computing benchmarks '
+        'for other json libraries.'), default=None)
+
+    args = parser.parse_args()
+
+    if args.command == "skip-lib-comps":
+        args.disable.extend(known_libraries[1:])
+
+    disabled_libraires = set(args.disable)
+    enabled_libraries = {}
+    for libname in known_libraries:
+        if libname not in disabled_libraires:
+            try:
+                module = importlib.import_module(libname)
+            except ImportError:
+                raise ImportError(f'{libname} is not available')
+            else:
+                enabled_libraries[libname] = module
+
+    # Ensure the modules are avilable in a the global scope
+    for libname, module in enabled_libraries.items():
+        print(f'Enabled {libname} benchmarks')
+        globals()[libname] = module
+
+    libraries = list(enabled_libraries.keys())
+    factor = args.factor
     benchmark_array_doubles(libraries, factor)
     benchmark_array_utf8_strings(libraries, factor)
     benchmark_array_byte_strings(libraries, factor)

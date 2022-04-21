@@ -1,11 +1,12 @@
-import sys
 import random
+import sys
+
 import timerit
 import ubelt as ub
 
 
 def data_lut(input, size):
-    if input == 'Array with UTF-8 strings':
+    if input == "Array with UTF-8 strings":
         test_object = []
         for x in range(size):
             test_object.append(
@@ -14,7 +15,7 @@ def data_lut(input, size):
                 " الحكم من بينهم ان يكون مسلما رشيدا عاقلا ًوابنا شرعيا لابوين عمانيين "
             )
         return test_object
-    elif input == 'Array with doubles':
+    elif input == "Array with doubles":
         test_object = []
         for x in range(256):
             test_object.append(sys.maxsize * random.random())
@@ -34,11 +35,14 @@ def benchmark_json_dumps():
 
     if True:
         import nujson
-        JSON_IMPLS['nujson'] = nujson
+
+        JSON_IMPLS["nujson"] = nujson
         import orjson
-        JSON_IMPLS['nujson'] = orjson
+
+        JSON_IMPLS["nujson"] = orjson
         import simplejson
-        JSON_IMPLS['simplejson'] = simplejson
+
+        JSON_IMPLS["simplejson"] = simplejson
 
     def method_lut(impl):
         return JSON_IMPLS[impl].dumps
@@ -53,19 +57,19 @@ def benchmark_json_dumps():
 
     # These are the parameters that we benchmark over
     basis = {
-        'input': [
-             'Array with UTF-8 strings',
-             'Array with doubles',
+        "input": [
+            "Array with UTF-8 strings",
+            "Array with doubles",
         ],
-        'size': [1, 32, 256, 1024, 2048],
-        'impl': list(JSON_IMPLS.keys()),
+        "size": [1, 32, 256, 1024, 2048],
+        "impl": list(JSON_IMPLS.keys()),
     }
-    xlabel = 'size'
+    xlabel = "size"
     # Set these to empty lists if they are not used
     group_labels = {
-        'col': ['input'],
-        'hue': ['impl'],
-        'size': [],
+        "col": ["input"],
+        "hue": ["impl"],
+        "size": [],
     }
     grid_iter = list(ub.named_product(basis))
 
@@ -74,13 +78,14 @@ def benchmark_json_dumps():
     for params in grid_iter:
         group_keys = {}
         for gname, labels in group_labels.items():
-            group_keys[gname + '_key'] = ub.repr2(
-                ub.dict_isect(params, labels), compact=1, si=1)
+            group_keys[gname + "_key"] = ub.repr2(
+                ub.dict_isect(params, labels), compact=1, si=1
+            )
         key = ub.repr2(params, compact=1, si=1)
         # Make any modifications you need to compute input kwargs for each
         # method here.
-        method = method_lut(params['impl'])
-        data = data_lut(params['input'], params['size'])
+        method = method_lut(params["impl"])
+        data = data_lut(params["input"], params["size"])
         # Timerit will run some user-specified number of loops.
         # and compute time stats with similar methodology to timeit
         for timer in ti.reset(key):
@@ -98,23 +103,23 @@ def benchmark_json_dumps():
             times = ti.robust_times()
             for time in times:
                 row = {
-                    'time': time,
-                    'key': key,
+                    "time": time,
+                    "key": key,
                     **group_keys,
                     **params,
                 }
                 rows.append(row)
         else:
             row = {
-                'mean': ti.mean(),
-                'min': ti.min(),
-                'key': key,
+                "mean": ti.mean(),
+                "min": ti.min(),
+                "key": key,
                 **group_keys,
                 **params,
             }
             rows.append(row)
 
-    time_key = 'time' if RECORD_ALL else 'min'
+    time_key = "time" if RECORD_ALL else "min"
 
     # The rows define a long-form pandas data array.
     # Data in long-form makes it very easy to use seaborn.
@@ -123,10 +128,12 @@ def benchmark_json_dumps():
 
     if RECORD_ALL:
         # Show the min / mean if we record all
-        min_times = data.groupby('key').min().rename({'time': 'min'}, axis=1)
-        mean_times = data.groupby('key')[['time']].mean().rename({'time': 'mean'}, axis=1)
+        min_times = data.groupby("key").min().rename({"time": "min"}, axis=1)
+        mean_times = (
+            data.groupby("key")[["time"]].mean().rename({"time": "mean"}, axis=1)
+        )
         stats_data = pd.concat([min_times, mean_times], axis=1)
-        stats_data = stats_data.sort_values('min')
+        stats_data = stats_data.sort_values("min")
     else:
         stats_data = data
 
@@ -138,29 +145,35 @@ def benchmark_json_dumps():
         # This does not take the fact that some "games" (i.e.  parameter
         # settings) are more important than others, but it should be fairly
         # robust on average.
-        skillboard = SkillTracker(basis['impl'])
+        skillboard = SkillTracker(basis["impl"])
 
-    other_keys = sorted(set(stats_data.columns) - {'key', 'impl', 'min', 'mean', 'hue_key', 'size_key', 'style_key'})
+    other_keys = sorted(
+        set(stats_data.columns)
+        - {"key", "impl", "min", "mean", "hue_key", "size_key", "style_key"}
+    )
     for params, variants in stats_data.groupby(other_keys):
-        variants = variants.sort_values('mean')
-        ranking = variants['impl'].reset_index(drop=True)
+        variants = variants.sort_values("mean")
+        ranking = variants["impl"].reset_index(drop=True)
 
-        mean_speedup = variants['mean'].max() / variants['mean']
-        stats_data.loc[mean_speedup.index, 'mean_speedup'] = mean_speedup
-        min_speedup = variants['min'].max() / variants['min']
-        stats_data.loc[min_speedup.index, 'min_speedup'] = min_speedup
+        mean_speedup = variants["mean"].max() / variants["mean"]
+        stats_data.loc[mean_speedup.index, "mean_speedup"] = mean_speedup
+        min_speedup = variants["min"].max() / variants["min"]
+        stats_data.loc[min_speedup.index, "min_speedup"] = min_speedup
 
         if USE_OPENSKILL:
             skillboard.observe(ranking)
 
-    print('Statistics:')
+    print("Statistics:")
     print(stats_data)
 
     if USE_OPENSKILL:
         win_probs = skillboard.predict_win()
         win_probs = ub.sorted_vals(win_probs, reverse=True)
-        print('Aggregated Rankings = {}'.format(ub.repr2(
-            win_probs, nl=1, precision=4, align=':')))
+        print(
+            "Aggregated Rankings = {}".format(
+                ub.repr2(win_probs, nl=1, precision=4, align=":")
+            )
+        )
 
     plot = True
     if plot:
@@ -168,20 +181,20 @@ def benchmark_json_dumps():
         # kwplot autosns works well for IPython and script execution.
         # not sure about notebooks.
         import seaborn as sns
+
         sns.set()
         from matplotlib import pyplot as plt
 
         plotkw = {}
         for gname, labels in group_labels.items():
             if labels:
-                plotkw[gname] = gname + '_key'
+                plotkw[gname] = gname + "_key"
 
         # Your variables may change
         # ax = plt.figure().gca()
-        col = plotkw.pop('col')
+        col = plotkw.pop("col")
         facet = sns.FacetGrid(data, col=col, sharex=False, sharey=False)
-        facet.map_dataframe(sns.lineplot, x=xlabel, y=time_key, marker='o',
-                            **plotkw)
+        facet.map_dataframe(sns.lineplot, x=xlabel, y=time_key, marker="o", **plotkw)
         facet.add_legend()
         # sns.lineplot(data=data, )
         # ax.set_title('JSON Benchmarks')
@@ -222,6 +235,7 @@ class SkillTracker:
 
     def __init__(self, player_ids):
         import openskill
+
         self.player_ids = player_ids
         self.ratings = {m: openskill.Rating() for m in player_ids}
         self.observations = []
@@ -235,6 +249,7 @@ class SkillTracker:
             Dict[T, float]: mapping from player ids to win probabilites
         """
         from openskill import predict_win
+
         teams = [[p] for p in list(self.ratings.keys())]
         ratings = [[r] for r in self.ratings.values()]
         probs = predict_win(ratings)
@@ -253,6 +268,7 @@ class SkillTracker:
                 winners are at the front (0-th place) of the list.
         """
         import openskill
+
         self.observations.append(ranking)
         ratings = self.ratings
         team_standings = [[r] for r in ub.take(ratings, ranking)]
@@ -261,7 +277,7 @@ class SkillTracker:
         ratings.update(ub.dzip(ranking, new_ratings))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     CommandLine:
         python ~/code/ultrajson/tests/benchmark2.py

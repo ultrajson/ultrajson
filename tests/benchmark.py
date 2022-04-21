@@ -144,6 +144,9 @@ def results_output_table(libraries):
                     columns[i + 1] = " " * (column_widths[i + 1] + 2)
             print("|{}|".format("|".join(columns)))
 
+    print()
+    print('Above metrics are in call/sec, larger is better.')
+
 
 # =============================================================================
 # JSON encoding.

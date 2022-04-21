@@ -24,9 +24,10 @@ def data_lut(input, size):
 
 
 def benchmark_json_dumps():
+    import json
+
     import pandas as pd
     import ujson
-    import json
 
     JSON_IMPLS = {
         "ujson": ujson,  # Our json

@@ -457,21 +457,7 @@ def main():
         help=("Specify as a fraction speed up benchmarks for development / testing"),
     )
 
-    parser.add_argument(
-        "command",
-        nargs="?",
-        help=(
-            "Exists for backwards compatibility. "
-            'Can be "skip-lib-comps" to disable computing benchmarks '
-            "for other json libraries."
-        ),
-        default=None,
-    )
-
     args = parser.parse_args()
-
-    if args.command == "skip-lib-comps":
-        args.disable.extend(known_libraries[1:])
 
     disabled_libraires = set(args.disable)
     enabled_libraries = {}

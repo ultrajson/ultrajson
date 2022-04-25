@@ -448,6 +448,7 @@ def main():
         nargs="+",
         choices=known_libraries,
         help=("Remove specified libraries from the benchmarks"),
+        default=[],
     )
 
     parser.add_argument(

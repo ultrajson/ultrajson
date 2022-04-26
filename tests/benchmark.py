@@ -455,7 +455,7 @@ def main():
         "--factor",
         type=float,
         default=1.0,
-        help=("Specify as a fraction speed up benchmarks for development / testing"),
+        help="Specify as a fraction speed up benchmarks for development / testing",
     )
 
     args = parser.parse_args()

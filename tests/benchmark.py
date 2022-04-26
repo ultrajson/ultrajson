@@ -471,7 +471,7 @@ def main():
             else:
                 enabled_libraries[libname] = module
 
-    # Ensure the modules are avilable in a the global scope
+    # Ensure the modules are available in the global scope
     for libname, module in enabled_libraries.items():
         print(f"Enabled {libname} benchmarks")
         globals()[libname] = module

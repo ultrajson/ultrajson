@@ -460,10 +460,10 @@ def main():
 
     args = parser.parse_args()
 
-    disabled_libraires = set(args.disable)
+    disabled_libraries = set(args.disable)
     enabled_libraries = {}
     for libname in known_libraries:
-        if libname not in disabled_libraires:
+        if libname not in disabled_libraries:
             try:
                 module = importlib.import_module(libname)
             except ImportError:

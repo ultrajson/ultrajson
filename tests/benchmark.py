@@ -447,7 +447,7 @@ def main():
         "--disable",
         nargs="+",
         choices=known_libraries,
-        help=("Remove specified libraries from the benchmarks"),
+        help="Remove specified libraries from the benchmarks",
         default=[],
     )
 

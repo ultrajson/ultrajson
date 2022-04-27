@@ -447,22 +447,23 @@ def main():
         "--disable",
         nargs="+",
         choices=known_libraries,
-        help=("Remove specified libraries from the benchmarks"),
+        help="Remove specified libraries from the benchmarks",
+        default=[],
     )
 
     parser.add_argument(
         "--factor",
         type=float,
         default=1.0,
-        help=("Specify as a fraction speed up benchmarks for development / testing"),
+        help="Specify as a fraction speed up benchmarks for development / testing",
     )
 
     args = parser.parse_args()
 
-    disabled_libraires = set(args.disable)
+    disabled_libraries = set(args.disable)
     enabled_libraries = {}
     for libname in known_libraries:
-        if libname not in disabled_libraires:
+        if libname not in disabled_libraries:
             try:
                 module = importlib.import_module(libname)
             except ImportError:
@@ -470,7 +471,7 @@ def main():
             else:
                 enabled_libraries[libname] = module
 
-    # Ensure the modules are avilable in a the global scope
+    # Ensure the modules are available in the global scope
     for libname, module in enabled_libraries.items():
         print(f"Enabled {libname} benchmarks")
         globals()[libname] = module

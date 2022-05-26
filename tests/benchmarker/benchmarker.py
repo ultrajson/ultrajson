@@ -8,9 +8,9 @@ from benchmarker.process_context import ProcessContext
 
 @dataclass
 class BenchmarkerConfig:
-    name   : str = None
-    num    : int = 100
-    bestof : int = 10
+    name    : str = None
+    num     : int = 100
+    bestof  : int = 10
 
 
 class BenchmarkerResult:
@@ -97,14 +97,16 @@ class Benchmarker:
         >>> dpath = ub.Path.appdir('benchmarker/demo').ensuredir()
         >>> self.dump_in_dpath(dpath)
     """
-    def __init__(self, basis={}, **kwargs):
+    def __init__(self, basis={}, verbose=1, **kwargs):
         self.basis = basis
 
         self.config = BenchmarkerConfig(**kwargs)
 
         self.ti = timerit.Timerit(
             num=self.config.num,
-            bestof=self.config.bestof)
+            bestof=self.config.bestof,
+            verbose=verbose,
+        )
         self.context = ProcessContext(name=self.config.name)
         self.rows = []
         self.RECORD_ALL = 0
@@ -152,7 +154,7 @@ class Benchmarker:
                 rows.append(row)
         else:
             times = np.array(ti.robust_times())
-            metrics = stats_dict(times)
+            metrics = stats_dict(times, '_time')
             row = {
                 'metrics': metrics,
                 'params': params,
@@ -161,13 +163,13 @@ class Benchmarker:
             rows.append(row)
 
 
-def stats_dict(data):
+def stats_dict(data, suffix=''):
     stats = {
-        'n': len(data),
-        'mean': data.mean(),
-        'std': data.std(),
-        'min': data.min(),
-        'max': data.max(),
+        'nobs' + suffix: len(data),
+        'mean' + suffix: data.mean(),
+        'std' + suffix: data.std(),
+        'min' + suffix: data.min(),
+        'max' + suffix: data.max(),
     }
     return stats
 
@@ -182,12 +184,12 @@ def combine_stats(s1, s2):
 
     Example:
         >>> basis = {
-        >>>     'n1': [1, 10, 100, 10000],
-        >>>     'n2': [1, 10, 100, 10000],
+        >>>     'nobs1': [1, 10, 100, 10000],
+        >>>     'nobs2': [1, 10, 100, 10000],
         >>> }
         >>> for params in ub.named_product(basis):
-        >>>     data1 = np.random.rand(params['n1'])
-        >>>     data2 = np.random.rand(params['n2'])
+        >>>     data1 = np.random.rand(params['nobs1'])
+        >>>     data2 = np.random.rand(params['nobs2'])
         >>>     data3 = np.hstack([data1, data2])
         >>>     s1 = stats_dict(data1)
         >>>     s2 = stats_dict(data2)
@@ -203,7 +205,7 @@ def combine_stats(s1, s2):
         https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
     """
     stats = [s1, s2]
-    sizes = np.array([s['n'] for s in stats])
+    sizes = np.array([s['nobs'] for s in stats])
     means = np.array([s['mean'] for s in stats])
     stds = np.array([s['std'] for s in stats])
     mins = np.array([s['min'] for s in stats])
@@ -221,7 +223,7 @@ def combine_stats(s1, s2):
     combo_std = np.sqrt(combo_vars)
 
     combo_stats = {
-        'n': combo_size,
+        'nobs': combo_size,
         'mean': combo_mean,
         'std': combo_std,
         'min': mins.min(),

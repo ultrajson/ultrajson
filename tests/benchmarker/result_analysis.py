@@ -8,6 +8,19 @@ import scipy
 import scipy.stats  # NOQA
 
 
+# a list of common objectives
+DEFAULT_METRIC_TO_OBJECTIVE = {
+    'time': 'min',
+    'ap': 'max',
+    'acc': 'max',
+    'f1': 'max',
+    'mcc': 'max',
+    #
+    'loss': 'min',
+    'brier': 'min',
+}
+
+
 class Result(ub.NiceRepr):
     """
     Storage of names, parameters, and quality metrics for a single experiment.
@@ -31,6 +44,10 @@ class Result(ub.NiceRepr):
         >>> self = Result.demo(rng=32)
         >>> print('self = {}'.format(self))
         self = <Result(name=53f57161,f1=0.33,acc=0.75,param1=1,param2=6.67,param3=a)>
+
+    Example:
+        >>> self = Result.demo(mode='alt', rng=32)
+        >>> print('self = {}'.format(self))
     """
     def __init__(self, name, params, metrics, meta=None):
         self.name = name
@@ -48,21 +65,43 @@ class Result(ub.NiceRepr):
         return text
 
     @classmethod
-    def demo(cls, rng=None):
+    def demo(cls, mode='null', rng=None):
         import numpy as np
         import string
         import kwarray
         rng = kwarray.ensure_rng(rng)
-        demo_param_space = {
-            'param1': list(range(3)),
-            'param2': np.linspace(0, 10, 10),
-            'param3': list(string.ascii_lowercase[0:3]),
-        }
-        params = {k: rng.choice(b) for k, b in demo_param_space.items()}
-        metrics = {
-            'f1': rng.rand(),
-            'acc': rng.rand(),
-        }
+
+        if mode == 'null':
+            # The null hypothesis should generally be true here,
+            # there is no relation between the results and parameters
+            demo_param_space = {
+                'param1': list(range(3)),
+                'param2': np.linspace(0, 10, 10),
+                'param3': list(string.ascii_lowercase[0:3]),
+            }
+            params = {k: rng.choice(b) for k, b in demo_param_space.items()}
+            metrics = {
+                'f1': rng.rand(),
+                'acc': rng.rand(),
+            }
+        elif mode == 'alt':
+            # The alternative hypothesis should be true here, there is a
+            # relationship between results two of the params.
+            from scipy.special import expit
+            params = {
+                'w': rng.randint(-1, 1),
+                'x': rng.randint(-3, 3),
+                'y': rng.randint(-2, 2),
+                'z': rng.randint(-3, 3),
+            }
+            noise = np.random.randn() * 1
+            r = 3 * params['x'] + params['y'] ** 2 + 0.3 * params['z'] ** 3
+            acc = expit(r / 20 + noise)
+            metrics = {
+                'acc': acc,
+            }
+        else:
+            raise KeyError(mode)
         name = ub.hash_data(params)[0:8]
         self = cls(name, params, metrics)
         return self
@@ -103,6 +142,10 @@ class ResultAnalysis(ub.NiceRepr):
 
     Example:
         >>> self = ResultAnalysis.demo()
+        >>> self.analysis()
+
+    Example:
+        >>> self = ResultAnalysis.demo(num=5000, mode='alt')
         >>> self.analysis()
 
     Example:
@@ -168,7 +211,8 @@ class ResultAnalysis(ub.NiceRepr):
 
     def __init__(self, results, metrics=None, params=None, ignore_params=None,
                  ignore_metrics=None, metric_objectives=None,
-                 abalation_orders={1}, default_objective='max'):
+                 abalation_orders={1}, default_objective='max',
+                 p_threshold=0.05):
         self.results = results
         if ignore_metrics is None:
             ignore_metrics = set()
@@ -181,23 +225,15 @@ class ResultAnalysis(ub.NiceRepr):
         self.default_objective = default_objective
 
         # encode if we want to maximize or minimize a metric
-        default_metric_to_objective = {
-            'ap': 'max',
-            'acc': 'max',
-            'f1': 'max',
-            #
-            'loss': 'min',
-            'brier': 'min',
-        }
         if metric_objectives is None:
             metric_objectives = {}
-
-        self.metric_objectives = default_metric_to_objective.copy()
+        self.metric_objectives = DEFAULT_METRIC_TO_OBJECTIVE.copy()
         self.metric_objectives.update(metric_objectives)
 
         self.params = params
         self.metrics = metrics
         self.statistics = None
+        self.p_threshold = p_threshold
 
         self._description = {}
         self._description['built'] = False
@@ -210,11 +246,14 @@ class ResultAnalysis(ub.NiceRepr):
         return ub.repr2(self._description, si=1, sv=1)
 
     @classmethod
-    def demo(cls, num=10, rng=None):
+    def demo(cls, num=10, mode='null', rng=None):
         import kwarray
         rng = kwarray.ensure_rng(rng)
-        results = [Result.demo(rng=rng) for _ in range(num)]
-        self = cls(results, metrics={'f1', 'acc'})
+        results = [Result.demo(mode=mode, rng=rng) for _ in range(num)]
+        if mode == 'null':
+            self = cls(results, metrics={'f1', 'acc'})
+        else:
+            self = cls(results, metrics={'acc'})
         return self
 
     def run(self):
@@ -251,18 +290,30 @@ class ResultAnalysis(ub.NiceRepr):
         varied = {k: vs for k, vs in varied.items() if len(vs)}
         return varied
 
-    def abalation_groups(self, param):
+    def abalation_groups(self, param_group, k=2):
         """
         Return groups where the specified parameter(s) are varied, but all
         other non-ignored parameters are held the same.
+
+        Args:
+            param_group (str | List[str]):
+                One or more parameters that are allowed to vary
+
+            k (int):
+                minimum number of items a group must contain to be returned
+
+        Returns:
+            List[DataFrame]:
+                a list of subsets of in the table where all but the specified
+                (non-ignored) parameters are allowed to vary.
 
         Example:
             >>> self = ResultAnalysis.demo()
             >>> param = 'param2'
             >>> self.abalation_groups(param)
         """
-        if not ub.iterable(param):
-            param = [param]
+        if not ub.iterable(param_group):
+            param_group = [param_group]
         table = self.table
         config_rows = [r.params for r in self.results]
         config_keys = list(map(set, config_rows))
@@ -271,14 +322,14 @@ class ResultAnalysis(ub.NiceRepr):
         if self.ignore_params:
             config_keys = [c - self.ignore_params for c in config_keys]
         isect_params = set.intersection(*config_keys)
-        other_params = sorted(isect_params - set(param))
+        other_params = sorted(isect_params - set(param_group))
         groups = []
         for key, group in table.groupby(other_params, dropna=False):
-            if len(group) > 1:
+            if len(group) >= k:
                 groups.append(group)
         return groups
 
-    def abalate(self, param):
+    def abalate(self, param_group):
         """
         Example:
             >>> self = ResultAnalysis.demo(100)
@@ -287,34 +338,34 @@ class ResultAnalysis(ub.NiceRepr):
             >>> self.abalate(param)
 
             >>> self = ResultAnalysis.demo()
-            >>> param = ['param2', 'param3']
-            >>> self.abalate(param)
+            >>> param_group = ['param2', 'param3']
+            >>> # xdoctest: +REQUIRES(module:openskill)
+            >>> self.abalate(param_group)
         """
-        import itertools as it
         if self.table is None:
             self.table = self.build_table()
-        if not ub.iterable(param):
-            param = [param]
+        if not ub.iterable(param_group):
+            param_group = [param_group]
 
         # For hashable generic dictionary
         from collections import namedtuple
-        gd = namedtuple('config', param)
+        gd = namedtuple('config', param_group)
 
         # from types import SimpleNamespace
-        param_unique_vals_ = self.table[param].drop_duplicates().to_dict('records')
+        param_unique_vals_ = self.table[param_group].drop_duplicates().to_dict('records')
         param_unique_vals = [gd(**d) for d in param_unique_vals_]
-        # param_unique_vals = {p: self.table[p].unique().tolist() for p in param}
+        # param_unique_vals = {p: self.table[p].unique().tolist() for p in param_group}
         score_improvements = ub.ddict(list)
         scored_obs = []
         skillboard = SkillTracker(param_unique_vals)
-        groups = self.abalation_groups(param)
+        groups = self.abalation_groups(param_group, k=2)
 
         for group in groups:
             for metric_key in self.metrics:
                 ascending = self._objective_is_ascending(metric_key)
 
                 group = group.sort_values(metric_key, ascending=ascending)
-                subgroups = group.groupby(param)
+                subgroups = group.groupby(param_group)
                 if ascending:
                     best_idx = subgroups[metric_key].idxmax()
                 else:
@@ -326,19 +377,19 @@ class ResultAnalysis(ub.NiceRepr):
                     if x1 != x2:
                         r1 = best_group.loc[x1]
                         r2 = best_group.loc[x2]
-                        k1 = gd(**r1[param])
-                        k2 = gd(**r2[param])
+                        k1 = gd(**r1[param_group])
+                        k2 = gd(**r2[param_group])
                         diff = r1[metric_key] - r2[metric_key]
                         score_improvements[(k1, k2, metric_key)].append(diff)
 
                 # metric_vals = best_group[metric_key].values
                 # diffs = metric_vals[None, :] - metric_vals[:, None]
-                best_group.set_index(param)
-                # best_group[param]
+                best_group.set_index(param_group)
+                # best_group[param_group]
                 # best_group[metric_key].diff()
-                scored_ranking = best_group[param + [metric_key]].reset_index(drop=True)
+                scored_ranking = best_group[param_group + [metric_key]].reset_index(drop=True)
                 scored_obs.append(scored_ranking)
-                ranking = [gd(**d) for d in scored_ranking[param].to_dict('records')]
+                ranking = [gd(**d) for d in scored_ranking[param_group].to_dict('records')]
                 skillboard.observe(ranking)
 
         print('skillboard.ratings = {}'.format(ub.repr2(skillboard.ratings, nl=1, align=':')))
@@ -377,15 +428,12 @@ class ResultAnalysis(ub.NiceRepr):
             # TODO : document these stats clearly and accurately
 
         Example:
-            >>> self = ResultAnalysis.demo(num=30)
+            >>> self = ResultAnalysis.demo(num=100)
             >>> print(self.table)
-            >>> param_group = ['param2']
+            >>> param_group = ['param2', 'param1']
             >>> metric_key = 'f1'
             >>> stats_row = self.test_group(param_group, metric_key)
-            >>> print('stats_row = {}'.format(ub.repr2(stats_row, nl=2, precision=2)))
-            >>> # ---
-            >>> self.build()
-            >>> self.report()
+            >>> print('stats_row = {}'.format(ub.repr2(stats_row, nl=2, sort=0, precision=2)))
         """
         param_group_name = ','.join(param_group)
         stats_row = {
@@ -461,10 +509,6 @@ class ResultAnalysis(ub.NiceRepr):
         pairwise_statistics = []
         for pair in value_pairs:
             pair_statistics = {}
-            # try:
-            #     param_val1, param_val2 = sorted(pair)
-            # except Exception:
-            #     param_val1, param_val2 = (pair)
             param_val1, param_val2 = pair
 
             metric_vals1 = value_to_metric[param_val1]
@@ -477,16 +521,17 @@ class ResultAnalysis(ub.NiceRepr):
             pair_statistics['value2'] = param_val2
             pair_statistics['n1'] = len(metric_vals1)
             pair_statistics['n2'] = len(metric_vals2)
-            # TODO: probably want to use an alternative=less or greater here
-            # instead of simply unequal
-            alternative = 'two-sided'
-            if 1:
+
+            TEST_ONLY_FOR_DIFFERENCE = True
+            if TEST_ONLY_FOR_DIFFERENCE:
                 if ascending:
                     # We want to minimize the metric
                     alternative = 'less' if rank1 < rank2 else 'greater'
                 else:
                     # We want to maximize the metric
                     alternative = 'greater' if rank1 < rank2 else 'less'
+            else:
+                alternative = 'two-sided'
 
             ind_kw = dict(
                 equal_var=False,
@@ -499,8 +544,8 @@ class ResultAnalysis(ub.NiceRepr):
                 stats1 = stats_dict(metric_vals1)
                 stats2 = stats_dict(metric_vals2)
                 scipy.stats.ttest_ind_from_stats(
-                    stats1['mean'], stats1['std'], stats1['n'],
-                    stats2['mean'], stats2['std'], stats2['n'],
+                    stats1['mean'], stats1['std'], stats1['nobs'],
+                    stats2['mean'], stats2['std'], stats2['nobs'],
                     **ind_kw
                 )
                 # metric_vals1, metric_vals2, equal_var=False)
@@ -523,6 +568,8 @@ class ResultAnalysis(ub.NiceRepr):
                 for nk in common:
                     group1 = nk_to_group1[nk]
                     group2 = nk_to_group2[nk]
+                    # TODO: Not sure if taking the product of everything within
+                    # the comparable group is correct or not. I think it is ok.
                     for i, j in it.product(group1.index, group2.index):
                         comparable_indexes1.append(i)
                         comparable_indexes2.append(j)
@@ -590,7 +637,6 @@ class ResultAnalysis(ub.NiceRepr):
         self._description['built'] = True
 
     def report(self):
-        p_threshold = 0.05
         stat_groups = ub.group_items(self.statistics, key=lambda x: x['param_name'])
         stat_groups_items = list(stat_groups.items())
 
@@ -600,42 +646,46 @@ class ResultAnalysis(ub.NiceRepr):
             'metrics': self.metrics_of_interest,
         })
         for grid_item in grid:
-            metric_key = grid_item['metrics']
-            stat_groups_item = grid_item['stat_group_item']
-
-            param_name, stat_group = stat_groups_item
-            stats_row = ub.group_items(stat_group, key=lambda x: x['metric'])[metric_key][0]
-            title = ('PARAMETER: {} - METRIC: {}'.format(param_name, metric_key))
-            print('\n\n')
-            print(title)
-            print('=' * len(title))
-            print(stats_row['moments'])
-            anova_rank_p = stats_row['anova_rank_p']
-            anova_mean_p = stats_row['anova_mean_p']
-            # Rougly speaking
-            print('')
-            print(f'ANOVA: If p is low, the param {param_name!r} might have an effect')
-            print(ub.color_text(f'  Rank-ANOVA: p={anova_rank_p:0.8f}', 'green' if anova_rank_p < p_threshold else None))
-            print(ub.color_text(f'  Mean-ANOVA: p={anova_mean_p:0.8f}', 'green' if anova_mean_p < p_threshold else None))
-            print('')
-            print('Pairwise T-Tests')
-            for pairstat in stats_row['pairwise']:
-                # Is this backwards?
-                value1 = pairstat['value1']
-                value2 = pairstat['value2']
-                winner = pairstat['winner']
-                if value2 == winner:
-                    value1, value2 = value2, value1
-                print(f'  If p is low, {param_name}={value1} may outperform {param_name}={value2}.')
-                if 'ttest_ind' in pairstat:
-                    ttest_ind_result = pairstat['ttest_ind']
-                    print(ub.color_text(f'    ttest_ind:  p={ttest_ind_result.pvalue:0.8f}', 'green' if ttest_ind_result.pvalue < p_threshold else None))
-                if 'ttest_rel' in pairstat:
-                    n_common = pairstat['n_common']
-                    ttest_rel_result = pairstat['ttest_ind']
-                    print(ub.color_text(f'    ttest_rel:  p={ttest_rel_result.pvalue:0.8f}, n={n_common}', 'green' if ttest_rel_result.pvalue < p_threshold else None))
+            self._report_one(grid_item)
 
         print(self.stats_table)
+
+    def _report_one(self, grid_item):
+        p_threshold = self.p_threshold
+        metric_key = grid_item['metrics']
+        stat_groups_item = grid_item['stat_group_item']
+
+        param_name, stat_group = stat_groups_item
+        stats_row = ub.group_items(stat_group, key=lambda x: x['metric'])[metric_key][0]
+        title = ('PARAMETER: {} - METRIC: {}'.format(param_name, metric_key))
+        print('\n\n')
+        print(title)
+        print('=' * len(title))
+        print(stats_row['moments'])
+        anova_rank_p = stats_row['anova_rank_p']
+        anova_mean_p = stats_row['anova_mean_p']
+        # Rougly speaking
+        print('')
+        print(f'ANOVA: If p is low, the param {param_name!r} might have an effect')
+        print(ub.color_text(f'  Rank-ANOVA: p={anova_rank_p:0.8f}', 'green' if anova_rank_p < p_threshold else None))
+        print(ub.color_text(f'  Mean-ANOVA: p={anova_mean_p:0.8f}', 'green' if anova_mean_p < p_threshold else None))
+        print('')
+        print('Pairwise T-Tests')
+        for pairstat in stats_row['pairwise']:
+            # Is this backwards?
+            value1 = pairstat['value1']
+            value2 = pairstat['value2']
+            winner = pairstat['winner']
+            if value2 == winner:
+                value1, value2 = value2, value1
+            print(f'  If p is low, {param_name}={value1} may outperform {param_name}={value2}.')
+            if 'ttest_ind' in pairstat:
+                ttest_ind_result = pairstat['ttest_ind']
+                print(ub.color_text(f'    ttest_ind:  p={ttest_ind_result.pvalue:0.8f}', 'green' if ttest_ind_result.pvalue < p_threshold else None))
+            if 'ttest_rel' in pairstat:
+                n_common = pairstat['n_common']
+                ttest_rel_result = pairstat['ttest_ind']
+                print(ub.color_text(f'    ttest_rel:  p={ttest_rel_result.pvalue:0.8f}, n_pairs={n_common}', 'green' if ttest_rel_result.pvalue < p_threshold else None))
 
     def conclusions(self):
         conclusions = []
@@ -652,6 +702,50 @@ class ResultAnalysis(ub.NiceRepr):
                 txt = (f'p={pvalue:0.8f}, If p is low, {param_name}={value1} may outperform {value2} on {metric}.')
                 conclusions.append(txt)
         return conclusions
+
+    def plot(self, xlabel, metric_key, group_labels):
+        """
+        Example:
+            >>> self = ResultAnalysis.demo(num=5000, mode='alt')
+            >>> self.analysis()
+            >>> print('self = {}'.format(self))
+            >>> # xdoctest: +REQUIRES(module:kwplot)
+            >>> import kwplot
+            >>> kwplot.autompl()
+            >>> xlabel = 'x'
+            >>> metric_key = 'acc'
+            >>> group_labels = {
+            >>>     'col': ['y', 'w'],
+            >>>     'hue': ['z'],
+            >>>     'size': [],
+            >>> }
+            >>> self.plot(xlabel, metric_key, group_labels)
+        """
+        import seaborn as sns
+        sns.set()
+        from matplotlib import pyplot as plt  # NOQA
+        data = self.table
+        data = data.sort_values(metric_key)
+        for gname, labels in group_labels.items():
+            if len(labels):
+                new_col = []
+                for row in data[labels].to_dict('records'):
+                    item = ub.repr2(row, compact=1, si=1)
+                    new_col.append(item)
+                gkey = gname + "_key"
+                data[gkey] = new_col
+
+        plotkw = {}
+        for gname, labels in group_labels.items():
+            if labels:
+                plotkw[gname] = gname + "_key"
+
+        # Your variables may change
+        # ax = plt.figure().gca()
+        col = plotkw.pop("col")
+        facet = sns.FacetGrid(data, col=col, sharex=False, sharey=False)
+        facet.map_dataframe(sns.lineplot, x=xlabel, y=metric_key, marker="o", **plotkw)
+        facet.add_legend()
 
 
 class SkillTracker:
@@ -677,6 +771,9 @@ class SkillTracker:
             4: 0.20,
             5: 0.20,
         }
+
+    Requirements:
+        openskill
     """
 
     def __init__(self, player_ids):

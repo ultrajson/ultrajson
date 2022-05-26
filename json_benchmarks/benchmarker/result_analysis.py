@@ -89,10 +89,11 @@ class Result(ub.NiceRepr):
             # relationship between results two of the params.
             from scipy.special import expit
             params = {
-                'w': rng.randint(-1, 1),
-                'x': rng.randint(-3, 3),
-                'y': rng.randint(-2, 2),
-                'z': rng.randint(-3, 3),
+                'u': rng.randint(0, 1 + 1),
+                'v': rng.randint(-1, 1 + 1),
+                'x': rng.randint(-2, 3 + 1),
+                'y': rng.randint(-1, 2 + 1),
+                'z': rng.randint(-0, 3 + 1),
             }
             noise = np.random.randn() * 1
             r = 3 * params['x'] + params['y'] ** 2 + 0.3 * params['z'] ** 3
@@ -326,8 +327,28 @@ class ResultAnalysis(ub.NiceRepr):
                 groups.append(group)
         return groups
 
+    def _objective_is_ascending(self, metric_key):
+        """
+        Args:
+            metric_key (str): the metric in question
+
+        Returns:
+            bool:
+                True if we should minimize the objective (lower is better)
+                False if we should maximize the objective (higher is better)
+        """
+        objective = self.metric_objectives.get(metric_key, None)
+        if objective is None:
+            warnings.warn(f'warning assume {self.default_objective} for {metric_key=}')
+            objective = self.default_objective
+        ascending = (objective == 'min')
+        return ascending
+
     def abalate(self, param_group):
         """
+        TODO:
+            rectify with test-group
+
         Example:
             >>> self = ResultAnalysis.demo(100)
             >>> param = 'param2'
@@ -400,23 +421,6 @@ class ResultAnalysis(ub.NiceRepr):
             print(pd.DataFrame([pd.Series(pos_delta).describe().T]))
         return scored_obs
 
-    def _objective_is_ascending(self, metric_key):
-        """
-        Args:
-            metric_key (str): the metric in question
-
-        Returns:
-            bool:
-                True if we should minimize the objective (lower is better)
-                False if we should maximize the objective (higher is better)
-        """
-        objective = self.metric_objectives.get(metric_key, None)
-        if objective is None:
-            warnings.warn(f'warning assume {self.default_objective} for {metric_key=}')
-            objective = self.default_objective
-        ascending = (objective == 'min')
-        return ascending
-
     def test_group(self, param_group, metric_key):
         """
         Get stats for a particular metric / constant group
@@ -477,8 +481,10 @@ class ResultAnalysis(ub.NiceRepr):
 
         # Determine a set of value pairs to do pairwise comparisons on
         value_pairs = ub.oset()
-        value_pairs.update(map(frozenset, ub.iter_window(moments.index, 2)))
-        value_pairs.update(map(frozenset, ub.iter_window(moments.sort_values('mean', ascending=ascending).index, 2)))
+        # value_pairs.update(
+        #     map(frozenset, ub.iter_window(moments.index, 2)))
+        value_pairs.update(map(frozenset, ub.iter_window(
+                moments.sort_values('mean', ascending=ascending).index, 2)))
 
         # https://en.wikipedia.org/wiki/Kruskal%E2%80%93Wallis_one-way_analysis_of_variance
         # If the researcher can make the assumptions of an identically
@@ -508,9 +514,9 @@ class ResultAnalysis(ub.NiceRepr):
         stats_row['anova_mean_p'] = anova_1way_result.pvalue
         stats_row['moments'] = moments
 
-        pairwise_statistics = []
+        pair_stats_list = []
         for pair in value_pairs:
-            pair_statistics = {}
+            pair_stats = {}
             param_val1, param_val2 = pair
 
             metric_vals1 = value_to_metric[param_val1]
@@ -518,11 +524,11 @@ class ResultAnalysis(ub.NiceRepr):
 
             rank1 = param_to_rank[param_val1]
             rank2 = param_to_rank[param_val2]
-            pair_statistics['winner'] = param_val1 if rank1 < rank2 else param_val2
-            pair_statistics['value1'] = param_val1
-            pair_statistics['value2'] = param_val2
-            pair_statistics['n1'] = len(metric_vals1)
-            pair_statistics['n2'] = len(metric_vals2)
+            pair_stats['winner'] = param_val1 if rank1 < rank2 else param_val2
+            pair_stats['value1'] = param_val1
+            pair_stats['value2'] = param_val2
+            pair_stats['n1'] = len(metric_vals1)
+            pair_stats['n2'] = len(metric_vals2)
 
             TEST_ONLY_FOR_DIFFERENCE = True
             if TEST_ONLY_FOR_DIFFERENCE:
@@ -554,7 +560,7 @@ class ResultAnalysis(ub.NiceRepr):
 
             scipy.stats.ttest_ind_from_stats
 
-            pair_statistics['ttest_ind'] = ttest_ind_result
+            pair_stats['ttest_ind'] = ttest_ind_result
 
             # Do relative checks, need to find comparable subgroups
             metric_group1 = value_to_metric_group[param_val1]
@@ -583,11 +589,11 @@ class ResultAnalysis(ub.NiceRepr):
                 # I think that is the case giving my understanding of paired
                 # t-tests, but the docs need a PR to make that more clear.
                 ttest_rel_result = scipy.stats.ttest_rel(comparable_groups1, comparable_groups2)
-                pair_statistics['n_common'] = len(common)
-                pair_statistics['ttest_rel'] = ttest_rel_result
-            pairwise_statistics.append(pair_statistics)
+                pair_stats['n_common'] = len(common)
+                pair_stats['ttest_rel'] = ttest_rel_result
+            pair_stats_list.append(pair_stats)
 
-        stats_row['pairwise'] = pairwise_statistics
+        stats_row['pairwise'] = pair_stats_list
         return stats_row
 
     def build(self):
@@ -671,8 +677,10 @@ class ResultAnalysis(ub.NiceRepr):
         # Rougly speaking
         print('')
         print(f'ANOVA: If p is low, the param {param_name!r} might have an effect')
-        print(ub.color_text(f'  Rank-ANOVA: p={anova_rank_p:0.8f}', 'green' if anova_rank_p < p_threshold else None))
-        print(ub.color_text(f'  Mean-ANOVA: p={anova_mean_p:0.8f}', 'green' if anova_mean_p < p_threshold else None))
+        print(ub.color_text(f'  Rank-ANOVA: p={anova_rank_p:0.8f}',
+                            'green' if anova_rank_p < p_threshold else None))
+        print(ub.color_text(f'  Mean-ANOVA: p={anova_mean_p:0.8f}',
+                            'green' if anova_mean_p < p_threshold else None))
         print('')
         print('Pairwise T-Tests')
         for pairstat in stats_row['pairwise']:
@@ -685,11 +693,13 @@ class ResultAnalysis(ub.NiceRepr):
             print(f'  If p is low, {param_name}={value1} may outperform {param_name}={value2}.')
             if 'ttest_ind' in pairstat:
                 ttest_ind_result = pairstat['ttest_ind']
-                print(ub.color_text(f'    ttest_ind:  p={ttest_ind_result.pvalue:0.8f}', 'green' if ttest_ind_result.pvalue < p_threshold else None))
+                print(ub.color_text(f'    ttest_ind:  p={ttest_ind_result.pvalue:0.8f}',
+                                    'green' if ttest_ind_result.pvalue < p_threshold else None))
             if 'ttest_rel' in pairstat:
                 n_common = pairstat['n_common']
                 ttest_rel_result = pairstat['ttest_ind']
-                print(ub.color_text(f'    ttest_rel:  p={ttest_rel_result.pvalue:0.8f}, n_pairs={n_common}', 'green' if ttest_rel_result.pvalue < p_threshold else None))
+                print(ub.color_text(f'    ttest_rel:  p={ttest_rel_result.pvalue:0.8f}, n_pairs={n_common}',
+                                    'green' if ttest_rel_result.pvalue < p_threshold else None))
 
     def conclusions(self):
         conclusions = []
@@ -709,17 +719,31 @@ class ResultAnalysis(ub.NiceRepr):
 
     def plot(self, xlabel, metric_key, group_labels):
         """
+        Args:
+            group_labels (dict):
+                Tells seaborn what attributes to use to distinsuish curves like
+                hue, size, marker. Also can contain "col" for use with
+                FacetGrid, and "fig" to separate different configurations into
+                different figures.
+
+        Returns:
+            List[Dict]:
+                A list for each figure containing info abou that figure for any
+                postprocessing.
+
         Example:
-            >>> self = ResultAnalysis.demo(num=5000, mode='alt')
+            >>> self = ResultAnalysis.demo(num=1000, mode='alt')
             >>> self.analysis()
             >>> print('self = {}'.format(self))
+            >>> print('self.varied = {}'.format(ub.repr2(self.varied, nl=1)))
             >>> # xdoctest: +REQUIRES(module:kwplot)
             >>> import kwplot
-            >>> kwplot.autompl()
+            >>> kwplot.autosns()
             >>> xlabel = 'x'
             >>> metric_key = 'acc'
             >>> group_labels = {
-            >>>     'col': ['y', 'w'],
+            >>>     'fig': ['u'],
+            >>>     'col': ['y', 'v'],
             >>>     'hue': ['z'],
             >>>     'size': [],
             >>> }
@@ -739,18 +763,72 @@ class ResultAnalysis(ub.NiceRepr):
                 gkey = gname + "_key"
                 data[gkey] = new_col
 
-        plotkw = {}
+        plot_kws = {
+            'x': xlabel,
+            'y': metric_key,
+        }
         for gname, labels in group_labels.items():
             if labels:
-                plotkw[gname] = gname + "_key"
+                plot_kws[gname] = gname + "_key"
 
         # Your variables may change
         # ax = plt.figure().gca()
-        col = plotkw.pop("col")
-        facet = sns.FacetGrid(data, col=col, sharex=False, sharey=False)
-        facet.map_dataframe(sns.lineplot, x=xlabel, y=metric_key, marker="o", **plotkw)
-        facet.add_legend()
-        return facet
+        fig_params = plot_kws.pop("fig", [])
+
+        facet_kws = {
+            'sharex': False,
+            'sharey': False,
+        }
+        # facet_kws['col'] = plot_kws.pop("col", None)
+        # facet_kws['row'] = plot_kws.pop("row", None)
+        # if not facet_kws['row']:
+        #     facet_kws['col_wrap'] = 5
+        plot_kws['row'] = plot_kws.get("row", None)
+        # if not plot_kws['row']:
+        #     plot_kws['col_wrap'] = 5
+
+        if not fig_params:
+            groups = [('', data)]
+        else:
+            groups = data.groupby(fig_params)
+
+        if 'marker' not in plot_kws:
+            plot_kws['marker'] = "o"
+
+        plot_kws['ci'] = "sd"
+
+        # Use a consistent pallete across plots
+        unique_hues = data['hue_key'].unique()
+        palette = ub.dzip(unique_hues, sns.color_palette(n_colors=len(unique_hues)))
+        plot_kws['palette'] = palette
+
+        plots = []
+        base_fnum = 1
+        for fnum, (fig_key, group) in enumerate(groups, start=base_fnum):
+            # TODO: seaborn doesn't give us any option to reuse an existing
+            # figure or even specify what it's handle should be. A patch should
+            # be submitted to add that feature, but in the meantime work around
+            # it and use the figures they give us.
+
+            # fig = plt.figure(fnum)
+            # fig.clf()
+
+            facet = sns.relplot(
+                data=group, kind='line',
+                facet_kws=facet_kws,
+                **plot_kws)
+
+            fig = facet.figure
+            fig.suptitle(fig_key)
+            fig.tight_layout()
+            # facet = sns.FacetGrid(group, **facet_kws)
+            # facet.map_dataframe(sns.lineplot, x=xlabel, y=metric_key, **plot_kws)
+            # facet.add_legend()
+            plots.append({
+                'fig': fig,
+                'facet': facet,
+            })
+        return plots
 
 
 class SkillTracker:

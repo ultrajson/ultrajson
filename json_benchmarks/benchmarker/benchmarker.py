@@ -3,7 +3,7 @@ import timerit
 import ubelt as ub
 import numpy as np
 from dataclasses import dataclass
-from benchmarker.process_context import ProcessContext
+from json_benchmarks.benchmarker.process_context import ProcessContext
 
 
 @dataclass
@@ -49,7 +49,7 @@ class BenchmarkerResult:
         Returns:
             List[Result]
         """
-        from benchmarker import result_analysis
+        from json_benchmarks.benchmarker import result_analysis
         results = []
         for row in self.rows:
             result = result_analysis.Result(
@@ -69,9 +69,6 @@ class Benchmarker:
     Helper to organize the execution and serialization of a benchmark
 
     Example:
-        >>> import sys, ubelt
-        >>> sys.path.append(ubelt.expandpath('~/code/ultrajson/tests'))
-        >>> from benchmarker.benchmarker import *  # NOQA
         >>> import numpy as np
         >>> impl_lut = {
         >>>     'numpy': np.sum,
@@ -205,11 +202,22 @@ def combine_stats(s1, s2):
         https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
     """
     stats = [s1, s2]
-    sizes = np.array([s['nobs'] for s in stats])
-    means = np.array([s['mean'] for s in stats])
-    stds = np.array([s['std'] for s in stats])
-    mins = np.array([s['min'] for s in stats])
-    maxs = np.array([s['max'] for s in stats])
+    data = {
+        'nobs': np.array([s['nobs'] for s in stats]),
+        'mean': np.array([s['mean'] for s in stats]),
+        'std': np.array([s['std'] for s in stats]),
+        'min': np.array([s['min'] for s in stats]),
+        'max': np.array([s['max'] for s in stats]),
+    }
+    combine_stats_arrs(data)
+
+
+def combine_stats_arrs(data):
+    sizes = data['nobs']
+    means = data['mean']
+    stds = data['std']
+    mins = data['min']
+    maxs = data['max']
     varis = stds * stds
 
     combo_size = sizes.sum()

@@ -4,7 +4,7 @@ import ubelt as ub
 
 
 def demo_data():
-    from benchmarker.benchmarker import Benchmarker
+    from json_benchmarks.benchmarker.benchmarker import Benchmarker
     import numpy as np
     impl_lut = {
         'numpy': np.sum,
@@ -43,8 +43,8 @@ def demo_data():
 
 
 def demo():
-    from benchmarker import BenchmarkerResult
-    from benchmarker import result_analysis
+    from json_benchmarks.benchmarker import BenchmarkerResult
+    from json_benchmarks.benchmarker import result_analysis
     fpaths = demo_data()
 
     results = []

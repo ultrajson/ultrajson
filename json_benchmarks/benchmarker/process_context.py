@@ -9,11 +9,10 @@ class ProcessContext:
     Context manager to track the context under which a result was computed
 
     Example:
-        >>> import sys, ubelt
-        >>> sys.path.append(ubelt.expandpath('~/code/ultrajson/tests'))
-        >>> from benchmarker.process_context import *  # NOQA
+        >>> from json_benchmarks.benchmarker.process_context import *  # NOQA
         >>> self = ProcessContext()
         >>> obj = self.start().stop()
+        >>> print('obj = {}'.format(ub.repr2(obj, nl=2)))
     """
 
     def __init__(self, name=None, args=None, config=None):
@@ -69,15 +68,19 @@ class ProcessContext:
             'mem_total': svmem_info.total,
         }
 
-    # def _cpuinfo(self):
-    #     import cpuinfo
-    #     cpu_info = cpuinfo.get_cpu_info()
-    #     return cpu_info
+    def _cpuinfo(self):
+        import cpuinfo
+        _cpu_info = cpuinfo.get_cpu_info()
+        cpu_info = {
+            'cpu_brand': _cpu_info['brand_raw'],
+        }
+        return cpu_info
 
     def _machine(self):
         return ub.dict_union(
             self._hostinfo(),
             self._meminfo(),
+            self._cpuinfo(),
             self._osinfo(),
             self._pyinfo(),
         )

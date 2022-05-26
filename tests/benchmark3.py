@@ -217,13 +217,28 @@ def benchmark_json_dumps():
 
     param_group = ['impl', 'impl_version']
     analysis.abalate(param_group)
-
     # benchmark_analysis(rows, xlabel, group_labels, basis, RECORD_ALL)
+
+    xlabel = "size"
+    # Set these to empty lists if they are not used
+    group_labels = {
+        "col": ["input"],
+        "hue": ["impl"],
+        "size": [],
+    }
+    import kwplot
+    kwplot.autompl()
+    facet = analysis.plot(xlabel, metric_key, group_labels)
+    for ax in facet.axes.ravel():
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+    print('facet = {!r}'.format(facet))
+    kwplot.show_if_requested()
 
 
 if __name__ == "__main__":
     """
     CommandLine:
-        python ~/code/ultrajson/tests/benchmark3.py
+        python ~/code/ultrajson/tests/benchmark3.py --show
     """
     benchmark_json_dumps()

@@ -240,9 +240,6 @@ class ResultAnalysis(ub.NiceRepr):
         self._description['num_results'] = len(self.results)
 
     def __nice__(self):
-        # if len(self._description) == 0:
-        #     return 'unbuilt'
-        # else:
         return ub.repr2(self._description, si=1, sv=1)
 
     @classmethod
@@ -405,8 +402,13 @@ class ResultAnalysis(ub.NiceRepr):
 
     def _objective_is_ascending(self, metric_key):
         """
-        Return True if we should minimize the objective (lower is better)
-        Return False if we should maximize the objective (higher is better)
+        Args:
+            metric_key (str): the metric in question
+
+        Returns:
+            bool:
+                True if we should minimize the objective (lower is better)
+                False if we should maximize the objective (higher is better)
         """
         objective = self.metric_objectives.get(metric_key, None)
         if objective is None:
@@ -578,6 +580,8 @@ class ResultAnalysis(ub.NiceRepr):
                 comparable_groups2 = metric_group2.loc[comparable_indexes2, metric_key]
 
                 # Does this need to have the values aligned?
+                # I think that is the case giving my understanding of paired
+                # t-tests, but the docs need a PR to make that more clear.
                 ttest_rel_result = scipy.stats.ttest_rel(comparable_groups1, comparable_groups2)
                 pair_statistics['n_common'] = len(common)
                 pair_statistics['ttest_rel'] = ttest_rel_result
@@ -746,6 +750,7 @@ class ResultAnalysis(ub.NiceRepr):
         facet = sns.FacetGrid(data, col=col, sharex=False, sharey=False)
         facet.map_dataframe(sns.lineplot, x=xlabel, y=metric_key, marker="o", **plotkw)
         facet.add_legend()
+        return facet
 
 
 class SkillTracker:

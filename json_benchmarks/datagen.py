@@ -1,5 +1,6 @@
 import random
 import sys
+import ubelt as ub
 
 
 def json_test_data_generators():
@@ -108,7 +109,7 @@ def json_test_data_generators():
                 raise Exception
         with open(fpath, 'r') as f:
             test_object = json.load(f)
-        if size > 1:
+        if size is not None:
             test_object = [test_object] * size
         return test_object
 

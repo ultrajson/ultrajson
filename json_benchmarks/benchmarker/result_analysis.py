@@ -776,8 +776,8 @@ class ResultAnalysis(ub.NiceRepr):
         fig_params = plot_kws.pop("fig", [])
 
         facet_kws = {
-            'sharex': False,
-            'sharey': False,
+            'sharex': True,
+            'sharey': True,
         }
         # facet_kws['col'] = plot_kws.pop("col", None)
         # facet_kws['row'] = plot_kws.pop("row", None)

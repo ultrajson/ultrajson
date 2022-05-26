@@ -73,7 +73,11 @@ def benchmark_json():
     data_lut = datagen.json_test_data_generators()
 
     # These are the parameters that we benchmark over
-    basis = {
+    common_basis = {
+        "impl": list(json_impls.keys()),
+        "func": ['dumps', 'loads'],
+    }
+    sized_basis = {
         "input": [
             'Array with doubles',
             'Array with UTF-8 strings',
@@ -83,10 +87,20 @@ def benchmark_json():
             # 'Dict of List[Dict[str, int]]',
             # 'Complex object'
         ],
-        "size": [1, 2, 4, 8, 16, 32, 128, 256, 512, 1024, 2048, 4096, 8192, 12288],
-        "impl": list(json_impls.keys()),
-        "func": ['dumps', 'loads'],
+        "size": [1, 2, 4, 8, 16, 32, 128, 256, 512],
+        # 1024, 2048, 4096, 8192, 12288],
     }
+    predefined_basis = {
+        "input": [
+            'Complex object'
+        ],
+        'size': [None],
+    }
+
+    basis = [
+        ub.dict_union(common_basis, predefined_basis),
+        ub.dict_union(common_basis, sized_basis),
+    ]
 
     # The Benchmarker class is a new experimental API around timerit to
     # abstract away the details of timing a process over a grid of parameters,
@@ -95,12 +109,18 @@ def benchmark_json():
         name='bench_json',
         num=100,
         bestof=10,
-        verbose=2,
+        verbose=3,
         basis=basis,
     )
 
+    def is_blocked(params):
+        if params['input'] == 'Complex object' and params['impl'] == 'orjson':
+            return True
+
     # For each variation of your experiment, create a row.
     for params in benchmark.iter_params():
+        if is_blocked(params):
+            continue
         # Make any modifications you need to compute input kwargs for each
         # method here.
         impl_info = json_impls[params["impl"]]
@@ -198,7 +218,7 @@ def aggregate_results(result_fpaths):
         new_data = pd.DataFrame(new_rows)
         return new_data
 
-    single_size = table[table['size'] == 256]
+    single_size = table[(table['size'] == 256) | table['size'].isnull()]
     # single_size_combo = aggregate_time_stats(single_size, None)
     single_size_combo = aggregate_time_stats(single_size, ['name'])
 
@@ -206,7 +226,8 @@ def aggregate_results(result_fpaths):
     single_size_combo['calls/sec'] = 1 / single_size_combo['mean_time']
     _single_size_combo = single_size_combo.copy()
     _single_size_combo['calls/sec'] = _single_size_combo['calls/sec'].apply(lambda x: '{:,.02f}'.format(x))
-    piv = _single_size_combo.pivot('input', param_group, 'calls/sec')
+    piv = _single_size_combo.pivot(['input', 'func'], param_group, 'calls/sec')
+    print('Table for size=256')
     print(piv)
 
     analysis.abalate(param_group)
@@ -216,6 +237,7 @@ def aggregate_results(result_fpaths):
     # Set these to empty lists if they are not used
     group_labels = {
         "fig": ["input"],
+        "col": ["func"],
         "hue": ["impl", "impl_version"],
         "size": [],
     }

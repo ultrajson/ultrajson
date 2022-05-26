@@ -121,7 +121,14 @@ class Benchmarker:
 
     def iter_params(self):
         self.context.start()
-        grid_iter = list(ub.named_product(self.basis))
+        if isinstance(self.basis, dict):
+            grid_iter = ub.named_product(self.basis)
+        else:
+            grid_iter = ub.flatten([
+                ub.named_product(b)
+                for b in self.basis
+            ])
+
         for params in grid_iter:
             self.params = params
             self.key = ub.repr2(params, compact=1, si=1)

@@ -171,7 +171,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
           }
           else if (intNeg == -1)
           {
-            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small!");
+            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big" : "Value is too small");
           }
         }
         goto BREAK_INT_LOOP;

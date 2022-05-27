@@ -795,7 +795,10 @@ class ResultAnalysis(ub.NiceRepr):
         if 'marker' not in plot_kws:
             plot_kws['marker'] = "o"
 
+        # We will want to overwrite this with our own std estimate
         plot_kws['ci'] = "sd"
+        # err_style='band',
+        # err_kws=None,
 
         # Use a consistent pallete across plots
         unique_hues = data['hue_key'].unique()
@@ -814,7 +817,9 @@ class ResultAnalysis(ub.NiceRepr):
             # fig.clf()
 
             facet = sns.relplot(
-                data=group, kind='line',
+                data=group,
+                # kind='line',
+                kind='scatter',
                 facet_kws=facet_kws,
                 **plot_kws)
 

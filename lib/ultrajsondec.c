@@ -96,7 +96,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
   int chr;
   char *offset = ds->start;
 
-  JSUINT64 overflowLimit = LLONG_MAX;
+  JSUINT64 overflowLimit = ULLONG_MAX;
 
   if (*(offset) == 'I') {
       goto DECODE_INF;
@@ -131,15 +131,17 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
       case '8':
       case '9':
       {
+        // detect overflow on digit shift
+        if ((intValue * 10ULL) % 10 != 0)
+        {
+          hasError = 1;
+        }
+
         //PERF: Don't do 64-bit arithmetic here unless we know we have to
         prevIntValue = intValue;
         intValue = intValue * 10ULL + (JSLONG) (chr - 48);
 
-        if (intNeg == 1 && prevIntValue > intValue)
-        {
-          hasError = 1;
-        }
-        else if (intNeg == -1 && intValue > overflowLimit)
+        if (prevIntValue > intValue)
         {
           hasError = 1;
         }
@@ -169,7 +171,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
           }
           else if (intNeg == -1)
           {
-            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small");
+            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small!");
           }
         }
         goto BREAK_INT_LOOP;

@@ -1055,3 +1055,18 @@ if __name__ == '__main__':
         heap = hp.heapu()
         print(heap)
 """
+
+
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        ("33333333303333333333"),
+        ("18446744073709551616"),   # 64 bit
+        ("-18446744073709551616"),   # 64 bit
+        ("-80888888888888888888"),
+    ],
+)
+def test_decode_big_numeric(test_input):
+    with pytest.raises(ujson.JSONDecodeError):
+        ujson.loads(test_input)
+

@@ -2,7 +2,12 @@ import pandas as pd
 import ubelt as ub
 
 
-def benchmark_analysis(rows, xlabel, group_labels, basis, ):
+def benchmark_analysis(
+    rows,
+    xlabel,
+    group_labels,
+    basis,
+):
     # xlabel = "size"
     # Set these to empty lists if they are not used
     # group_labels = {
@@ -18,6 +23,7 @@ def benchmark_analysis(rows, xlabel, group_labels, basis, ):
     # key = ub.repr2(params, compact=1, si=1)
 
     from process_tracker.result_analysis import SkillTracker
+
     RECORD_ALL = 0
 
     USE_OPENSKILL = True

@@ -2,10 +2,11 @@
 Main definition of the benchmarks
 """
 import json
-import ubelt as ub
+
 import scriptconfig as scfg
-from json_benchmarks import benchmarker
-from json_benchmarks import datagen
+import ubelt as ub
+
+from json_benchmarks import benchmarker, datagen
 
 KNOWN_LIBRARIES = [
     "ujson",
@@ -20,39 +21,49 @@ class JSONBenchmarkConfig(scfg.Config):
     """
     Benchmark JSON implementations
     """
-    default = {
-        'disable': scfg.Value([], choices=KNOWN_LIBRARIES, help=ub.paragraph(
-            '''
-            Remove specified libraries from the benchmarks
-            '''
-        )),
 
-        'factor': scfg.Value(1.0, help=ub.paragraph(
-            '''
+    default = {
+        "disable": scfg.Value(
+            [],
+            choices=KNOWN_LIBRARIES,
+            help=ub.paragraph(
+                """
+            Remove specified libraries from the benchmarks
+            """
+            ),
+        ),
+        "factor": scfg.Value(
+            1.0,
+            help=ub.paragraph(
+                """
             Specify as a fraction to speed up benchmarks for development /
             testing
-            ''')),
-
-        'cache_dir': scfg.Value(None, help=ub.paragraph(
-            '''
+            """
+            ),
+        ),
+        "cache_dir": scfg.Value(
+            None,
+            help=ub.paragraph(
+                """
             Location for benchmark cache.
             Defaults to $XDG_CACHE/ujson/benchmark_results/
-            ''')),
+            """
+            ),
+        ),
     }
 
     def normalize(self):
-        dpath = self['cache_dir']
+        dpath = self["cache_dir"]
         if dpath is None:
-            dpath = ub.Path.appdir('ujson/benchmark_results')
+            dpath = ub.Path.appdir("ujson/benchmark_results")
         dpath = ub.Path(dpath)
-        self['cache_dir'] = dpath
+        self["cache_dir"] = dpath
 
 
 def available_json_impls():
     import importlib
-    known_modnames = [
-        'ujson', 'json', 'nujson', 'orjson', 'simplejson'
-    ]
+
+    known_modnames = ["ujson", "json", "nujson", "orjson", "simplejson"]
     json_impls = {}
     for libname in known_modnames:
         try:
@@ -61,8 +72,8 @@ def available_json_impls():
             pass
         else:
             json_impls[libname] = {
-                'module': module,
-                'version': module.__version__,
+                "module": module,
+                "version": module.__version__,
             }
     return json_impls
 
@@ -75,15 +86,15 @@ def benchmark_json():
     # These are the parameters that we benchmark over
     common_basis = {
         "impl": list(json_impls.keys()),
-        "func": ['dumps', 'loads'],
+        "func": ["dumps", "loads"],
     }
     sized_basis = {
         "input": [
-            'Array with doubles',
-            'Array with UTF-8 strings',
+            "Array with doubles",
+            "Array with UTF-8 strings",
             # 'Medium complex object',
-            'Array with True values',
-            'Array of Dict[str, int]',
+            "Array with True values",
+            "Array of Dict[str, int]",
             # 'Dict of List[Dict[str, int]]',
             # 'Complex object'
         ],
@@ -91,10 +102,8 @@ def benchmark_json():
         # 1024, 2048, 4096, 8192, 12288],
     }
     predefined_basis = {
-        "input": [
-            'Complex object'
-        ],
-        'size': [None],
+        "input": ["Complex object"],
+        "size": [None],
     }
 
     basis = [
@@ -106,7 +115,7 @@ def benchmark_json():
     # abstract away the details of timing a process over a grid of parameters,
     # serializing the results, and aggregating results from disparate runs.
     benchmark = benchmarker.Benchmarker(
-        name='bench_json',
+        name="bench_json",
         num=100,
         bestof=10,
         verbose=3,
@@ -114,7 +123,7 @@ def benchmark_json():
     )
 
     def is_blocked(params):
-        if params['input'] == 'Complex object' and params['impl'] == 'orjson':
+        if params["input"] == "Complex object" and params["impl"] == "orjson":
             return True
 
     # For each variation of your experiment, create a row.
@@ -124,12 +133,12 @@ def benchmark_json():
         # Make any modifications you need to compute input kwargs for each
         # method here.
         impl_info = json_impls[params["impl"]]
-        params["impl_version"] = impl_info['version']
-        module = impl_info['module']
-        if params['func'] == 'dumps':
+        params["impl_version"] = impl_info["version"]
+        module = impl_info["module"]
+        if params["func"] == "dumps":
             method = module.dumps
             data = data_lut[params["input"]](params["size"])
-        elif params['func'] == 'loads':
+        elif params["func"] == "loads":
             method = module.loads
             to_encode = data_lut[params["input"]](params["size"])
             data = json.dumps(to_encode)
@@ -142,17 +151,18 @@ def benchmark_json():
                 # Put the logic you want to time here
                 method(data)
 
-    dpath = ub.Path.appdir('ujson/benchmark_results').ensuredir()
+    dpath = ub.Path.appdir("ujson/benchmark_results").ensuredir()
     result_fpath = benchmark.dump_in_dpath(dpath)
     return result_fpath
 
 
 def aggregate_results(result_fpaths):
     import json
+
     results = []
     for fpath in result_fpaths:
         data = json.loads(fpath.read_text())
-        for row in data['rows']:
+        for row in data["rows"]:
             result = benchmarker.BenchmarkerResult.load(fpath)
             results.extend(result.to_result_list())
 
@@ -164,12 +174,13 @@ def aggregate_results(result_fpaths):
     analysis = benchmarker.result_analysis.ResultAnalysis(
         results,
         metrics=[metric_key],
-        params=['impl'],
+        params=["impl"],
         metric_objectives={
-            'min_time': 'min',
-            'mean_time': 'min',
-            'time': 'min',
-        })
+            "min_time": "min",
+            "mean_time": "min",
+            "time": "min",
+        },
+    )
     analysis.analysis()
 
     table = analysis.table
@@ -182,21 +193,23 @@ def aggregate_results(result_fpaths):
         otherwise the new column for that row is set to None.
         """
         import pandas as pd
+
         # Stats groupings
         stats_cols = [
-            'nobs_time',
-            'std_time',
-            'mean_time',
-            'max_time',
-            'min_time',
+            "nobs_time",
+            "std_time",
+            "mean_time",
+            "max_time",
+            "min_time",
         ]
-        mapper = {c: c.replace('_time', '') for c in stats_cols}
+        mapper = {c: c.replace("_time", "") for c in stats_cols}
         unmapper = ub.invert_dict(mapper)
         non_stats_cols = list(ub.oset(data.columns) - stats_cols)
         if group_keys is None:
             group_keys = non_stats_cols
         non_group_keys = list(ub.oset(non_stats_cols) - group_keys)
         from json_benchmarks.benchmarker.benchmarker import combine_stats_arrs
+
         new_rows = []
         for group_vals, group in list(data.groupby(group_keys)):
             # hack, is this a pandas bug in 1.4.1? Is it fixed
@@ -218,16 +231,18 @@ def aggregate_results(result_fpaths):
         new_data = pd.DataFrame(new_rows)
         return new_data
 
-    single_size = table[(table['size'] == 256) | table['size'].isnull()]
+    single_size = table[(table["size"] == 256) | table["size"].isnull()]
     # single_size_combo = aggregate_time_stats(single_size, None)
-    single_size_combo = aggregate_time_stats(single_size, ['name'])
+    single_size_combo = aggregate_time_stats(single_size, ["name"])
 
-    param_group = ['impl', 'impl_version']
-    single_size_combo['calls/sec'] = 1 / single_size_combo['mean_time']
+    param_group = ["impl", "impl_version"]
+    single_size_combo["calls/sec"] = 1 / single_size_combo["mean_time"]
     _single_size_combo = single_size_combo.copy()
-    _single_size_combo['calls/sec'] = _single_size_combo['calls/sec'].apply(lambda x: '{:,.02f}'.format(x))
-    piv = _single_size_combo.pivot(['input', 'func'], param_group, 'calls/sec')
-    print('Table for size=256')
+    _single_size_combo["calls/sec"] = _single_size_combo["calls/sec"].apply(
+        lambda x: f"{x:,.02f}"
+    )
+    piv = _single_size_combo.pivot(["input", "func"], param_group, "calls/sec")
+    print("Table for size=256")
     print(piv)
 
     analysis.abalate(param_group)
@@ -242,29 +257,31 @@ def aggregate_results(result_fpaths):
         "size": [],
     }
     import kwplot
+
     kwplot.autosns()
     plots = analysis.plot(xlabel, metric_key, group_labels)
     for plot in plots:
-        for ax in plot['facet'].axes.ravel():
-            ax.set_xscale('log')
-            ax.set_yscale('log')
+        for ax in plot["facet"].axes.ravel():
+            ax.set_xscale("log")
+            ax.set_yscale("log")
     kwplot.show_if_requested()
 
 
 def main():
     from json_benchmarks import core
+
     config = core.JSONBenchmarkConfig(cmdline=True)
-    dpath = config['cache_dir']
+    dpath = config["cache_dir"]
 
     run = 1
     if run:
         result_fpath = core.benchmark_json()
-        print('result_fpath = {!r}'.format(result_fpath))
+        print(f"result_fpath = {result_fpath!r}")
         result_fpaths = [result_fpath]
 
     agg = 1
     if agg:
-        result_fpaths = list(dpath.glob('benchmarks*.json'))
+        result_fpaths = list(dpath.glob("benchmarks*.json"))
 
     core.aggregate_results(result_fpaths)
     # results_output_table(libraries)

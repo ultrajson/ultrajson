@@ -1,43 +1,46 @@
 import json
+from dataclasses import dataclass
+
+import numpy as np
 import timerit
 import ubelt as ub
-import numpy as np
-from dataclasses import dataclass
+
 from json_benchmarks.benchmarker.process_context import ProcessContext
 
 
 @dataclass
 class BenchmarkerConfig:
-    name    : str = None
-    num     : int = 100
-    bestof  : int = 10
+    name: str = None
+    num: int = 100
+    bestof: int = 10
 
 
 class BenchmarkerResult:
     """
     Serialization for a single benchmark result
     """
+
     def __init__(self, context, rows):
         self.context = context
         self.rows = rows
 
     def __json__(self):
         data = {
-            'type': 'benchmark_result',
-            'context': self.context,
-            'rows': self.rows,
+            "type": "benchmark_result",
+            "context": self.context,
+            "rows": self.rows,
         }
         return data
 
     @classmethod
     def from_json(cls, data):
-        assert data['type'] == 'benchmark_result'
-        self = cls(data['context'], data['rows'])
+        assert data["type"] == "benchmark_result"
+        self = cls(data["context"], data["rows"])
         return self
 
     @classmethod
     def load(cls, fpath):
-        with open(fpath, 'r') as file:
+        with open(fpath) as file:
             data = json.load(file)
         self = cls.from_json(data)
         return self
@@ -50,14 +53,15 @@ class BenchmarkerResult:
             List[Result]
         """
         from json_benchmarks.benchmarker import result_analysis
+
         results = []
         for row in self.rows:
             result = result_analysis.Result(
-                name=row['name'],
-                metrics=row['metrics'],
-                params=row['params'].copy(),
+                name=row["name"],
+                metrics=row["metrics"],
+                params=row["params"].copy(),
             )
-            machine = self.context['machine']
+            machine = self.context["machine"]
             assert not ub.dict_isect(result.params, machine)
             result.params.update(machine)
             results.append(result)
@@ -94,6 +98,7 @@ class Benchmarker:
         >>> dpath = ub.Path.appdir('benchmarker/demo').ensuredir()
         >>> self.dump_in_dpath(dpath)
     """
+
     def __init__(self, basis={}, verbose=1, **kwargs):
         self.basis = basis
 
@@ -111,11 +116,11 @@ class Benchmarker:
 
     def dump_in_dpath(self, dpath):
         dpath = ub.Path(dpath)
-        timestamp = self.context.obj['stop_timestamp']
-        fname = f'benchmarks_{self.config.name}_{timestamp}.json'
+        timestamp = self.context.obj["stop_timestamp"]
+        fname = f"benchmarks_{self.config.name}_{timestamp}.json"
         fpath = dpath / fname
 
-        with open(fpath, 'w') as file:
+        with open(fpath, "w") as file:
             json.dump(self.result.__json__(), file)
         return fpath
 
@@ -124,10 +129,7 @@ class Benchmarker:
         if isinstance(self.basis, dict):
             grid_iter = ub.named_product(self.basis)
         else:
-            grid_iter = ub.flatten([
-                ub.named_product(b)
-                for b in self.basis
-            ])
+            grid_iter = ub.flatten([ub.named_product(b) for b in self.basis])
 
         for params in grid_iter:
             self.params = params
@@ -137,8 +139,7 @@ class Benchmarker:
         self.result = BenchmarkerResult(obj, self.rows)
 
     def measure(self):
-        for timer in self.ti.reset(self.key):
-            yield timer
+        yield from self.ti.reset(self.key)
 
         rows = self.rows
         ti = self.ti
@@ -151,29 +152,29 @@ class Benchmarker:
                     "time": time,
                 }
                 row = {
-                    'name': key,
-                    'metrics': metrics,
-                    'params': params,
+                    "name": key,
+                    "metrics": metrics,
+                    "params": params,
                 }
                 rows.append(row)
         else:
             times = np.array(ti.robust_times())
-            metrics = stats_dict(times, '_time')
+            metrics = stats_dict(times, "_time")
             row = {
-                'metrics': metrics,
-                'params': params,
-                'name': key,
+                "metrics": metrics,
+                "params": params,
+                "name": key,
             }
             rows.append(row)
 
 
-def stats_dict(data, suffix=''):
+def stats_dict(data, suffix=""):
     stats = {
-        'nobs' + suffix: len(data),
-        'mean' + suffix: data.mean(),
-        'std' + suffix: data.std(),
-        'min' + suffix: data.min(),
-        'max' + suffix: data.max(),
+        "nobs" + suffix: len(data),
+        "mean" + suffix: data.mean(),
+        "std" + suffix: data.std(),
+        "min" + suffix: data.min(),
+        "max" + suffix: data.max(),
     }
     return stats
 
@@ -210,27 +211,27 @@ def combine_stats(s1, s2):
     """
     stats = [s1, s2]
     data = {
-        'nobs': np.array([s['nobs'] for s in stats]),
-        'mean': np.array([s['mean'] for s in stats]),
-        'std': np.array([s['std'] for s in stats]),
-        'min': np.array([s['min'] for s in stats]),
-        'max': np.array([s['max'] for s in stats]),
+        "nobs": np.array([s["nobs"] for s in stats]),
+        "mean": np.array([s["mean"] for s in stats]),
+        "std": np.array([s["std"] for s in stats]),
+        "min": np.array([s["min"] for s in stats]),
+        "max": np.array([s["max"] for s in stats]),
     }
     combine_stats_arrs(data)
 
 
 def combine_stats_arrs(data):
-    sizes = data['nobs']
-    means = data['mean']
-    stds = data['std']
-    mins = data['min']
-    maxs = data['max']
+    sizes = data["nobs"]
+    means = data["mean"]
+    stds = data["std"]
+    mins = data["min"]
+    maxs = data["max"]
     varis = stds * stds
 
     combo_size = sizes.sum()
     combo_mean = (sizes * means).sum() / combo_size
 
-    mean_deltas = (means - combo_mean)
+    mean_deltas = means - combo_mean
 
     sv = (sizes * varis).sum()
     sm = (sizes * (mean_deltas * mean_deltas)).sum()
@@ -238,10 +239,10 @@ def combine_stats_arrs(data):
     combo_std = np.sqrt(combo_vars)
 
     combo_stats = {
-        'nobs': combo_size,
-        'mean': combo_mean,
-        'std': combo_std,
-        'min': mins.min(),
-        'max': maxs.max(),
+        "nobs": combo_size,
+        "mean": combo_mean,
+        "std": combo_std,
+        "min": mins.min(),
+        "max": maxs.max(),
     }
     return combo_stats

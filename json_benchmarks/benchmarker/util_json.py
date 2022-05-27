@@ -1,9 +1,10 @@
 import copy
+import json
+import pathlib
+from collections import OrderedDict
+
 import numpy as np
 import ubelt as ub
-import json
-from collections import OrderedDict
-import pathlib
 
 
 def ensure_json_serializable(dict_, normalize_containers=False, verbose=0):
@@ -64,7 +65,7 @@ def ensure_json_serializable(dict_, normalize_containers=False, verbose=0):
         elif isinstance(value, pathlib.Path):
             new_value = str(value)
             walker[prefix] = new_value
-        elif hasattr(value, '__json__'):
+        elif hasattr(value, "__json__"):
             new_value = value.__json__()
             walker[prefix] = new_value
         elif normalize_containers:
@@ -159,9 +160,9 @@ def find_json_unserializable(data, quickcheck=False):
                 # Purposely make loc non-hashable so its not confused with
                 # an address. All we can know in this case is that they key
                 # is at this level, there is no concept of where.
-                yield {'loc': root + [['.keys', key]], 'data': key}
+                yield {"loc": root + [[".keys", key]], "data": key}
             elif not isinstance(value, serializable_types):
-                yield {'loc': prefix, 'data': value}
+                yield {"loc": prefix, "data": value}
 
 
 def indexable_allclose(dct1, dct2, return_info=False):
@@ -189,19 +190,21 @@ def indexable_allclose(dct1, dct2, return_info=False):
     walker1 = ub.IndexableWalker(dct1)
     walker2 = ub.IndexableWalker(dct2)
     flat_items1 = [
-        (path, value) for path, value in walker1
-        if not isinstance(value, walker1.indexable_cls) or len(value) == 0]
+        (path, value)
+        for path, value in walker1
+        if not isinstance(value, walker1.indexable_cls) or len(value) == 0
+    ]
     flat_items2 = [
-        (path, value) for path, value in walker2
-        if not isinstance(value, walker1.indexable_cls) or len(value) == 0]
+        (path, value)
+        for path, value in walker2
+        if not isinstance(value, walker1.indexable_cls) or len(value) == 0
+    ]
 
     flat_items1 = sorted(flat_items1)
     flat_items2 = sorted(flat_items2)
 
     if len(flat_items1) != len(flat_items2):
-        info = {
-            'faillist': ['length mismatch']
-        }
+        info = {"faillist": ["length mismatch"]}
         final_flag = False
     else:
         passlist = []
@@ -212,9 +215,13 @@ def indexable_allclose(dct1, dct2, return_info=False):
             p2, v2 = t2
             assert p1 == p2
 
-            flag = (v1 == v2)
+            flag = v1 == v2
             if not flag:
-                if isinstance(v1, float) and isinstance(v2, float) and np.isclose(v1, v2):
+                if (
+                    isinstance(v1, float)
+                    and isinstance(v2, float)
+                    and np.isclose(v1, v2)
+                ):
                     flag = True
             if flag:
                 passlist.append(p1)
@@ -223,8 +230,8 @@ def indexable_allclose(dct1, dct2, return_info=False):
 
         final_flag = len(faillist) == 0
         info = {
-            'passlist': passlist,
-            'faillist': faillist,
+            "passlist": passlist,
+            "faillist": faillist,
         }
 
     if return_info:

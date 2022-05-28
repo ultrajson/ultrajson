@@ -92,23 +92,31 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
   int intNeg = 1;
   int hasError = 0;
   JSUINT64 intValue;
-  JSUINT64 prevIntValue;
+  JSUINT64 addIntValue;
   int chr;
   char *offset = ds->start;
 
-  JSUINT64 overflowLimit = LLONG_MAX;
+  JSUINT64 maxIntValue = ULLONG_MAX;
+  JSUINT64 overflowLimit = maxIntValue / 10LLU;
 
-  if (*(offset) == 'I') {
+  if (*(offset) == 'I')
+  {
+    goto DECODE_INF;
+  }
+  else if (*(offset) == 'N')
+  {
+    goto DECODE_NAN;
+  }
+  else if (*(offset) == '-')
+  {
+    offset++;
+    intNeg = -1;
+    if (*(offset) == 'I')
+    {
       goto DECODE_INF;
-  } else if (*(offset) == 'N') {
-      goto DECODE_NAN;
-  } else if (*(offset) == '-') {
-      offset++;
-      intNeg = -1;
-      if (*(offset) == 'I') {
-          goto DECODE_INF;
-      }
-    overflowLimit = LLONG_MIN;
+    }
+    maxIntValue = -(JSUINT64) LONG_MIN;
+    overflowLimit = maxIntValue / 10LL;
   }
 
   // Scan integer part
@@ -131,19 +139,21 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
       case '8':
       case '9':
       {
-        //PERF: Don't do 64-bit arithmetic here unless we know we have to
-        prevIntValue = intValue;
-        intValue = intValue * 10ULL + (JSLONG) (chr - 48);
-
-        if (intNeg == 1 && prevIntValue > intValue)
+        // check whether multiplication would be out of bounds
+        if (intValue > overflowLimit)
         {
           hasError = 1;
         }
-        else if (intNeg == -1 && intValue > overflowLimit)
+        intValue *= 10ULL;
+        addIntValue = (JSUINT64) (chr - 48);
+
+        // check whether addition would be out of bounds
+        if (maxIntValue - intValue < addIntValue)
         {
           hasError = 1;
         }
 
+        intValue += addIntValue;
         offset ++;
         break;
       }
@@ -163,14 +173,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
       {
         if (hasError)
         {
-          if (intNeg == 1)
-          {
-            return SetError(ds, -1, "Value is too big!");
-          }
-          else if (intNeg == -1)
-          {
-            return SetError(ds, -1, overflowLimit == LLONG_MAX ? "Value is too big!" : "Value is too small");
-          }
+          return SetError(ds, -1, intNeg == 1 ? "Value is too big" : "Value is too small");
         }
         goto BREAK_INT_LOOP;
         break;

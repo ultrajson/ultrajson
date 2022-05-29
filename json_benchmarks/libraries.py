@@ -40,7 +40,7 @@ class Compatability:
     def lut_dumps(module):
         if module.__name__ == "cysimdjson":
             return None
-        elif module.__name__ == 'simdjson':
+        elif module.__name__ == "simdjson":
             return None
         else:
             return getattr(module, "dumps", None)

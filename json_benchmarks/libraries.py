@@ -38,20 +38,24 @@ class Compatability:
 
     @staticmethod
     def lut_dumps(module):
-        if module.__name__ == 'cysimdjson':
+        if module.__name__ == "cysimdjson":
             return None
+<<<<<<< HEAD
         elif module.__name__ == 'simdjson':
+=======
+        elif module.__name__ == "pysimdjson":
+>>>>>>> 7dbb203450810217c6f8790c01fb54d73d5305b7
             return None
         else:
-            return getattr(module, 'dumps', None)
+            return getattr(module, "dumps", None)
 
     @staticmethod
     def lut_loads(module):
-        if module.__name__ == 'cysimdjson':
+        if module.__name__ == "cysimdjson":
             parser = module.JSONParser()
             return parser.loads
         else:
-            return getattr(module, 'loads', None)
+            return getattr(module, "loads", None)
 
 
 def available_json_impls():
@@ -64,7 +68,9 @@ def available_json_impls():
         >>> print('json_impls = {}'.format(ub.repr2(json_impls, nl=1)))
     """
     import importlib
+
     import pkg_resources
+
     known_libinfo = KNOWN_LIBRARIES
     json_impls = {}
     for libinfo in known_libinfo:

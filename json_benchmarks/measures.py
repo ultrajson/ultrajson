@@ -69,7 +69,7 @@ def benchmark_json():
             # 'Dict of List[Dict[str, int]]',
             # 'Complex object'
         ],
-        "size": [1, 2, 4, 8, 16, 32, 128, 256, 512, 1024, 2048, 4096, 8192, 12288],
+        "size": [1, 2, 4, 8, 16, 32, 128, 256, 512, 1024, 2048, 4096, 8192],
     }
     predefined_basis = {
         "input": ["Complex object"],
@@ -93,8 +93,10 @@ def benchmark_json():
     )
 
     def is_blocked(params):
-        if params["input"] == "Complex object" and params["impl"] == "orjson":
-            return True
+        if params["input"] == "Complex object":
+            # Some libraries can't handle the complex object
+            if params["impl"] in {"orjson", "libpy_simdjson"}:
+                return True
 
     # For each variation of your experiment, create a row.
     for params in benchmark.iter_params():
@@ -104,14 +106,15 @@ def benchmark_json():
         # method here.
         impl_info = json_impls[params["impl"]]
         params["impl_version"] = impl_info["version"]
-        module = impl_info["module"]
+        method = impl_info[params["func"]]
+        if method is None:
+            # Not all libraries implement all methods
+            continue
+        py_data = data_lut[params["input"]](params["size"])
         if params["func"] == "dumps":
-            method = module.dumps
-            data = data_lut[params["input"]](params["size"])
+            data = py_data
         elif params["func"] == "loads":
-            method = module.loads
-            to_encode = data_lut[params["input"]](params["size"])
-            data = json.dumps(to_encode)
+            data = json.dumps(py_data)
         # Timerit will run some user-specified number of loops.
         # and compute time stats with similar methodology to timeit
         for timer in benchmark.measure():

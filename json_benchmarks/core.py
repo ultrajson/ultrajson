@@ -72,9 +72,9 @@ def main(cmdline=True, **kwargs):
         print(f"result_fpath = {result_fpath!r}")
         result_fpaths = [result_fpath]
 
-    agg = config["mode"] not in {"single"}
-    if agg:
-        result_fpaths = list(dpath.glob("benchmarks*.json"))
+    # agg = config["mode"] not in {"single"}
+    # if agg:
+    #     result_fpaths = list(dpath.glob("benchmarks*.json"))
 
     analyze = config["mode"] in {"all", "single", "analyze"}
     if analyze:

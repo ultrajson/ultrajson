@@ -115,7 +115,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
     {
       goto DECODE_INF;
     }
-    maxIntValue = -(JSUINT64) LONG_MIN;
+    maxIntValue = -(JSUINT64) LLONG_MIN;
     overflowLimit = maxIntValue / 10LL;
   }
 

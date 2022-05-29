@@ -27,9 +27,10 @@ class AnalysisConfig(scfg.Config):
 
 
 def analyze_results(result_fpaths):
-    from json_benchmarks.benchmarker import util_stats
-    from json_benchmarks import benchmarker
     import json
+
+    from json_benchmarks import benchmarker
+    from json_benchmarks.benchmarker import util_stats
 
     results = []
     for fpath in ub.ProgIter(result_fpaths, desc="load results"):
@@ -96,6 +97,7 @@ def analyze_results(result_fpaths):
         "size": [],
     }
     import kwplot
+
     kwplot.autosns()
     self = analysis  # NOQA
 

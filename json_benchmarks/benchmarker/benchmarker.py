@@ -171,9 +171,10 @@ class Benchmarker:
 
 
 def _test_demo():
+    import numpy as np
+
     from json_benchmarks.benchmarker import BenchmarkerResult, result_analysis
     from json_benchmarks.benchmarker.benchmarker import Benchmarker
-    import numpy as np
 
     impl_lut = {
         "numpy": np.sum,

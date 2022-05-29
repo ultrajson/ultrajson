@@ -1,9 +1,11 @@
 """
 The definitions of the measurements we want to take
 """
+import json
+
 import scriptconfig as scfg
 import ubelt as ub
-import json
+
 from json_benchmarks import libraries
 
 
@@ -47,9 +49,7 @@ class MeasurementConfig(scfg.Config):
 
 
 def benchmark_json():
-    from json_benchmarks import benchmarker
-    from json_benchmarks import datagen
-    from json_benchmarks import libraries
+    from json_benchmarks import benchmarker, datagen, libraries
 
     json_impls = libraries.available_json_impls()
     data_lut = datagen.json_test_data_generators()

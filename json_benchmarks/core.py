@@ -4,8 +4,7 @@ Main definition of the benchmarks
 import scriptconfig as scfg
 import ubelt as ub
 
-from json_benchmarks import measures
-from json_benchmarks import analysis
+from json_benchmarks import analysis, measures
 
 
 class CoreConfig(scfg.Config):
@@ -33,7 +32,6 @@ class CoreConfig(scfg.Config):
                 """
             ),
         ),
-
         "cache_dir": scfg.Value(
             None,
             help=ub.paragraph(

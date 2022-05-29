@@ -3,15 +3,15 @@ Define the json libraries we are considering
 """
 
 KNOWN_LIBRARIES = [
-    {'modname': "ujson", 'distname': 'ujson'},
-    {'modname': "nujson", 'distname': 'nujson'},
-    {'modname': "orjson", 'distname': 'orjson'},
-    {'modname': "simplejson", 'distname': 'simplejson'},
-    {'modname': "json", 'distname': "<stdlib>"},
-    {'modname': "simdjson", 'distname': 'pysimdjson'},
+    {"modname": "ujson", "distname": "ujson"},
+    {"modname": "nujson", "distname": "nujson"},
+    {"modname": "orjson", "distname": "orjson"},
+    {"modname": "simplejson", "distname": "simplejson"},
+    {"modname": "json", "distname": "<stdlib>"},
+    {"modname": "simdjson", "distname": "pysimdjson"},
 ]
 
-KNOWN_MODNAMES = [info['modname'] for info in KNOWN_LIBRARIES]
+KNOWN_MODNAMES = [info["modname"] for info in KNOWN_LIBRARIES]
 
 
 # TODO:
@@ -39,19 +39,21 @@ def available_json_impls():
         >>> print('json_impls = {}'.format(ub.repr2(json_impls, nl=1)))
     """
     import importlib
+
     known_libinfo = KNOWN_LIBRARIES
     json_impls = {}
     for libinfo in known_libinfo:
-        modname = libinfo['modname']
-        distname = libinfo['distname']
+        modname = libinfo["modname"]
+        distname = libinfo["distname"]
         try:
             module = importlib.import_module(modname)
         except ImportError:
             pass
         else:
             import pkg_resources
-            mod_version = getattr(module, '__version__', None)
-            if distname == '<stdlib>':
+
+            mod_version = getattr(module, "__version__", None)
+            if distname == "<stdlib>":
                 pkg_version = mod_version
             else:
                 pkg_version = pkg_resources.get_distribution(distname).version

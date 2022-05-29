@@ -935,8 +935,12 @@ class ResultAnalysis(ub.NiceRepr):
                         _ydata_mean = combo_group[ylabel].values
                         _ydata_std = combo_group[std_label].values
                         std_label = ylabel.replace("mean_", "std_")
-                        y_data_min = _ydata_mean - _ydata_std
-                        y_data_max = _ydata_mean + _ydata_std
+
+                        # Plot bars 3 standard deviations from the mean to
+                        # get a 99.7% interval
+                        num_std = 3
+                        y_data_min = _ydata_mean - num_std * _ydata_std
+                        y_data_max = _ydata_mean + num_std * _ydata_std
                         spread_alpha = 0.3
                         color = palette[subgroup_key]
                         ax.fill_between(

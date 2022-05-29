@@ -7,6 +7,7 @@ import scriptconfig as scfg
 import ubelt as ub
 
 from json_benchmarks import benchmarker, datagen
+from json_benchmarks.benchmarker import util_stats
 
 KNOWN_LIBRARIES = [
     "ujson",
@@ -23,31 +24,50 @@ class JSONBenchmarkConfig(scfg.Config):
     """
 
     default = {
+        "mode": scfg.Value(
+            "all",
+            position=1,
+            choices=["all", "single", "run", "analyze"],
+            help=ub.paragraph(
+                """
+                By default all benchmarks are run, saved, and aggregated
+                with any other existing benchmarks for analysis and
+                visualization.
+
+                In "single" mode, other existing benchmarks are ignord.
+
+                In "run" mode, the benchmarks are run, but no analysis is done.
+
+                In "analyze" mode, no benchmarks are run, but any existing
+                benchmarks are loaded for analysis and visualization.
+                """)
+        ),
+
         "disable": scfg.Value(
             [],
             choices=KNOWN_LIBRARIES,
             help=ub.paragraph(
                 """
-            Remove specified libraries from the benchmarks
-            """
+                Remove specified libraries from the benchmarks
+                """
             ),
         ),
         "factor": scfg.Value(
             1.0,
             help=ub.paragraph(
                 """
-            Specify as a fraction to speed up benchmarks for development /
-            testing
-            """
+                Specify as a fraction to speed up benchmarks for development /
+                testing
+                """
             ),
         ),
         "cache_dir": scfg.Value(
             None,
             help=ub.paragraph(
                 """
-            Location for benchmark cache.
-            Defaults to $XDG_CACHE/ujson/benchmark_results/
-            """
+                Location for benchmark cache.
+                Defaults to $XDG_CACHE/ujson/benchmark_results/
+                """
             ),
         ),
     }
@@ -62,8 +82,7 @@ class JSONBenchmarkConfig(scfg.Config):
 
 def available_json_impls():
     import importlib
-
-    known_modnames = ["ujson", "json", "nujson", "orjson", "simplejson"]
+    known_modnames = KNOWN_LIBRARIES
     json_impls = {}
     for libname in known_modnames:
         try:
@@ -116,8 +135,8 @@ def benchmark_json():
     # serializing the results, and aggregating results from disparate runs.
     benchmark = benchmarker.Benchmarker(
         name="bench_json",
-        num=100,
-        bestof=10,
+        num=1000,
+        bestof=100,
         verbose=3,
         basis=basis,
     )
@@ -156,7 +175,7 @@ def benchmark_json():
     return result_fpath
 
 
-def aggregate_results(result_fpaths):
+def analyze_results(result_fpaths):
     import json
 
     results = []
@@ -185,65 +204,28 @@ def aggregate_results(result_fpaths):
 
     table = analysis.table
 
-    def aggregate_time_stats(data, group_keys=None):
-        """
-        Given columns interpreted as containing stats, aggregate those stats
-        within each group. For each row, any non-group, non-stat column
-        with consistent values across that columns in the group is kept as-is,
-        otherwise the new column for that row is set to None.
-        """
-        import pandas as pd
-
-        # Stats groupings
-        stats_cols = [
-            "nobs_time",
-            "std_time",
-            "mean_time",
-            "max_time",
-            "min_time",
-        ]
-        mapper = {c: c.replace("_time", "") for c in stats_cols}
-        unmapper = ub.invert_dict(mapper)
-        non_stats_cols = list(ub.oset(data.columns) - stats_cols)
-        if group_keys is None:
-            group_keys = non_stats_cols
-        non_group_keys = list(ub.oset(non_stats_cols) - group_keys)
-        from json_benchmarks.benchmarker.benchmarker import combine_stats_arrs
-
-        new_rows = []
-        for group_vals, group in list(data.groupby(group_keys)):
-            # hack, is this a pandas bug in 1.4.1? Is it fixed
-            if isinstance(group_keys, list) and not isinstance(group_vals, list):
-                group_vals = [group_vals]
-            stat_data = group[stats_cols].rename(mapper, axis=1)
-            new_stats = combine_stats_arrs(stat_data)
-            new_time_stats = ub.map_keys(unmapper, new_stats)
-            new_row = ub.dzip(group_keys, group_vals)
-            if non_group_keys:
-                for k in non_group_keys:
-                    unique_vals = group[k].unique()
-                    if len(unique_vals) == 1:
-                        new_row[k] = unique_vals[0]
-                    else:
-                        new_row[k] = None
-            new_row.update(new_time_stats)
-            new_rows.append(new_row)
-        new_data = pd.DataFrame(new_rows)
-        return new_data
-
     single_size = table[(table["size"] == 256) | table["size"].isnull()]
-    # single_size_combo = aggregate_time_stats(single_size, None)
-    single_size_combo = aggregate_time_stats(single_size, ["name"])
+    # single_size_combo = aggregate_stats(single_size, None)
+    single_size_combo = util_stats.aggregate_stats(single_size, suffix='_time', group_keys=["name"])
 
     param_group = ["impl", "impl_version"]
     single_size_combo["calls/sec"] = 1 / single_size_combo["mean_time"]
-    _single_size_combo = single_size_combo.copy()
-    _single_size_combo["calls/sec"] = _single_size_combo["calls/sec"].apply(
-        lambda x: f"{x:,.02f}"
-    )
-    piv = _single_size_combo.pivot(["input", "func"], param_group, "calls/sec")
+    # _single_size_combo = single_size_combo.copy()
+    # _single_size_combo["calls/sec"] = _single_size_combo["calls/sec"].apply(
+    #
+    # )
+    time_piv = single_size_combo.pivot(["input", "func"], param_group, "mean_time")
+
+    hz_piv = (1 / time_piv)
+    # hzstr_piv = (1 / time_piv).applymap(lambda x: f"{x:,.02f}")
     print("Table for size=256")
-    print(piv)
+    # print(hzstr_piv.to_markdown())
+    print(hz_piv.to_markdown(floatfmt=',.02f'))
+    print("")
+    print("Above metrics are in call/sec, larger is better.")
+
+    speedup_piv = hz_piv / hz_piv['json'].values
+    print(speedup_piv.to_markdown(floatfmt=',.02g'))
 
     analysis.abalate(param_group)
     # benchmark_analysis(rows, xlabel, group_labels, basis, RECORD_ALL)
@@ -253,35 +235,46 @@ def aggregate_results(result_fpaths):
     group_labels = {
         "fig": ["input"],
         "col": ["func"],
+        # "fig": [],
+        # "col": ["func" "input"],
         "hue": ["impl", "impl_version"],
         "size": [],
     }
     import kwplot
-
     kwplot.autosns()
-    plots = analysis.plot(xlabel, metric_key, group_labels)
-    for plot in plots:
-        for ax in plot["facet"].axes.ravel():
-            ax.set_xscale("log")
-            ax.set_yscale("log")
+    plots = analysis.plot(
+        xlabel, metric_key, group_labels,
+        xscale='log', yscale='log',
+    )
+    plots
     kwplot.show_if_requested()
 
 
-def main():
-    from json_benchmarks import core
-
-    config = core.JSONBenchmarkConfig(cmdline=True)
+def main(cmdline=True, **kwargs):
+    """
+    Example:
+        >>> import sys, ubelt
+        >>> sys.path.append(ubelt.expandpath('~/code/ultrajson'))
+        >>> from json_benchmarks.core import *  # NOQA
+        >>> import kwplot
+        >>> kwplot.autosns()
+        >>> cmdline = False
+        >>> kwargs = {}
+        >>> main(cmdline, **kwargs)
+    """
+    config = JSONBenchmarkConfig(cmdline=cmdline, data=kwargs)
     dpath = config["cache_dir"]
 
-    run = 1
+    run = config['mode'] in {'all', 'single', 'run'}
     if run:
-        result_fpath = core.benchmark_json()
+        result_fpath = benchmark_json()
         print(f"result_fpath = {result_fpath!r}")
         result_fpaths = [result_fpath]
 
-    agg = 1
+    agg = config['mode'] not in {'single'}
     if agg:
         result_fpaths = list(dpath.glob("benchmarks*.json"))
 
-    core.aggregate_results(result_fpaths)
-    # results_output_table(libraries)
+    analyze = config['mode'] in {'all', 'single', 'analyze'}
+    if analyze:
+        analyze_results(result_fpaths)

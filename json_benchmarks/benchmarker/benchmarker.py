@@ -158,91 +158,12 @@ class Benchmarker:
                 }
                 rows.append(row)
         else:
+            from json_benchmarks.benchmarker import util_stats
             times = np.array(ti.robust_times())
-            metrics = stats_dict(times, "_time")
+            metrics = util_stats.stats_dict(times, "_time")
             row = {
                 "metrics": metrics,
                 "params": params,
                 "name": key,
             }
             rows.append(row)
-
-
-def stats_dict(data, suffix=""):
-    stats = {
-        "nobs" + suffix: len(data),
-        "mean" + suffix: data.mean(),
-        "std" + suffix: data.std(),
-        "min" + suffix: data.min(),
-        "max" + suffix: data.max(),
-    }
-    return stats
-
-
-def combine_stats(s1, s2):
-    """
-    Helper for combining mean and standard deviation of multiple measurements
-
-    Args:
-        s1 (dict): stats dict containing mean, std, and n
-        s2 (dict): stats dict containing mean, std, and n
-
-    Example:
-        >>> basis = {
-        >>>     'nobs1': [1, 10, 100, 10000],
-        >>>     'nobs2': [1, 10, 100, 10000],
-        >>> }
-        >>> for params in ub.named_product(basis):
-        >>>     data1 = np.random.rand(params['nobs1'])
-        >>>     data2 = np.random.rand(params['nobs2'])
-        >>>     data3 = np.hstack([data1, data2])
-        >>>     s1 = stats_dict(data1)
-        >>>     s2 = stats_dict(data2)
-        >>>     s3 = stats_dict(data3)
-        >>>     # Check that our combo works
-        >>>     combo_s3 = combine_stats(s1, s2)
-        >>>     compare = pd.DataFrame({'raw': s3, 'combo': combo_s3})
-        >>>     print(compare)
-        >>>     assert np.allclose(compare.raw, compare.combo)
-
-    References:
-        https://stackoverflow.com/questions/7753002/adding-combining-standard-deviations
-        https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-    """
-    stats = [s1, s2]
-    data = {
-        "nobs": np.array([s["nobs"] for s in stats]),
-        "mean": np.array([s["mean"] for s in stats]),
-        "std": np.array([s["std"] for s in stats]),
-        "min": np.array([s["min"] for s in stats]),
-        "max": np.array([s["max"] for s in stats]),
-    }
-    combine_stats_arrs(data)
-
-
-def combine_stats_arrs(data):
-    sizes = data["nobs"]
-    means = data["mean"]
-    stds = data["std"]
-    mins = data["min"]
-    maxs = data["max"]
-    varis = stds * stds
-
-    combo_size = sizes.sum()
-    combo_mean = (sizes * means).sum() / combo_size
-
-    mean_deltas = means - combo_mean
-
-    sv = (sizes * varis).sum()
-    sm = (sizes * (mean_deltas * mean_deltas)).sum()
-    combo_vars = (sv + sm) / combo_size
-    combo_std = np.sqrt(combo_vars)
-
-    combo_stats = {
-        "nobs": combo_size,
-        "mean": combo_mean,
-        "std": combo_std,
-        "min": mins.min(),
-        "max": maxs.max(),
-    }
-    return combo_stats

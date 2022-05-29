@@ -788,7 +788,7 @@ class ResultAnalysis(ub.NiceRepr):
                 conclusions.append(txt)
         return conclusions
 
-    def plot(self, xlabel, metric_key, group_labels):
+    def plot(self, xlabel, metric_key, group_labels, **kwargs):
         """
         Args:
             group_labels (dict):
@@ -818,10 +818,10 @@ class ResultAnalysis(ub.NiceRepr):
             >>>     'hue': ['z'],
             >>>     'size': [],
             >>> }
-            >>> self.plot(xlabel, metric_key, group_labels)
+            >>> kwargs = {'xscale': 'log', 'yscale': 'log'}
+            >>> self.plot(xlabel, metric_key, group_labels, **kwargs)
         """
         import seaborn as sns
-
         sns.set()
         from matplotlib import pyplot as plt  # NOQA
 
@@ -903,12 +903,27 @@ class ResultAnalysis(ub.NiceRepr):
             # facet = sns.FacetGrid(group, **facet_kws)
             # facet.map_dataframe(sns.lineplot, x=xlabel, y=metric_key, **plot_kws)
             # facet.add_legend()
-            plots.append(
-                {
-                    "fig": fig,
-                    "facet": facet,
-                }
-            )
+
+            plot = {
+                "fig": fig,
+                "facet": facet,
+            }
+            plots.append(plot)
+
+        for plot in plots:
+            xscale = kwargs.get('xscale', None)
+            yscale = kwargs.get('yscale', None)
+            for ax in plot['facet'].axes.ravel():
+                if xscale is not None:
+                    try:
+                        ax.set_xscale(xscale)
+                    except ValueError:
+                        pass
+                if yscale is not None:
+                    try:
+                        ax.set_yscale(yscale)
+                    except ValueError:
+                        pass
         return plots
 
 

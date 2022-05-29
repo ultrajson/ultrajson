@@ -179,7 +179,7 @@ def analyze_results(result_fpaths):
     import json
 
     results = []
-    for fpath in result_fpaths:
+    for fpath in ub.ProgIter(result_fpaths, desc='load results'):
         data = json.loads(fpath.read_text())
         for row in data["rows"]:
             result = benchmarker.BenchmarkerResult.load(fpath)
@@ -242,6 +242,8 @@ def analyze_results(result_fpaths):
     }
     import kwplot
     kwplot.autosns()
+    self = analysis
+
     plots = analysis.plot(
         xlabel, metric_key, group_labels,
         xscale='log', yscale='log',

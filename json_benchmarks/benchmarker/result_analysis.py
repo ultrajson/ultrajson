@@ -821,18 +821,18 @@ class ResultAnalysis(ub.NiceRepr):
             >>> kwargs = {'xscale': 'log', 'yscale': 'log'}
             >>> self.plot(xlabel, metric_key, group_labels, **kwargs)
         """
-        print('Init seaborn and pyplot')
+        print("Init seaborn and pyplot")
         import seaborn as sns
 
         sns.set()
         from matplotlib import pyplot as plt  # NOQA
 
-        print('Starting plot')
+        print("Starting plot")
 
         data = self.table
         data = data.sort_values(metric_key)
 
-        print('Compute group labels')
+        print("Compute group labels")
         for gname, labels in group_labels.items():
             if len(labels):
                 new_col = []
@@ -886,7 +886,7 @@ class ResultAnalysis(ub.NiceRepr):
 
         plots = []
         base_fnum = 1
-        print('Start plots')
+        print("Start plots")
         for fnum, (fig_key, group) in enumerate(groups, start=base_fnum):
             # TODO: seaborn doesn't give us any option to reuse an existing
             # figure or even specify what it's handle should be. A patch should
@@ -898,7 +898,7 @@ class ResultAnalysis(ub.NiceRepr):
 
             facet = sns.relplot(
                 data=group,
-                kind='line',
+                kind="line",
                 # kind="scatter",
                 facet_kws=facet_kws,
                 **plot_kws,
@@ -917,7 +917,7 @@ class ResultAnalysis(ub.NiceRepr):
             }
             plots.append(plot)
 
-        print('Adjust plots')
+        print("Adjust plots")
         for plot in plots:
             xscale = kwargs.get("xscale", None)
             yscale = kwargs.get("yscale", None)
@@ -932,7 +932,7 @@ class ResultAnalysis(ub.NiceRepr):
                         ax.set_yscale(yscale)
                     except ValueError:
                         pass
-        print('Finish')
+        print("Finish")
         return plots
 
 

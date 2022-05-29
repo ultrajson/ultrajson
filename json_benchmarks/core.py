@@ -180,7 +180,7 @@ def analyze_results(result_fpaths):
     import json
 
     results = []
-    for fpath in ub.ProgIter(result_fpaths, desc='load results'):
+    for fpath in ub.ProgIter(result_fpaths, desc="load results"):
         data = json.loads(fpath.read_text())
         for row in data["rows"]:
             result = benchmarker.BenchmarkerResult.load(fpath)

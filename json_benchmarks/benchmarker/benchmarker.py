@@ -159,6 +159,7 @@ class Benchmarker:
                 rows.append(row)
         else:
             from json_benchmarks.benchmarker import util_stats
+
             times = np.array(ti.robust_times())
             metrics = util_stats.stats_dict(times, "_time")
             row = {

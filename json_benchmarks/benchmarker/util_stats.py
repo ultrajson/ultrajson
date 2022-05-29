@@ -1,68 +1,68 @@
-import ubelt as ub
 import numpy as np
+import ubelt as ub
+
 
 def __tabulate_issue():
     # MWE for tabulate issue
     # The decimals are not aligned when using "," in the floatfmt
     import tabulate
+
     data = [
-        [13213.2, 3213254.23, 432432.231,],
-        [432432., 432.3, 3.2]
+        [
+            13213.2,
+            3213254.23,
+            432432.231,
+        ],
+        [432432.0, 432.3, 3.2],
     ]
-    print(tabulate.tabulate(data, headers=['a', 'b'], floatfmt=',.02f'))
-    print(tabulate.tabulate(data, headers=['a', 'b'], floatfmt='.02f'))
+    print(tabulate.tabulate(data, headers=["a", "b"], floatfmt=",.02f"))
+    print(tabulate.tabulate(data, headers=["a", "b"], floatfmt=".02f"))
 
 
 def __groupby_issue():
     # MWE of an issue with pandas groupby
     import pandas as pd
-    data = pd.DataFrame([
-        {'p1': 'a', 'p2': 1, 'p3': 0},
-        {'p1': 'a', 'p2': 1, 'p3': 0},
-        {'p1': 'a', 'p2': 2, 'p3': 0},
-        {'p1': 'b', 'p2': 2, 'p3': 0},
-        {'p1': 'b', 'p2': 1, 'p3': 0},
-        {'p1': 'b', 'p2': 1, 'p3': 0},
-        {'p1': 'b', 'p2': 1, 'p3': 0},
-    ])
 
-    by = 'p1'
+    data = pd.DataFrame(
+        [
+            {"p1": "a", "p2": 1, "p3": 0},
+            {"p1": "a", "p2": 1, "p3": 0},
+            {"p1": "a", "p2": 2, "p3": 0},
+            {"p1": "b", "p2": 2, "p3": 0},
+            {"p1": "b", "p2": 1, "p3": 0},
+            {"p1": "b", "p2": 1, "p3": 0},
+            {"p1": "b", "p2": 1, "p3": 0},
+        ]
+    )
+
+    by = "p1"
     key = list(data.groupby(by))[0][0]
-    result = {
-        'by': by,
-        'key': key,
-        'type(key)': type(key)
-    }
-    print('result = {}'.format(ub.repr2(result, nl=1)))
+    result = {"by": by, "key": key, "type(key)": type(key)}
+    print(f"result = {ub.repr2(result, nl=1)}")
+    assert not ub.iterable(
+        key
+    ), "`by` is specified as a scalar, so getting `key` as a scalar makes sense"
+
+    by = ["p1"]
+    key = list(data.groupby(by))[0][0]
+    result = {"by": by, "key": key, "type(key)": type(key)}
+    print(f"result = {ub.repr2(result, nl=1)}")
     assert not ub.iterable(key), (
-        '`by` is specified as a scalar, so getting `key` as a scalar makes sense')
+        "`by` is specified as a list of scalars (with one element), but we "
+        "still get `key` as a scalar. This does not make sense"
+    )
 
-    by = ['p1']
+    by = ["p1", "p2"]
     key = list(data.groupby(by))[0][0]
-    result = {
-        'by': by,
-        'key': key,
-        'type(key)': type(key)
-    }
-    print('result = {}'.format(ub.repr2(result, nl=1)))
-    assert not ub.iterable(key), (
-        '`by` is specified as a list of scalars (with one element), but we '
-        'still get `key` as a scalar. This does not make sense')
-
-    by = ['p1', 'p2']
-    key = list(data.groupby(by))[0][0]
-    result = {
-        'by': by,
-        'key': key,
-        'type(key)': type(key)
-    }
-    print('result = {}'.format(ub.repr2(result, nl=1)))
+    result = {"by": by, "key": key, "type(key)": type(key)}
+    print(f"result = {ub.repr2(result, nl=1)}")
     assert ub.iterable(key), (
-        '`by` is specified as a list of scalars (with multiple elements), '
-        'and we still get `key` as a tuple of values. This makes sense')
+        "`by` is specified as a list of scalars (with multiple elements), "
+        "and we still get `key` as a tuple of values. This makes sense"
+    )
 
 
-def aggregate_stats(data, suffix='', group_keys=None):
+def aggregate_stats(data, suffix="", group_keys=None):
     """
     Given columns interpreted as containing stats, aggregate those stats
     within each group. For each row, any non-group, non-stat column

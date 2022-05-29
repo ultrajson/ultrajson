@@ -822,6 +822,7 @@ class ResultAnalysis(ub.NiceRepr):
             >>> self.plot(xlabel, metric_key, group_labels, **kwargs)
         """
         import seaborn as sns
+
         sns.set()
         from matplotlib import pyplot as plt  # NOQA
 
@@ -911,9 +912,9 @@ class ResultAnalysis(ub.NiceRepr):
             plots.append(plot)
 
         for plot in plots:
-            xscale = kwargs.get('xscale', None)
-            yscale = kwargs.get('yscale', None)
-            for ax in plot['facet'].axes.ravel():
+            xscale = kwargs.get("xscale", None)
+            yscale = kwargs.get("yscale", None)
+            for ax in plot["facet"].axes.ravel():
                 if xscale is not None:
                     try:
                         ax.set_xscale(xscale)

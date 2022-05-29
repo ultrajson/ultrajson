@@ -40,9 +40,9 @@ class JSONBenchmarkConfig(scfg.Config):
 
                 In "analyze" mode, no benchmarks are run, but any existing
                 benchmarks are loaded for analysis and visualization.
-                """)
+                """
+            ),
         ),
-
         "disable": scfg.Value(
             [],
             choices=KNOWN_LIBRARIES,
@@ -82,6 +82,7 @@ class JSONBenchmarkConfig(scfg.Config):
 
 def available_json_impls():
     import importlib
+
     known_modnames = KNOWN_LIBRARIES
     json_impls = {}
     for libname in known_modnames:
@@ -206,7 +207,9 @@ def analyze_results(result_fpaths):
 
     single_size = table[(table["size"] == 256) | table["size"].isnull()]
     # single_size_combo = aggregate_stats(single_size, None)
-    single_size_combo = util_stats.aggregate_stats(single_size, suffix='_time', group_keys=["name"])
+    single_size_combo = util_stats.aggregate_stats(
+        single_size, suffix="_time", group_keys=["name"]
+    )
 
     param_group = ["impl", "impl_version"]
     single_size_combo["calls/sec"] = 1 / single_size_combo["mean_time"]
@@ -216,16 +219,16 @@ def analyze_results(result_fpaths):
     # )
     time_piv = single_size_combo.pivot(["input", "func"], param_group, "mean_time")
 
-    hz_piv = (1 / time_piv)
+    hz_piv = 1 / time_piv
     # hzstr_piv = (1 / time_piv).applymap(lambda x: f"{x:,.02f}")
     print("Table for size=256")
     # print(hzstr_piv.to_markdown())
-    print(hz_piv.to_markdown(floatfmt=',.02f'))
+    print(hz_piv.to_markdown(floatfmt=",.02f"))
     print("")
     print("Above metrics are in call/sec, larger is better.")
 
-    speedup_piv = hz_piv / hz_piv['json'].values
-    print(speedup_piv.to_markdown(floatfmt=',.02g'))
+    speedup_piv = hz_piv / hz_piv["json"].values
+    print(speedup_piv.to_markdown(floatfmt=",.02g"))
 
     analysis.abalate(param_group)
     # benchmark_analysis(rows, xlabel, group_labels, basis, RECORD_ALL)
@@ -241,10 +244,14 @@ def analyze_results(result_fpaths):
         "size": [],
     }
     import kwplot
+
     kwplot.autosns()
     plots = analysis.plot(
-        xlabel, metric_key, group_labels,
-        xscale='log', yscale='log',
+        xlabel,
+        metric_key,
+        group_labels,
+        xscale="log",
+        yscale="log",
     )
     plots
     kwplot.show_if_requested()
@@ -265,16 +272,16 @@ def main(cmdline=True, **kwargs):
     config = JSONBenchmarkConfig(cmdline=cmdline, data=kwargs)
     dpath = config["cache_dir"]
 
-    run = config['mode'] in {'all', 'single', 'run'}
+    run = config["mode"] in {"all", "single", "run"}
     if run:
         result_fpath = benchmark_json()
         print(f"result_fpath = {result_fpath!r}")
         result_fpaths = [result_fpath]
 
-    agg = config['mode'] not in {'single'}
+    agg = config["mode"] not in {"single"}
     if agg:
         result_fpaths = list(dpath.glob("benchmarks*.json"))
 
-    analyze = config['mode'] in {'all', 'single', 'analyze'}
+    analyze = config["mode"] in {"all", "single", "analyze"}
     if analyze:
         analyze_results(result_fpaths)

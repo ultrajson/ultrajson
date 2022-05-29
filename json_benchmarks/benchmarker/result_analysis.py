@@ -823,6 +823,7 @@ class ResultAnalysis(ub.NiceRepr):
         """
         print('Init seaborn and pyplot')
         import seaborn as sns
+
         sns.set()
         from matplotlib import pyplot as plt  # NOQA
 
@@ -918,9 +919,9 @@ class ResultAnalysis(ub.NiceRepr):
 
         print('Adjust plots')
         for plot in plots:
-            xscale = kwargs.get('xscale', None)
-            yscale = kwargs.get('yscale', None)
-            for ax in plot['facet'].axes.ravel():
+            xscale = kwargs.get("xscale", None)
+            yscale = kwargs.get("yscale", None)
+            for ax in plot["facet"].axes.ravel():
                 if xscale is not None:
                     try:
                         ax.set_xscale(xscale)

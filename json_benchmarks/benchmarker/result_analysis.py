@@ -915,29 +915,38 @@ class ResultAnalysis(ub.NiceRepr):
             # facet_data_group_iter = iter(facet_data_groups.keys())
 
             for ax in facet.axes.ravel():
-                col_key = ax.get_title().split('=', 1)[-1].strip()
+                col_key = ax.get_title().split("=", 1)[-1].strip()
                 # col_key = next(facet_data_group_iter)
                 col_data = facet_data_groups[col_key]
-                col_data['mean_time']
-                col_data['std_time']
-                xlabel = plot_kws['x']
-                ylabel = plot_kws['y']
-                subgroups = col_data.groupby(plot_kws['hue'])
+                col_data["mean_time"]
+                col_data["std_time"]
+                xlabel = plot_kws["x"]
+                ylabel = plot_kws["y"]
+                subgroups = col_data.groupby(plot_kws["hue"])
                 for subgroup_key, subgroup in subgroups:
                     # combine stds in multiple groups on the x and manually draw errors
-                    suffix = '_' + ylabel.partition('_')[2]
-                    if 'mean_' in ylabel:
-                        std_label = ylabel.replace('mean_', 'std_')
-                        combo_group = aggregate_stats(subgroup, suffix=suffix, group_keys=[plot_kws['x']])
+                    suffix = "_" + ylabel.partition("_")[2]
+                    if "mean_" in ylabel:
+                        std_label = ylabel.replace("mean_", "std_")
+                        combo_group = aggregate_stats(
+                            subgroup, suffix=suffix, group_keys=[plot_kws["x"]]
+                        )
                         _xdata = combo_group[xlabel].values
                         _ydata_mean = combo_group[ylabel].values
                         _ydata_std = combo_group[std_label].values
-                        std_label = ylabel.replace('mean_', 'std_')
+                        std_label = ylabel.replace("mean_", "std_")
                         y_data_min = _ydata_mean - _ydata_std
                         y_data_max = _ydata_mean + _ydata_std
                         spread_alpha = 0.3
                         color = palette[subgroup_key]
-                        ax.fill_between(_xdata, y_data_min, y_data_max, alpha=spread_alpha, color=color, zorder=1)
+                        ax.fill_between(
+                            _xdata,
+                            y_data_min,
+                            y_data_max,
+                            alpha=spread_alpha,
+                            color=color,
+                            zorder=1,
+                        )
                     # zorder=0)
 
             xscale = kwargs.get("xscale", None)

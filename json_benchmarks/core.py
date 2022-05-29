@@ -204,11 +204,11 @@ def analyze_results(result_fpaths):
     analysis.analysis()
 
     table = analysis.table
-    stats_table = util_stats.aggregate_stats(
-        table, suffix="_time", group_keys=["name"]
-    )
+    stats_table = util_stats.aggregate_stats(table, suffix="_time", group_keys=["name"])
 
-    single_size = stats_table[(stats_table["size"] == 256) | stats_table["size"].isnull()]
+    single_size = stats_table[
+        (stats_table["size"] == 256) | stats_table["size"].isnull()
+    ]
     # single_size_combo = aggregate_stats(single_size, None)
     single_size_combo = util_stats.aggregate_stats(
         single_size, suffix="_time", group_keys=["name"]

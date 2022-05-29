@@ -86,8 +86,8 @@ def benchmark_json():
     # serializing the results, and aggregating results from disparate runs.
     benchmark = benchmarker.Benchmarker(
         name="bench_json",
-        num=1000,
-        bestof=100,
+        num=100,
+        bestof=10,
         verbose=3,
         basis=basis,
     )
@@ -117,12 +117,15 @@ def benchmark_json():
             data = json.dumps(py_data)
         # Timerit will run some user-specified number of loops.
         # and compute time stats with similar methodology to timeit
-        for timer in benchmark.measure():
-            # Put any setup logic you dont want to time here.
-            # ...
-            with timer:
-                # Put the logic you want to time here
-                method(data)
+        try:
+            for timer in benchmark.measure():
+                # Put any setup logic you dont want to time here.
+                # ...
+                with timer:
+                    # Put the logic you want to time here
+                    method(data)
+        except Exception as ex:
+            print(f'Failed to time: ex={ex}. Skipping')
 
     dpath = ub.Path.appdir("ujson/benchmark_results").ensuredir()
     result_fpath = benchmark.dump_in_dpath(dpath)

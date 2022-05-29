@@ -204,8 +204,11 @@ def analyze_results(result_fpaths):
     analysis.analysis()
 
     table = analysis.table
+    stats_table = util_stats.aggregate_stats(
+        table, suffix="_time", group_keys=["name"]
+    )
 
-    single_size = table[(table["size"] == 256) | table["size"].isnull()]
+    single_size = stats_table[(stats_table["size"] == 256) | stats_table["size"].isnull()]
     # single_size_combo = aggregate_stats(single_size, None)
     single_size_combo = util_stats.aggregate_stats(
         single_size, suffix="_time", group_keys=["name"]
@@ -248,12 +251,14 @@ def analyze_results(result_fpaths):
     kwplot.autosns()
     self = analysis
 
+    data = stats_table
     plots = analysis.plot(
         xlabel,
         metric_key,
         group_labels,
         xscale="log",
         yscale="log",
+        data=data,
     )
     plots
     kwplot.show_if_requested()

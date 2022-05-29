@@ -788,7 +788,7 @@ class ResultAnalysis(ub.NiceRepr):
                 conclusions.append(txt)
         return conclusions
 
-    def plot(self, xlabel, metric_key, group_labels, **kwargs):
+    def plot(self, xlabel, metric_key, group_labels, data=None, **kwargs):
         """
         Args:
             group_labels (dict):
@@ -829,7 +829,8 @@ class ResultAnalysis(ub.NiceRepr):
 
         print("Starting plot")
 
-        data = self.table
+        if data is None:
+            data = self.table
         data = data.sort_values(metric_key)
 
         print("Compute group labels")
@@ -884,10 +885,15 @@ class ResultAnalysis(ub.NiceRepr):
         palette = ub.dzip(unique_hues, sns.color_palette(n_colors=len(unique_hues)))
         plot_kws["palette"] = palette
 
+        # kwplot.close_figures()
+
         plots = []
         base_fnum = 1
         print("Start plots")
-        for fnum, (fig_key, group) in enumerate(groups, start=base_fnum):
+        # hack
+        hack_groups = [(k, v) for k, v in groups if k != "input=Complex object"]
+
+        for fnum, (fig_key, group) in enumerate(hack_groups, start=base_fnum):
             # TODO: seaborn doesn't give us any option to reuse an existing
             # figure or even specify what it's handle should be. A patch should
             # be submitted to add that feature, but in the meantime work around
@@ -903,6 +909,50 @@ class ResultAnalysis(ub.NiceRepr):
                 facet_kws=facet_kws,
                 **plot_kws,
             )
+            from json_benchmarks.benchmarker.util_stats import aggregate_stats
+
+            facet_data_groups = dict(list(facet.data.groupby(facet._col_var)))
+            # facet_data_group_iter = iter(facet_data_groups.keys())
+
+            for ax in facet.axes.ravel():
+                col_key = ax.get_title().split('=', 1)[-1].strip()
+                # col_key = next(facet_data_group_iter)
+                col_data = facet_data_groups[col_key]
+                col_data['mean_time']
+                col_data['std_time']
+                xlabel = plot_kws['x']
+                ylabel = plot_kws['y']
+                subgroups = col_data.groupby(plot_kws['hue'])
+                for subgroup_key, subgroup in subgroups:
+                    # combine stds in multiple groups on the x and manually draw errors
+                    suffix = '_' + ylabel.partition('_')[2]
+                    if 'mean_' in ylabel:
+                        std_label = ylabel.replace('mean_', 'std_')
+                        combo_group = aggregate_stats(subgroup, suffix=suffix, group_keys=[plot_kws['x']])
+                        _xdata = combo_group[xlabel].values
+                        _ydata_mean = combo_group[ylabel].values
+                        _ydata_std = combo_group[std_label].values
+                        std_label = ylabel.replace('mean_', 'std_')
+                        y_data_min = _ydata_mean - _ydata_std
+                        y_data_max = _ydata_mean + _ydata_std
+                        spread_alpha = 0.3
+                        color = palette[subgroup_key]
+                        ax.fill_between(_xdata, y_data_min, y_data_max, alpha=spread_alpha, color=color, zorder=1)
+                    # zorder=0)
+
+            xscale = kwargs.get("xscale", None)
+            yscale = kwargs.get("yscale", None)
+            for ax in facet.axes.ravel():
+                if xscale is not None:
+                    try:
+                        ax.set_xscale(xscale)
+                    except ValueError:
+                        pass
+                if yscale is not None:
+                    try:
+                        ax.set_yscale(yscale)
+                    except ValueError:
+                        pass
 
             fig = facet.figure
             fig.suptitle(fig_key)
@@ -917,21 +967,30 @@ class ResultAnalysis(ub.NiceRepr):
             }
             plots.append(plot)
 
-        print("Adjust plots")
-        for plot in plots:
-            xscale = kwargs.get("xscale", None)
-            yscale = kwargs.get("yscale", None)
-            for ax in plot["facet"].axes.ravel():
-                if xscale is not None:
-                    try:
-                        ax.set_xscale(xscale)
-                    except ValueError:
-                        pass
-                if yscale is not None:
-                    try:
-                        ax.set_yscale(yscale)
-                    except ValueError:
-                        pass
+            # if fnum >= 1:
+            #     break
+
+        # print("Adjust plots")
+        # for plot in plots:
+        #     xscale = kwargs.get("xscale", None)
+        #     yscale = kwargs.get("yscale", None)
+        #     facet = plot["facet"]
+
+        #     facet_data_groups = dict(list(facet.data.groupby(facet._col_var)))
+        #     facet_data_group_iter = iter(facet_data_groups.keys())
+
+        #     for ax in facet.axes.ravel():
+
+        #         if xscale is not None:
+        #             try:
+        #                 ax.set_xscale(xscale)
+        #             except ValueError:
+        #                 pass
+        #         if yscale is not None:
+        #             try:
+        #                 ax.set_yscale(yscale)
+        #             except ValueError:
+        #                 pass
         print("Finish")
         return plots
 

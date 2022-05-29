@@ -28,6 +28,7 @@ class AnalysisConfig(scfg.Config):
 
 def analyze_results(result_fpaths):
     import json
+
     from json_benchmarks import benchmarker
     from json_benchmarks.benchmarker import util_stats
 

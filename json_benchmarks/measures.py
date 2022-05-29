@@ -125,7 +125,7 @@ def benchmark_json():
                     # Put the logic you want to time here
                     method(data)
         except Exception as ex:
-            print(f'Failed to time: ex={ex}. Skipping')
+            print(f"Failed to time: ex={ex}. Skipping")
 
     dpath = ub.Path.appdir("ujson/benchmark_results").ensuredir()
     result_fpath = benchmark.dump_in_dpath(dpath)

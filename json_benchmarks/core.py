@@ -65,7 +65,7 @@ def main(cmdline=True, **kwargs):
     """
     config = CoreConfig(cmdline=cmdline, data=kwargs)
     dpath = config["cache_dir"]
-    print(f'dpath={dpath}')
+    print(f"dpath={dpath}")
 
     run = config["mode"] in {"all", "single", "run"}
     if run:

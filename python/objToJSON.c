@@ -114,7 +114,7 @@ static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
   return PyBytes_AsString(obj);
 }
 
-static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
+static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesObj)
 {
   /*
   Converts the PyUnicode object to char* whose size is stored in _outLen.
@@ -134,7 +134,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
   }
 #endif
 
-  bytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
+  PyObject *bytesObj = *pBytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
   if (!bytesObj)
   {
     return NULL;
@@ -146,7 +146,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
 
 static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  return PyUnicodeToUTF8Raw(_obj, _outLen, GET_TC(tc)->newObj);
+  return PyUnicodeToUTF8Raw(_obj, _outLen, &(GET_TC(tc)->newObj));
 }
 
 static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)

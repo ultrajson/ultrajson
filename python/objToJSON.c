@@ -134,7 +134,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject *bytesObj)
   }
 #endif
 
-  bytesObj = PyUnicode_AsEncodedString (obj, "utf-8", "surrogatepass");
+  bytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
   if (!bytesObj)
   {
     return NULL;
@@ -250,7 +250,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   if (PyUnicode_Check(GET_TC(tc)->itemName))
   {
     itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, "utf-8", "surrogatepass");
+    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, NULL, "surrogatepass");
     Py_DECREF(itemNameTmp);
   }
   else
@@ -273,7 +273,7 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       return -1;
     }
     itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, "utf-8", "surrogatepass");
+    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, NULL, "surrogatepass");
     Py_DECREF(itemNameTmp);
   }
   PRINTMARK();
@@ -342,7 +342,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       // Subject the key to the same type restrictions and conversions as in Dict_iterGetValue.
       if (PyUnicode_Check(key))
       {
-        key = PyUnicode_AsEncodedString(key, "utf-8", "surrogatepass");
+        key = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
       }
       else if (!PyBytes_Check(key))
       {
@@ -352,7 +352,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
           goto error;
         }
         keyTmp = key;
-        key = PyUnicode_AsEncodedString(key, "utf-8", "surrogatepass");
+        key = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
         Py_DECREF(keyTmp);
       }
       else
@@ -684,7 +684,7 @@ DEFAULT:
   {
     goto INVALID;
   }
-  PyObject* str = PyUnicode_AsEncodedString(objRepr, "utf-8", "strict");
+  PyObject* str = PyUnicode_AsEncodedString(objRepr, NULL, "strict");
   if (str)
   {
     PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AsString(str));

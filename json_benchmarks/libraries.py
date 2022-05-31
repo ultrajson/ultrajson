@@ -4,13 +4,13 @@ Define the json libraries we are considering
 
 KNOWN_LIBRARIES = [
     {"modname": "ujson", "distname": "ujson"},
-    {"modname": "nujson", "distname": "nujson"},
-    {"modname": "orjson", "distname": "orjson"},
-    {"modname": "simplejson", "distname": "simplejson"},
+    # {"modname": "nujson", "distname": "nujson"},
+    # {"modname": "orjson", "distname": "orjson"},
+    # {"modname": "simplejson", "distname": "simplejson"},
     {"modname": "json", "distname": "<stdlib>"},
-    {"modname": "simdjson", "distname": "pysimdjson"},
-    {"modname": "cysimdjson", "distname": "cysimdjson"},
-    {"modname": "libpy_simdjson", "distname": "libpy-simdjson"},
+    # {"modname": "simdjson", "distname": "pysimdjson"},
+    # {"modname": "cysimdjson", "distname": "cysimdjson"},
+    # {"modname": "libpy_simdjson", "distname": "libpy-simdjson"},
 ]
 
 KNOWN_MODNAMES = [info["modname"] for info in KNOWN_LIBRARIES]

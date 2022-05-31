@@ -57,7 +57,9 @@ def analyze_results(result_fpaths):
     analysis.analysis()
 
     table = analysis.table
-    stats_table = util_stats.aggregate_stats(table, suffix="_time", group_keys=["name", "impl_version"])
+    stats_table = util_stats.aggregate_stats(
+        table, suffix="_time", group_keys=["name", "impl_version"]
+    )
 
     single_size = stats_table[
         (stats_table["size"] == 256) | stats_table["size"].isnull()

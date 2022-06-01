@@ -600,7 +600,10 @@ def test_decode_range_raises(test_input, expected):
         ("[]]", ujson.JSONDecodeError),  # array unmatched bracket fail
         ("18446744073709551616", ujson.JSONDecodeError),  # too big value
         ("-90223372036854775809", ujson.JSONDecodeError),  # too small value
+        ("-23058430092136939529", ujson.JSONDecodeError),  # too small value
+        ("-11529215046068469760", ujson.JSONDecodeError),  # too small value
         ("18446744073709551616", ujson.JSONDecodeError),  # very too big value
+        ("23058430092136939529", ujson.JSONDecodeError),  # too big value
         ("-90223372036854775809", ujson.JSONDecodeError),  # very too small value
         ("{}\n\t a", ujson.JSONDecodeError),  # with trailing non whitespaces
         ("[18446744073709551616]", ujson.JSONDecodeError),  # array with big int

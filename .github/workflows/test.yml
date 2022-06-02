@@ -12,9 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["pypy-3.8", "3.7", "3.8", "3.9", "3.10", "3.11-dev"]
-        os: [ubuntu-20.04, ubuntu-18.04, macos-latest, windows-2019]
-        exclude:
-          - { python-version: "pypy-3.8", os: macos-latest }
+        os: [ubuntu-latest]
+        include:
+          - { python-version: "3.10", os: windows-latest }
+          - { python-version: "3.10", os: macos-latest }
 
     steps:
       - uses: actions/checkout@v2
@@ -55,3 +56,11 @@ jobs:
           coverage run -m pytest
           ./scripts/coverage.sh
           bash <(curl -s https://codecov.io/bash) -X gcov
+
+  success:
+    needs: test
+    runs-on: ubuntu-latest
+    name: test successful
+    steps:
+      - name: Success
+        run: echo Test successful

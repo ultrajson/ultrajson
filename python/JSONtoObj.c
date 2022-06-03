@@ -119,6 +119,15 @@ static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
   return PyLong_FromUnsignedLongLong (value);
 }
 
+static JSOBJ Object_newIntegerFromString(void *prv, char *value, size_t length)
+{
+  // PyLong_FromString requires a NUL-terminated string in CPython, contrary to the documentation: https://github.com/python/cpython/issues/59200
+  char *buf = PyObject_Malloc(length + 1);
+  memcpy(buf, value, length);
+  buf[length] = '\0';
+  return PyLong_FromString(buf, NULL, 10);
+}
+
 static JSOBJ Object_newDouble(void *prv, double value)
 {
   return PyFloat_FromDouble(value);
@@ -152,6 +161,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_newInteger,
     Object_newLong,
     Object_newUnsignedLong,
+    Object_newIntegerFromString,
     Object_newDouble,
     Object_releaseObject,
     PyObject_Malloc,

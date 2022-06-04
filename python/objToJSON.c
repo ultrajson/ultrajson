@@ -876,19 +876,19 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   dconv_d2s_free(&encoder.d2s);
 
-  if (PyErr_Occurred())
+  if (encoder.errorMsg && !PyErr_Occurred())
   {
-    return NULL;
+    // If there is an error message and we don't already have a Python exception, set one.
+    PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
   }
 
-  if (encoder.errorMsg)
+  if (PyErr_Occurred())
   {
     if (ret != buffer)
     {
       encoder.free (ret);
     }
 
-    PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
     return NULL;
   }
 

@@ -986,6 +986,11 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 
   if (enc->errorMsg)
   {
+    if (enc->heap == 1)
+    {
+      // Buffer was realloc'd at some point, or no initial buffer was provided.
+      enc->free(enc->start);
+    }
     return NULL;
   }
 

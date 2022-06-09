@@ -3,7 +3,9 @@ import decimal
 import io
 import json
 import math
+import os.path
 import re
+import subprocess
 import sys
 import uuid
 from collections import OrderedDict
@@ -1024,6 +1026,19 @@ def test_obj_str_exception(sort_keys):
 
     with pytest.raises(NotImplementedError):
         ujson.dumps({Obj(): 1}, sort_keys=sort_keys)
+
+
+def no_memory_leak(func_code, n=None):
+    code = f"import functools, ujson; func = {func_code}"
+    path = os.path.join(os.path.dirname(__file__), "memory.py")
+    n = [str(n)] if n is not None else []
+    p = subprocess.run(["python3", path, code] + n)
+    assert p.returncode == 0
+
+
+@pytest.mark.parametrize("input", ['["a" * 11000, b""]'])
+def test_no_memory_leak_encoding_errors(input):
+    no_memory_leak(f"functools.partial(ujson.dumps, {input})")
 
 
 """

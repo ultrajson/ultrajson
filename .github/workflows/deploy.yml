@@ -47,7 +47,7 @@ jobs:
           # Don't build with prerelease Python versions.
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.7,<3.11"
           # Run the test suite after each build.
-          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_REQUIRES: "pytest psutil"
           CIBW_TEST_COMMAND: pytest {package}/tests
 
       - name: Upload as build artifacts
@@ -120,7 +120,7 @@ jobs:
           # Likewise, select only one Python version per job to speed this up.
           CIBW_BUILD: "${{ matrix.python-version }}-*"
           # Run the test suite after each build.
-          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_REQUIRES: "pytest psutil"
           CIBW_TEST_COMMAND: pytest {package}/tests
 
       - name: Upload as build artifacts

@@ -11,7 +11,7 @@ def run(func, n):
         pass
 
     # Take a measurement
-    before = psutil.Process().memory_info().vms
+    before = psutil.Process().memory_full_info().uss
 
     # Run n times
     for i in range(n):
@@ -21,9 +21,9 @@ def run(func, n):
             pass
 
     # Measure again and return success (less than 1% increase)
-    after = psutil.Process().memory_info().vms
+    after = psutil.Process().memory_full_info().uss
 
-    print(f"VMS before: {before}, after: {after}", file=sys.stderr)
+    print(f"USS before: {before}, after: {after}", file=sys.stderr)
     return (after - before) / before < 0.01
 
 

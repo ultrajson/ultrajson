@@ -1032,7 +1032,7 @@ def no_memory_leak(func_code, n=None):
     code = f"import functools, ujson; func = {func_code}"
     path = os.path.join(os.path.dirname(__file__), "memory.py")
     n = [str(n)] if n is not None else []
-    p = subprocess.run(["python3", path, code] + n)
+    p = subprocess.run([sys.executable, path, code] + n)
     assert p.returncode == 0
 
 

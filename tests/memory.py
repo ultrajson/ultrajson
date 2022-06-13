@@ -1,38 +1,45 @@
+import gc
 import sys
+import tracemalloc
 
-import psutil
+# exec the first argument to get func() and n
+exec_globals = {}
+exec(sys.argv[1], exec_globals)
+func = exec_globals["func"]
+n = int(sys.argv[2]) if sys.argv[2:] else 1
 
+# Pre-run once
+try:
+    func()
+except Exception:
+    pass
 
-def run(func, n):
-    # Run func once so any static variables etc. are allocated
+# Create filter to only report leaks on the 'tracemalloc: measure' line below
+filters = []
+with open(__file__) as fp:
+    for i, line in enumerate(fp, start=1):
+        if "tracemalloc: measure" in line:
+            filters.append(tracemalloc.Filter(True, __file__, i))
+
+# Clean up and take a snapshot
+tracemalloc.start()
+gc.collect()
+before = tracemalloc.take_snapshot().filter_traces(filters)
+
+# Run
+for i in range(n):
     try:
-        func()
+        func()  # tracemalloc: measure
     except Exception:
         pass
 
-    # Take a measurement
-    before = psutil.Process().memory_full_info().uss
+# Clean up and second snapshot
+gc.collect()
+after = tracemalloc.take_snapshot().filter_traces(filters)
 
-    # Run n times
-    for i in range(n):
-        try:
-            func()
-        except Exception:
-            pass
-
-    # Measure again and return success (less than 1% increase)
-    after = psutil.Process().memory_full_info().uss
-
-    print(f"USS before: {before}, after: {after}", file=sys.stderr)
-    return (after - before) / before < 0.01
-
-
-if __name__ == "__main__":
-    # Usage: python3 memory.py CODE [N]
-    #   CODE must define a function 'func'; it will be exec()'d!
-    #   N, if present, overrides the number of runs (default: 1000)
-    exec_globals = {}
-    exec(sys.argv[1], exec_globals)
-    n = int(sys.argv[2]) if sys.argv[2:] else 1000
-    if not run(exec_globals["func"], n):
-        sys.exit(1)
+# Check that nothing got leaked
+diff = after.compare_to(before, "lineno")
+if diff:
+    for stat in diff:
+        print(stat)
+    sys.exit(1)

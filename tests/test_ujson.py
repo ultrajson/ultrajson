@@ -1036,6 +1036,9 @@ def no_memory_leak(func_code, n=None):
     assert p.returncode == 0
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+)
 @pytest.mark.parametrize("input", ['["a" * 11000, b""]'])
 def test_no_memory_leak_encoding_errors(input):
     no_memory_leak(f"functools.partial(ujson.dumps, {input})")

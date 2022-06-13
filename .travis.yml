@@ -19,7 +19,6 @@ jobs:
 install:
   - pip install -U pip
   - pip install -U pytest
-  - pip install -U psutil
   - pip install .
 
 script: pytest

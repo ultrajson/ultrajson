@@ -613,7 +613,8 @@ def test_decode_numeric_int_exp(test_input):
 @pytest.mark.parametrize("mode", ["encode", "decode"])
 def test_encode_decode_big_int(i, mode):
     # Test ints that are too large to be represented by a C integer type
-    for py, j in ((i, str(i)), ([i], f"[{i}]"), ({"i": i}, f'{{"i":{i}}}')):
+    for py in (i, [i], {"i": i}):
+        j = json.dumps(py, separators=(",", ":"))
         if mode == "encode":
             if hasattr(sys, "pypy_version_info"):
                 # https://foss.heptapod.net/pypy/pypy/-/issues/3765

@@ -620,6 +620,8 @@ def test_encode_decode_big_int(i, mode):
                 # https://foss.heptapod.net/pypy/pypy/-/issues/3765
                 pytest.skip("PyPy can't serialise big ints")
             assert ujson.encode(py) == j
+            if isinstance(py, dict):
+                assert ujson.encode(py, sort_keys=True) == j
         else:
             assert ujson.decode(j) == py
 

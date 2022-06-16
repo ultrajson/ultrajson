@@ -1,3 +1,4 @@
+import ctypes
 import datetime as dt
 import decimal
 import io
@@ -512,6 +513,41 @@ def test_encode_surrogate_characters():
     out2 = '{"\ud800":"\udfff"}'
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False) == out2
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False, sort_keys=True) == out2
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # Normal cases
+        (r'"\uD83D\uDCA9"', "\U0001F4A9"),
+        (r'"a\uD83D\uDCA9b"', "a\U0001F4A9b"),
+        # Unpaired surrogates
+        (r'"\uD800"', "\uD800"),
+        (r'"a\uD800b"', "a\uD800b"),
+        (r'"\uDEAD"', "\uDEAD"),
+        (r'"a\uDEADb"', "a\uDEADb"),
+        (r'"\uD83D\uD83D\uDCA9"', "\uD83D\U0001F4A9"),
+        (r'"\uDCA9\uD83D\uDCA9"', "\uDCA9\U0001F4A9"),
+        (r'"\uD83D\uDCA9\uD83D"', "\U0001F4A9\uD83D"),
+        (r'"\uD83D\uDCA9\uDCA9"', "\U0001F4A9\uDCA9"),
+        (r'"\uD83D \uDCA9"', "\uD83D \uDCA9"),
+        # No decoding of actual surrogate characters (rather than escaped ones)
+        ('"\uD800"', "\uD800"),
+        ('"\uDEAD"', "\uDEAD"),
+        ('"\uD800a\uDEAD"', "\uD800a\uDEAD"),
+        ('"\uD83D\uDCA9"', "\uD83D\uDCA9"),
+    ],
+)
+def test_decode_surrogate_characters(test_input, expected):
+    # FIXME Wrong output (combined char) on platforms with 16-bit wchar_t
+    if test_input == '"\uD83D\uDCA9"' and ctypes.sizeof(ctypes.c_wchar) == 2:
+        pytest.skip("Raw surrogate pairs are not supported with 16-bit wchar_t")
+
+    assert ujson.loads(test_input) == expected
+    assert ujson.loads(test_input.encode("utf-8", "surrogatepass")) == expected
+
+    # Ensure that this matches stdlib's behaviour
+    assert json.loads(test_input) == expected
 
 
 def test_sort_keys():

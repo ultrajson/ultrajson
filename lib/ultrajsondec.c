@@ -357,13 +357,15 @@ static const JSUINT8 g_decoderLookup[256] =
 
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
-  JSUTF16 sur[2] = { 0 };
-  int iSur = 0;
   int index;
   wchar_t *escOffset;
   wchar_t *escStart;
   size_t escLen = (ds->escEnd - ds->escStart);
   JSUINT8 *inputOffset;
+  JSUTF16 ch = 0;
+#if WCHAR_MAX >= 0x10FFFF
+  JSUINT8 *lastHighSurrogate = NULL;
+#endif
   JSUINT8 oct;
   JSUTF32 ucs;
   ds->lastType = JT_INVALID;
@@ -464,7 +466,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
                 case '7':
                 case '8':
                 case '9':
-                  sur[iSur] = (sur[iSur] << 4) + (JSUTF16) (*inputOffset - '0');
+                  ch = (ch << 4) + (JSUTF16) (*inputOffset - '0');
                   break;
 
                 case 'a':
@@ -473,7 +475,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
                 case 'd':
                 case 'e':
                 case 'f':
-                  sur[iSur] = (sur[iSur] << 4) + 10 + (JSUTF16) (*inputOffset - 'a');
+                  ch = (ch << 4) + 10 + (JSUTF16) (*inputOffset - 'a');
                   break;
 
                 case 'A':
@@ -482,39 +484,31 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
                 case 'D':
                 case 'E':
                 case 'F':
-                  sur[iSur] = (sur[iSur] << 4) + 10 + (JSUTF16) (*inputOffset - 'A');
+                  ch = (ch << 4) + 10 + (JSUTF16) (*inputOffset - 'A');
                   break;
               }
 
               inputOffset ++;
             }
 
-            if (iSur == 0)
+#if WCHAR_MAX >= 0x10FFFF
+            if ((ch & 0xfc00) == 0xdc00 && lastHighSurrogate == inputOffset - 6 * sizeof(*inputOffset))
             {
-              if((sur[iSur] & 0xfc00) == 0xd800)
-              {
-                // First of a surrogate pair, continue parsing
-                iSur ++;
-                break;
-              }
-              (*escOffset++) = (wchar_t) sur[iSur];
-              iSur = 0;
+              // Low surrogate immediately following a high surrogate
+              // Overwrite existing high surrogate with combined character
+              *(escOffset-1) = (((*(escOffset-1) - 0xd800) <<10) | (ch - 0xdc00)) + 0x10000;
             }
             else
-            {
-              // Decode pair
-              if ((sur[1] & 0xfc00) != 0xdc00)
-              {
-                return SetError (ds, -1, "Unpaired high surrogate when decoding 'string'");
-              }
-#if WCHAR_MAX == 0xffff
-              (*escOffset++) = (wchar_t) sur[0];
-              (*escOffset++) = (wchar_t) sur[1];
-#else
-              (*escOffset++) = (wchar_t) 0x10000 + (((sur[0] - 0xd800) << 10) | (sur[1] - 0xdc00));
 #endif
-              iSur = 0;
+            {
+              *(escOffset++) = (wchar_t) ch;
             }
+#if WCHAR_MAX >= 0x10FFFF
+            if ((ch & 0xfc00) == 0xd800)
+            {
+              lastHighSurrogate = inputOffset;
+            }
+#endif
             break;
           }
 

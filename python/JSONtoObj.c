@@ -173,7 +173,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   else
   if (PyUnicode_Check(arg))
   {
-    sarg = PyUnicode_AsUTF8String(arg);
+    sarg = PyUnicode_AsEncodedString(arg, NULL, "surrogatepass");
     if (sarg == NULL)
     {
       //Exception raised above us by codec according to docs

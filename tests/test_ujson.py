@@ -610,11 +610,17 @@ def test_decode_numeric_int_exp(test_input):
         10**25,  # very positive
     ],
 )
-def test_encode_decode_big_int(i):
+@pytest.mark.parametrize("mode", ["encode", "decode"])
+def test_encode_decode_big_int(i, mode):
     # Test ints that are too large to be represented by a C integer type
     for py, j in ((i, str(i)), ([i], f"[{i}]"), ({"i": i}, f'{{"i":{i}}}')):
-        assert ujson.encode(py) == j
-        assert ujson.decode(j) == py
+        if mode == "encode":
+            if hasattr(sys, "pypy_version_info"):
+                # https://foss.heptapod.net/pypy/pypy/-/issues/3765
+                pytest.skip("PyPy can't serialise big ints")
+            assert ujson.encode(py) == j
+        else:
+            assert ujson.decode(j) == py
 
 
 @pytest.mark.parametrize(

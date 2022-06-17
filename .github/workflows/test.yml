@@ -62,7 +62,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [ppc64le, s390x, aarch64, mips64le, arm/v5, 386]
+        architecture: [ppc64le, s390x, aarch64, arm/v6, 386]
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
@@ -77,8 +77,12 @@ jobs:
 
       - name: Test
         run: |
-          docker run -v "$PWD:/io" --platform=linux/${{ matrix.architecture }} python bash -e -c '
-            cd /io && pip install . pytest && pytest
+          docker run -v "$PWD:/io" --platform=linux/${{ matrix.architecture }} python:alpine ash -e -c '
+            apk add gcc g++ musl-dev git
+            cd /io
+            git config --global --add safe.directory /io
+            pip install . pytest
+            FORCE_COLOR=1 pytest
           '
 
   success:

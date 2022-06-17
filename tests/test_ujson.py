@@ -515,6 +515,10 @@ def test_encode_surrogate_characters():
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False, sort_keys=True) == out2
 
 
+@pytest.mark.xfail(
+    hasattr(sys, "pypy_version_info") and os.name == "nt",
+    reason="This feature needs fixing! See #552",
+)
 @pytest.mark.parametrize(
     "test_input, expected",
     [

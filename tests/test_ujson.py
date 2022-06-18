@@ -605,6 +605,32 @@ def test_decode_numeric_int_exp(test_input):
 
 
 @pytest.mark.parametrize(
+    "i",
+    [
+        -(10**25),  # very negative
+        -(2**64),  # too large in magnitude for a uint64
+        -(2**63) - 1,  # too small for a int64
+        2**64,  # too large for a uint64
+        10**25,  # very positive
+    ],
+)
+@pytest.mark.parametrize("mode", ["encode", "decode"])
+def test_encode_decode_big_int(i, mode):
+    # Test ints that are too large to be represented by a C integer type
+    for python_object in (i, [i], {"i": i}):
+        json_string = json.dumps(python_object, separators=(",", ":"))
+        if mode == "encode":
+            if hasattr(sys, "pypy_version_info"):
+                # https://foss.heptapod.net/pypy/pypy/-/issues/3765
+                pytest.skip("PyPy can't serialise big ints")
+            assert ujson.encode(python_object) == json_string
+            if isinstance(python_object, dict):
+                assert ujson.encode(python_object, sort_keys=True) == json_string
+        else:
+            assert ujson.decode(json_string) == python_object
+
+
+@pytest.mark.parametrize(
     "test_input, expected",
     [
         ('{{1337:""}}', ujson.JSONDecodeError),  # broken dict key type leak test
@@ -640,15 +666,7 @@ def test_decode_range_raises(test_input, expected):
         ("[,31337]", ujson.JSONDecodeError),  # array leading comma fail
         ("[,]", ujson.JSONDecodeError),  # array only comma fail
         ("[]]", ujson.JSONDecodeError),  # array unmatched bracket fail
-        ("18446744073709551616", ujson.JSONDecodeError),  # too big value
-        ("-90223372036854775809", ujson.JSONDecodeError),  # too small value
-        ("-23058430092136939529", ujson.JSONDecodeError),  # too small value
-        ("-11529215046068469760", ujson.JSONDecodeError),  # too small value
-        ("18446744073709551616", ujson.JSONDecodeError),  # very too big value
-        ("23058430092136939529", ujson.JSONDecodeError),  # too big value
-        ("-90223372036854775809", ujson.JSONDecodeError),  # very too small value
         ("{}\n\t a", ujson.JSONDecodeError),  # with trailing non whitespaces
-        ("[18446744073709551616]", ujson.JSONDecodeError),  # array with big int
         ('{"age", 44}', ujson.JSONDecodeError),  # read bad object syntax
     ],
 )
@@ -722,11 +740,6 @@ def test_dumps_raises(test_input, expected_exception, expected_message):
         (float("nan"), OverflowError),
         (float("inf"), OverflowError),
         (-float("inf"), OverflowError),
-        (12839128391289382193812939, OverflowError),
-        ([12839128391289382193812939], OverflowError),
-        ([12839128391289382193812939, 42], OverflowError),
-        ({"a": 12839128391289382193812939}, OverflowError),
-        ({"a": 12839128391289382193812939, "b": 42}, OverflowError),
     ],
 )
 def test_encode_raises_allow_nan(test_input, expected_exception):

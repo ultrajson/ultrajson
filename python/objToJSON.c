@@ -100,6 +100,17 @@ static void *PyLongToUINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
   return NULL;
 }
 
+static void *PyLongToINTSTR(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+{
+  PyObject *obj = PyNumber_ToBase(_obj, 10);
+  if (!obj)
+  {
+    return NULL;
+  }
+  *_outLen = PyUnicode_GET_LENGTH(obj);
+  return PyUnicode_1BYTE_DATA(obj);
+}
+
 static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
@@ -506,6 +517,16 @@ BEGIN:
       GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
 
       exc = PyErr_Occurred();
+    }
+
+    if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
+    {
+      PyErr_Clear();
+      pc->PyTypeToJSON = PyLongToINTSTR;
+      tc->type = JT_RAW;
+      // Overwritten by PyLong_* due to the union, which would lead to a DECREF in endTypeContext.
+      GET_TC(tc)->rawJSONValue = NULL;
+      return;
     }
 
     if (exc)

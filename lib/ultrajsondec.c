@@ -173,7 +173,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
       {
         if (hasError)
         {
-          return SetError(ds, -1, intNeg == 1 ? "Value is too big" : "Value is too small");
+          char *strStart = ds->start;
+          ds->lastType = JT_INT;
+          ds->start = offset;
+          return ds->dec->newIntegerFromString(ds->prv, strStart, offset - strStart);
         }
         goto BREAK_INT_LOOP;
         break;

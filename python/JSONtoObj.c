@@ -59,9 +59,18 @@ static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
   return;
 }
 
-static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
+/*
+Check that Py_UCS4 is the same as JSUINT32, else Object_newString will fail.
+Based on Linux's check in vbox_vmmdev_types.h.
+This should be replaced with
+  _Static_assert(sizeof(Py_UCS4) == sizeof(JSUINT32));
+when C11 is made mandatory (CPython 3.11+, PyPy ?).
+*/
+typedef char assert_py_ucs4_is_jsuint32[1 - 2*!(sizeof(Py_UCS4) == sizeof(JSUINT32))];
+
+static JSOBJ Object_newString(void *prv, JSUINT32 *start, JSUINT32 *end)
 {
-  return PyUnicode_FromWideChar (start, (end - start));
+  return PyUnicode_FromKindAndData (PyUnicode_4BYTE_KIND, (Py_UCS4 *) start, (end - start));
 }
 
 static JSOBJ Object_newTrue(void *prv)

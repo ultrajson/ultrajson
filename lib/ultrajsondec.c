@@ -41,7 +41,6 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
-#include <wchar.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -58,8 +57,8 @@ struct DecoderState
 {
   char *start;
   char *end;
-  wchar_t *escStart;
-  wchar_t *escEnd;
+  JSUINT32 *escStart;
+  JSUINT32 *escEnd;
   int escHeap;
   int lastType;
   JSUINT32 objDepth;
@@ -361,14 +360,12 @@ static const JSUINT8 g_decoderLookup[256] =
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
   int index;
-  wchar_t *escOffset;
-  wchar_t *escStart;
+  JSUINT32 *escOffset;
+  JSUINT32 *escStart;
   size_t escLen = (ds->escEnd - ds->escStart);
   JSUINT8 *inputOffset;
   JSUTF16 ch = 0;
-#if WCHAR_MAX >= 0x10FFFF
   JSUINT8 *lastHighSurrogate = NULL;
-#endif
   JSUINT8 oct;
   JSUTF32 ucs;
   ds->lastType = JT_INVALID;
@@ -380,11 +377,11 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 
     if (ds->escHeap)
     {
-      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
+      if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
-      escStart = (wchar_t *)ds->dec->realloc(ds->escStart, newSize * sizeof(wchar_t));
+      escStart = (JSUINT32 *)ds->dec->realloc(ds->escStart, newSize * sizeof(JSUINT32));
       if (!escStart)
       {
         ds->dec->free(ds->escStart);
@@ -394,18 +391,18 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
     }
     else
     {
-      wchar_t *oldStart = ds->escStart;
-      if (newSize > (SIZE_MAX / sizeof(wchar_t)))
+      JSUINT32 *oldStart = ds->escStart;
+      if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
-      ds->escStart = (wchar_t *) ds->dec->malloc(newSize * sizeof(wchar_t));
+      ds->escStart = (JSUINT32 *) ds->dec->malloc(newSize * sizeof(JSUINT32));
       if (!ds->escStart)
       {
         return SetError(ds, -1, "Could not reserve memory block");
       }
       ds->escHeap = 1;
-      memcpy(ds->escStart, oldStart, escLen * sizeof(wchar_t));
+      memcpy(ds->escStart, oldStart, escLen * sizeof(JSUINT32));
     }
 
     ds->escEnd = ds->escStart + newSize;
@@ -438,14 +435,14 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         inputOffset ++;
         switch (*inputOffset)
         {
-          case '\\': *(escOffset++) = L'\\'; inputOffset++; continue;
-          case '\"': *(escOffset++) = L'\"'; inputOffset++; continue;
-          case '/':  *(escOffset++) = L'/';  inputOffset++; continue;
-          case 'b':  *(escOffset++) = L'\b'; inputOffset++; continue;
-          case 'f':  *(escOffset++) = L'\f'; inputOffset++; continue;
-          case 'n':  *(escOffset++) = L'\n'; inputOffset++; continue;
-          case 'r':  *(escOffset++) = L'\r'; inputOffset++; continue;
-          case 't':  *(escOffset++) = L'\t'; inputOffset++; continue;
+          case '\\': *(escOffset++) = '\\'; inputOffset++; continue;
+          case '\"': *(escOffset++) = '\"'; inputOffset++; continue;
+          case '/':  *(escOffset++) = '/';  inputOffset++; continue;
+          case 'b':  *(escOffset++) = '\b'; inputOffset++; continue;
+          case 'f':  *(escOffset++) = '\f'; inputOffset++; continue;
+          case 'n':  *(escOffset++) = '\n'; inputOffset++; continue;
+          case 'r':  *(escOffset++) = '\r'; inputOffset++; continue;
+          case 't':  *(escOffset++) = '\t'; inputOffset++; continue;
 
           case 'u':
           {
@@ -494,7 +491,6 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
               inputOffset ++;
             }
 
-#if WCHAR_MAX >= 0x10FFFF
             if ((ch & 0xfc00) == 0xdc00 && lastHighSurrogate == inputOffset - 6 * sizeof(*inputOffset))
             {
               // Low surrogate immediately following a high surrogate
@@ -502,16 +498,13 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
               *(escOffset-1) = (((*(escOffset-1) - 0xd800) <<10) | (ch - 0xdc00)) + 0x10000;
             }
             else
-#endif
             {
-              *(escOffset++) = (wchar_t) ch;
+              *(escOffset++) = (JSUINT32) ch;
             }
-#if WCHAR_MAX >= 0x10FFFF
             if ((ch & 0xfc00) == 0xd800)
             {
               lastHighSurrogate = inputOffset;
             }
-#endif
             break;
           }
 
@@ -523,7 +516,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 
       case 1:
       {
-        *(escOffset++) = (wchar_t) (*inputOffset++);
+        *(escOffset++) = (JSUINT32) (*inputOffset++);
         break;
       }
 
@@ -537,7 +530,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         }
         ucs |= (*inputOffset++) & 0x3f;
         if (ucs < 0x80) return SetError (ds, -1, "Overlong 2 byte UTF-8 sequence detected when decoding 'string'");
-        *(escOffset++) = (wchar_t) ucs;
+        *(escOffset++) = (JSUINT32) ucs;
         break;
       }
 
@@ -560,7 +553,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         }
 
         if (ucs < 0x800) return SetError (ds, -1, "Overlong 3 byte UTF-8 sequence detected when encoding string");
-        *(escOffset++) = (wchar_t) ucs;
+        *(escOffset++) = (JSUINT32) ucs;
         break;
       }
 
@@ -584,20 +577,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 
         if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4 byte UTF-8 sequence detected when decoding 'string'");
 
-#if WCHAR_MAX == 0xffff
-        if (ucs >= 0x10000)
-        {
-          ucs -= 0x10000;
-          *(escOffset++) = (wchar_t) (ucs >> 10) + 0xd800;
-          *(escOffset++) = (wchar_t) (ucs & 0x3ff) + 0xdc00;
-        }
-        else
-        {
-          *(escOffset++) = (wchar_t) ucs;
-        }
-#else
-        *(escOffset++) = (wchar_t) ucs;
-#endif
+        *(escOffset++) = (JSUINT32) ucs;
         break;
       }
     }
@@ -810,14 +790,14 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
   /*
   FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time */
   struct DecoderState ds;
-  wchar_t escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t))];
+  JSUINT32 escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32))];
   JSOBJ ret;
 
   ds.start = (char *) buffer;
   ds.end = ds.start + cbBuffer;
 
   ds.escStart = escBuffer;
-  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(wchar_t));
+  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32));
   ds.escHeap = 0;
   ds.prv = dec->prv;
   ds.dec = dec;

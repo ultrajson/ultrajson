@@ -269,6 +269,13 @@ typedef struct __JSONObjectEncoder
   int rejectBytes;
 
   /*
+  Configuration for item and key separators, e.g. "," and ":" for a compact representation or ", " and ": " to match the Python standard library's defaults. */
+  size_t itemSeparatorLength;
+  const char *itemSeparatorChars;
+  size_t keySeparatorLength;
+  const char *keySeparatorChars;
+
+  /*
   Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
   void *prv;
 

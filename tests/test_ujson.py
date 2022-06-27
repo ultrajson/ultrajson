@@ -1088,6 +1088,42 @@ def test_no_memory_leak_encoding_errors(input):
     no_memory_leak(f"functools.partial(ujson.dumps, {input})")
 
 
+@pytest.mark.parametrize(
+    "separators, expected",
+    [
+        (None, '{"a":0,"b":1}'),
+        ((",", ":"), '{"a":0,"b":1}'),
+        ((", ", ": "), '{"a": 0, "b": 1}'),
+        # And some weird values, even though they produce invalid JSON
+        (("\u203d", "\u00a1"), '{"a"\u00a10\u203d"b"\u00a11}'),
+        (("i\x00", "k\x00"), '{"a"k\x000i\x00"b"k\x001}'),
+        (("\udc80", "\udc81"), '{"a"\udc810\udc80"b"\udc811}'),
+    ],
+)
+def test_separators(separators, expected):
+    assert ujson.dumps({"a": 0, "b": 1}, separators=separators) == expected
+
+
+@pytest.mark.parametrize(
+    "separators, expected_exception",
+    [
+        (True, TypeError),
+        (0, TypeError),
+        (b"", TypeError),
+        ((), ValueError),
+        ((",",), ValueError),
+        ((",", ":", "x"), ValueError),
+        ((True, 0), TypeError),
+        ((",", True), TypeError),
+        ((True, ":"), TypeError),
+        ((b",", b":"), TypeError),
+    ],
+)
+def test_separators_errors(separators, expected_exception):
+    with pytest.raises(expected_exception):
+        ujson.dumps({"a": 0, "b": 1}, separators=separators)
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

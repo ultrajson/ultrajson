@@ -677,8 +677,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
   if (name)
   {
-    // 2 extra for the colon and optional space after it
-    Buffer_Reserve(enc, RESERVE_STRING(cbName) + 2);
+    Buffer_Reserve(enc, RESERVE_STRING(cbName) + enc->keySeparatorLength);
     Buffer_AppendCharUnchecked(enc, '\"');
 
     if (enc->forceASCII)
@@ -698,11 +697,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     Buffer_AppendCharUnchecked(enc, '\"');
 
-    Buffer_AppendCharUnchecked (enc, ':');
-    if (enc->indent)
-    {
-      Buffer_AppendCharUnchecked (enc, ' ');
-    }
+    Buffer_memcpy(enc, enc->keySeparatorChars, enc->keySeparatorLength);
   }
 
   tc.encoder_prv = enc->prv;
@@ -741,12 +736,12 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       while (enc->iterNext(obj, &tc))
       {
-        // The extra 2 bytes cover the comma and (optional) newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + 2);
+        // The extra 1 byte covers the optional newline.
+        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
 
         if (count > 0)
         {
-          Buffer_AppendCharUnchecked (enc, ',');
+          Buffer_memcpy(enc, enc->itemSeparatorChars, enc->itemSeparatorLength);
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 
@@ -786,8 +781,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       while ((res = enc->iterNext(obj, &tc)))
       {
-        // The extra 2 bytes cover the comma and optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + 2);
+        // The extra 1 byte covers the optional newline.
+        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
 
         if(res < 0)
         {
@@ -799,7 +794,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
         if (count > 0)
         {
-          Buffer_AppendCharUnchecked (enc, ',');
+          Buffer_memcpy(enc, enc->itemSeparatorChars, enc->itemSeparatorLength);
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 

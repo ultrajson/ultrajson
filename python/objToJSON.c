@@ -794,7 +794,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", "separators", NULL };
 
   char buffer[65536];
   char *ret;
@@ -806,6 +806,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   PyObject *odefaultFn = NULL;
+  PyObject *oseparators = NULL;
+  PyObject *oseparatorsItem = NULL;
+  PyObject *separatorsItemBytes = NULL;
+  PyObject *oseparatorsKey = NULL;
+  PyObject *separatorsKeyBytes = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
   size_t retLen;
@@ -834,13 +839,17 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //indent
     1, //allowNan
     1, //rejectBytes
+    0, //itemSeparatorLength
+    NULL, //itemSeparatorChars
+    0, //keySeparatorLength
+    NULL, //keySeparatorChars
     NULL, //prv
   };
 
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators))
   {
     return NULL;
   }
@@ -887,6 +896,69 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     encoder.rejectBytes = orejectBytes;
   }
 
+  if (oseparators != NULL && oseparators != Py_None)
+  {
+    if (!PyTuple_Check(oseparators))
+    {
+      PyErr_SetString(PyExc_TypeError, "expected tuple or None as separator");
+      return NULL;
+    }
+    if (PyTuple_Size (oseparators) != 2)
+    {
+      PyErr_SetString(PyExc_ValueError, "expected tuple of size 2 as separator");
+      return NULL;
+    }
+    oseparatorsItem = PyTuple_GetItem(oseparators, 0);
+    if (PyErr_Occurred())
+    {
+      return NULL;
+    }
+    if (!PyUnicode_Check(oseparatorsItem))
+    {
+      PyErr_SetString(PyExc_TypeError, "expected str as item separator");
+      return NULL;
+    }
+    oseparatorsKey = PyTuple_GetItem(oseparators, 1);
+    if (PyErr_Occurred())
+    {
+      return NULL;
+    }
+    if (!PyUnicode_Check(oseparatorsKey))
+    {
+      PyErr_SetString(PyExc_TypeError, "expected str as key separator");
+      return NULL;
+    }
+    encoder.itemSeparatorChars = PyUnicodeToUTF8Raw(oseparatorsItem, &encoder.itemSeparatorLength, &separatorsItemBytes);
+    if (encoder.itemSeparatorChars == NULL)
+    {
+      PyErr_SetString(PyExc_ValueError, "item separator malformed");
+      goto ERROR;
+    }
+    encoder.keySeparatorChars = PyUnicodeToUTF8Raw(oseparatorsKey, &encoder.keySeparatorLength, &separatorsKeyBytes);
+    if (encoder.keySeparatorChars == NULL)
+    {
+      PyErr_SetString(PyExc_ValueError, "key separator malformed");
+      goto ERROR;
+    }
+  }
+  else
+  {
+    // Default to most compact representation
+    encoder.itemSeparatorChars = ",";
+    encoder.itemSeparatorLength = 1;
+    if (encoder.indent)
+    {
+      // Extra space when indentation is in use
+      encoder.keySeparatorChars = ": ";
+      encoder.keySeparatorLength = 2;
+    }
+    else
+    {
+      encoder.keySeparatorChars = ":";
+      encoder.keySeparatorLength = 1;
+    }
+  }
+
   encoder.d2s = NULL;
   dconv_d2s_init(&encoder.d2s, DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
                  csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
@@ -896,6 +968,8 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PRINTMARK();
 
   dconv_d2s_free(&encoder.d2s);
+  Py_XDECREF(separatorsItemBytes);
+  Py_XDECREF(separatorsKeyBytes);
 
   if (encoder.errorMsg && !PyErr_Occurred())
   {
@@ -923,6 +997,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PRINTMARK();
 
   return newobj;
+
+ERROR:
+  Py_XDECREF(separatorsItemBytes);
+  Py_XDECREF(separatorsKeyBytes);
+  return NULL;
 }
 
 PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)

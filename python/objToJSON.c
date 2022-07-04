@@ -139,7 +139,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
     Py_ssize_t len;
-    char *data = PyUnicode_AsUTF8AndSize(obj, &len);
+    const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
     *_outLen = len;
     return data;
   }
@@ -792,6 +792,32 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
 
+
+static const char *_PyUnicodeToChars(PyObject *obj, int *_outLen)
+{
+  // helper for indent only
+  // an error occurs when the return is NULL and _outLen is 0
+  PyObject *newObj;
+/*#ifndef Py_LIMITED_API*/
+  if (PyUnicode_IS_COMPACT_ASCII(obj))
+  {
+    Py_ssize_t len = 0;
+    const char *data = PyUnicode_AsUTF8AndSize(obj, &len);
+    *_outLen = (int) len;
+    return data;
+  }
+/*#endif*/
+  newObj = PyUnicode_AsEncodedString(obj, "utf-8", "surrogatepass");
+  if(!newObj)
+  {
+    *_outLen = 0;
+    return NULL;
+  }
+
+  *_outLen = PyBytes_Size(newObj);
+  return PyBytes_AsString(newObj);
+}
+
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", NULL };
@@ -806,6 +832,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *oescapeForwardSlashes = NULL;
   PyObject *osortKeys = NULL;
   PyObject *odefaultFn = NULL;
+  PyObject *oindent = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
   size_t retLen;
@@ -831,7 +858,10 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //encodeHTMLChars
     1, //escapeForwardSlashes
     0, //sortKeys
-    0, //indent
+    0, //indentLength
+    NULL, //indentChars
+    0, // indentIsSpace
+    0, // indentEnabled
     1, //allowNan
     1, //rejectBytes
     NULL, //prv
@@ -840,7 +870,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOOiiO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &oindent, &allowNan, &orejectBytes, &odefaultFn))
   {
     return NULL;
   }
@@ -863,6 +893,47 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
   {
     encoder.sortKeys = 1;
+  }
+
+  if (oindent != NULL)
+  {
+    // Handle multiple input types
+    if (oindent == Py_None)
+    {
+        // Case where the indent is specified as None
+        // This should be exactly the same as if oindent is NULL
+        encoder.indentLength = 0;
+    }
+    else if (PyLong_Check(oindent))
+    {
+        // Case where the indent is specified as an integer
+        // In this case the indent characters should only be
+        // space chars - i.e. chr(32)
+        encoder.indentLength = PyLong_AsLong(oindent);
+        encoder.indentIsSpace = 1;
+        encoder.indentEnabled = 1;
+        if (encoder.indentLength < 0)
+        {
+            encoder.indentLength = 0;
+        }
+    }
+    else if (PyUnicode_Check(oindent))
+    {
+        // Case where custom UTF-8 indent is specified.
+        encoder.indentLength = -1; // set to -1 to indicate an error
+        encoder.indentChars = _PyUnicodeToChars(oindent, &encoder.indentLength);
+        encoder.indentEnabled = 1;
+        if(encoder.indentChars == NULL && encoder.indentLength == -1)
+        {
+            PyErr_SetString(PyExc_ValueError, "malformed indent");
+            return NULL;
+        }
+    }
+    else
+    {
+        PyErr_Format (PyExc_TypeError, "expected integer, None, or str indent");
+        return NULL;
+    }
   }
 
   if (allowNan != -1)
@@ -921,7 +992,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   PRINTMARK();
-
   return newobj;
 }
 

@@ -273,9 +273,58 @@ def test_encode_to_utf8():
 )
 def test_encode_indent(test_input):
     obj = ujson.decode(test_input)
+    print(f"obj = {obj!r}")
     output = ujson.encode(obj, indent=4)
+    print(f"output = {output!r}")
     assert test_input == output
     assert output == json.dumps(obj, indent=4)
+
+
+def test_indent_types():
+    # Python json allows indent to be an int, str, or None.
+    # Check that ujson handles this as well.
+    data = [1, 2, 3]
+    output0a = ujson.encode(data)
+    output0b = ujson.encode(data, indent=None)
+    output0c = ujson.encode(data, indent="")
+    output0d = ujson.encode(data, indent=0)
+
+    output4a = ujson.encode(data, indent=4)
+    output4b = ujson.encode(data, indent="    ")
+
+    assert output0a == "[1,2,3]"
+    assert output0b == "[1,2,3]"
+    assert output0c == "[\n1,\n2,\n3\n]"
+    assert output0d == "[\n1,\n2,\n3\n]"
+    assert output4a == "[\n    1,\n    2,\n    3\n]"
+    assert output4b == "[\n    1,\n    2,\n    3\n]"
+
+
+def test_nonspace_indent():
+    # Nonspace inputs are allowed
+    assert ujson.encode([1], indent="900") == "[\n9001\n]"
+    assert ujson.encode([1], indent="\t") == "[\n\t1\n]"
+    assert ujson.encode([1], indent="\n  \t") == "[\n\n  \t1\n]"
+    indent = b"\xe6\x97\xa5\xd1\x88".decode("utf-8")
+    assert ujson.encode([1], indent=indent) == b"[\n\xe6\x97\xa5\xd1\x881\n]".decode(
+        "utf-8"
+    )
+    assert ujson.encode([1], indent="\udc80") == "[\n\udc801\n]"
+
+
+@pytest.mark.parametrize(
+    "indent",
+    [
+        b" ",  # simple byte indent
+        b"\xfd\xbf\xbf\xbf\xbf\xbf",  # complex byte indent
+        3.2,
+        object,
+    ],
+)
+def test_indent_type_errors(indent):
+    # Ensure we throw a type error when indent gets a bad input
+    with pytest.raises(TypeError):
+        ujson.encode([1], indent=indent)
 
 
 def test_decode_from_unicode():
@@ -840,7 +889,10 @@ def test_encode_no_assert(test_input):
     "test_input, expected",
     [
         (1.0, "1.0"),
-        (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1":1,"0":0,"8":8,"2":2}'),
+        (
+            OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]),
+            '{"1":1,"0":0,"8":8,"2":2}',
+        ),
         ({"a": float("NaN")}, '{"a":NaN}'),
         ({"a": float("inf")}, '{"a":Inf}'),
         ({"a": -float("inf")}, '{"a":-Inf}'),

@@ -1,0 +1,18 @@
+name: Require PR label
+
+on:
+  pull_request:
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: mheap/github-action-required-labels@v2
+        with:
+          mode: minimum
+          count: 1
+          labels:
+            "changelog: Added, changelog: Changed, changelog: Deprecated, changelog:
+            Fixed, changelog: Removed, changelog: Security, changelog: skip"

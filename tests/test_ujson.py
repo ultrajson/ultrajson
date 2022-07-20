@@ -639,7 +639,7 @@ def test_decode_range_raises(test_input, expected):
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ("fdsa sda v9sa fdsa", ujson.JSONDecodeError),  # jibberish
+        ("fdsa sda v9sa fdsa", ujson.JSONDecodeError),  # gibberish
         ("[", ujson.JSONDecodeError),  # broken array start
         ("{", ujson.JSONDecodeError),  # broken object start
         ("]", ujson.JSONDecodeError),  # broken array end

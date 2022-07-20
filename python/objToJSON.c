@@ -321,7 +321,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   PyObject* keyTmp;
 
   // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
-  // stanard library's _json.c sort_keys handler.
+  // standard library's _json.c sort_keys handler.
   if (GET_TC(tc)->newObj == NULL)
   {
     // Obtain the list of keys from the dictionary.

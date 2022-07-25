@@ -179,7 +179,7 @@ jobs:
 
       - name: Publish package to PyPI
         if: github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
@@ -188,7 +188,7 @@ jobs:
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.test_pypi_password }}

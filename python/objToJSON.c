@@ -887,7 +887,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (encoder.allowNan)
   {
-    csInf = "Inf";
+    csInf = "Infinity";
     csNan = "NaN";
   }
 

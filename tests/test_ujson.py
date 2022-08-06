@@ -842,8 +842,8 @@ def test_encode_no_assert(test_input):
         (1.0, "1.0"),
         (OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)]), '{"1":1,"0":0,"8":8,"2":2}'),
         ({"a": float("NaN")}, '{"a":NaN}'),
-        ({"a": float("inf")}, '{"a":Inf}'),
-        ({"a": -float("inf")}, '{"a":-Inf}'),
+        ({"a": float("inf")}, '{"a":Infinity}'),
+        ({"a": -float("inf")}, '{"a":-Infinity}'),
     ],
 )
 def test_encode(test_input, expected):

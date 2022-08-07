@@ -20,10 +20,10 @@ jobs:
           - { python-version: "3.10", os: macos-latest }
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -66,7 +66,7 @@ jobs:
       matrix:
         architecture: [ppc64le, s390x, aarch64, arm/v6, 386]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: git fetch --prune --unshallow
 
       # https://github.com/docker/setup-qemu-action

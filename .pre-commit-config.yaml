@@ -39,10 +39,11 @@ repos:
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
 
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.20.1
-    hooks:
-      - id: setup-cfg-fmt
+# Disabled due to asottile/setup-cfg-fmt#73. Re-enable once that issue is fixed.
+#  - repo: https://github.com/asottile/setup-cfg-fmt
+#    rev: v1.20.1
+#    hooks:
+#      - id: setup-cfg-fmt
 
 ci:
   autoupdate_schedule: quarterly

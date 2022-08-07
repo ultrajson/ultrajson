@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install cibuildwheel==2.3.0
+          python -m pip install cibuildwheel==2.10.0
           python -m pip install -U twine
 
       - name: Build wheels
@@ -48,8 +48,6 @@ jobs:
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           # Build only on Linux architectures that don't need qemu emulation.
           CIBW_ARCHS_LINUX: "x86_64 i686"
-          # Don't build with prerelease Python versions.
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.7,<3.11"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests
@@ -90,6 +88,7 @@ jobs:
           - cp38
           - cp39
           - cp310
+          - cp311
 
     steps:
       - uses: actions/checkout@v3
@@ -98,12 +97,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
+          python-version: "3.x"
           cache: pip
           cache-dependency-path: ".github/workflows/deploy.yml"
 
       - name: Install dependencies
         run: |
-          python -m pip install cibuildwheel==2.3.0
+          python -m pip install cibuildwheel==2.10.0
           python -m pip install -U twine
 
       # https://github.com/docker/setup-qemu-action

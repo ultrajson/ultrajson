@@ -83,6 +83,7 @@ jobs:
         python-version:
           - pp37
           - pp38
+          - pp39
           - cp37
           - cp38
           - cp39

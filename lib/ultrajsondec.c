@@ -79,7 +79,7 @@ static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
 {
   int processed_characters_count;
-  int len = (int)(ds->end - ds->start);
+  int len = ((size_t)(ds->end - ds->start) < (size_t) INT_MAX) ? (int)(ds->end - ds->start) : INT_MAX;
   double value = dconv_s2d(ds->dec->s2d, ds->start, len, &processed_characters_count);
   ds->lastType = JT_DOUBLE;
   ds->start += processed_characters_count;

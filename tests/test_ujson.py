@@ -1125,7 +1125,7 @@ def test_separators_errors(separators, expected_exception):
 
 
 def test_decode_decimal_no_int_overflow():
-    # This unittest takes a while because the string is large; feel free to comment out or remove
+    # Takes a while because the string is large; feel free to comment out or remove
     ujson.decode(r'[0.123456789,"{}"]'.format("a" * (2**32 - 5)))
 
 

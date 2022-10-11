@@ -1124,6 +1124,11 @@ def test_separators_errors(separators, expected_exception):
         ujson.dumps({"a": 0, "b": 1}, separators=separators)
 
 
+def test_decode_decimal_no_int_overflow():
+    # This unittest takes a while because the string is large; feel free to comment out or remove
+    ujson.decode(r'[0.123456789,"{}"]'.format('a' * (2**32 - 5)))
+
+
 """
 def test_decode_numeric_int_frc_overflow():
 input = "X.Y"

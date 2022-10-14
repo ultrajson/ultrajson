@@ -1124,9 +1124,15 @@ def test_separators_errors(separators, expected_exception):
         ujson.dumps({"a": 0, "b": 1}, separators=separators)
 
 
-def test_decode_decimal_no_int_overflow():
-    # Takes a while because the string is large; feel free to comment out or remove
-    ujson.decode(r'[0.123456789,"{}"]'.format("a" * (2**32 - 5)))
+"""
+The following checks are not part of the standard test suite.
+They can be run manually as follows:
+python -c 'from tests.test_ujson import check_foo; check_foo()'
+"""
+def check_decode_decimal_no_int_overflow():
+    # Requires enough free RAM to hold a ~4GB string in memory
+    decoded = ujson.decode(r'[0.123456789,"{}"]'.format("a" * (2**32 - 5)))
+    assert decoded[0] == 0.123456789
 
 
 """

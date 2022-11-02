@@ -127,4 +127,3 @@ if (MSVC AND BUILD_SHARED_LIBS)
     OPTIONAL
   )
 endif()
-

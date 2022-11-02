@@ -4682,7 +4682,7 @@ TEST(StringToFloatHexString) {
   CHECK_EQ(5.0f, StrToF(" + 0x5 ", flags, 0.0f, &processed, &all_used));
   CHECK(all_used);
 
-  CHECK_EQ(Single::NaN(), StrToF("- -0x5", flags, 0.0f, 
+  CHECK_EQ(Single::NaN(), StrToF("- -0x5", flags, 0.0f,
                                  &processed, &all_used));
   CHECK_EQ(0, processed);
 
@@ -5950,7 +5950,7 @@ TEST(StringToTemplate) {
         // The double rounding example from TEST(StringToFloatHexString), which
         // yields a slightly different result from StringToFloat than from
         // StringToDouble. Allows testing that StringTo<float> behaves like
-        // StringToFloat (rather than like StringToDouble). 
+        // StringToFloat (rather than like StringToDouble).
         const char buffer[] = "0x100000100000008";
         const int length = DOUBLE_CONVERSION_ARRAY_SIZE(buffer) - 1;
 

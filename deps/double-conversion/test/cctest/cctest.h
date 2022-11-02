@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "double-conversion/utils.h"
 
@@ -69,11 +70,43 @@ static inline void CheckHelper(const char* file,
 
 #define CHECK_EQ(a, b) CheckEqualsHelper(__FILE__, __LINE__, #a, a, #b, b)
 
-static inline void CheckEqualsHelper(const char* file, int line,
-                                     const char* expected_source,
-                                     const char* expected,
-                                     const char* value_source,
-                                     const char* value) {
+template<typename T> inline void PrintfValue(T x);
+template<> inline void PrintfValue(int x) { printf("%d", x); }
+template<> inline void PrintfValue(unsigned int x) { printf("%u", x); }
+template<> inline void PrintfValue(short x) { printf("%hd", x); }
+template<> inline void PrintfValue(unsigned short x) { printf("%hu", x); }
+template<> inline void PrintfValue(int64_t x) { printf("%" PRId64, x); }
+template<> inline void PrintfValue(uint64_t x) { printf("%" PRIu64, x); }
+template<> inline void PrintfValue(float x) { printf("%.30e", static_cast<double>(x)); }
+template<> inline void PrintfValue(double x) { printf("%.30e", x); }
+template<> inline void PrintfValue(bool x) { printf("%s", x ? "true" : "false"); }
+
+template<typename T1, typename T2>
+inline void CheckEqualsHelper(const char* file, int line,
+                       const char* expected_source,
+                       T1 expected,
+                       const char* value_source,
+                       T2 value) {
+  // If expected and value are NaNs then expected != value.
+  if (expected != value && (expected == expected || value == value)) {
+    printf("%s:%d:\n CHECK_EQ(%s, %s) failed\n",
+           file, line, expected_source, value_source);
+    printf("#  Expected: ");
+    PrintfValue(expected);
+    printf("\n");
+    printf("#  Found:    ");
+    PrintfValue(value);
+    printf("\n");
+    abort();
+  }
+}
+
+template<>
+inline void CheckEqualsHelper(const char* file, int line,
+                       const char* expected_source,
+                       const char* expected,
+                       const char* value_source,
+                       const char* value) {
   if ((expected == NULL && value != NULL) ||
       (expected != NULL && value == NULL)) {
     abort();
@@ -88,35 +121,14 @@ static inline void CheckEqualsHelper(const char* file, int line,
   }
 }
 
-static inline void CheckEqualsHelper(const char* file, int line,
-                                     const char* expected_source,
-                                     int expected,
-                                     const char* value_source,
-                                     int value) {
-  if (expected != value) {
-    printf("%s:%d:\n CHECK_EQ(%s, %s) failed\n"
-           "#  Expected: %d\n"
-           "#  Found:    %d\n",
-           file, line, expected_source, value_source, expected, value);
-    abort();
-  }
+template<>
+inline void CheckEqualsHelper(const char* file, int line,
+                       const char* expected_source,
+                       const char* expected,
+                       const char* value_source,
+                       char* value) {
+  CheckEqualsHelper(file, line, expected_source, expected, value_source, static_cast<const char*>(value));
 }
-
-static inline void CheckEqualsHelper(const char* file, int line,
-                                     const char* expected_source,
-                                     double expected,
-                                     const char* value_source,
-                                     double value) {
-  // If expected and value are NaNs then expected != value.
-  if (expected != value && (expected == expected || value == value)) {
-    printf("%s:%d:\n CHECK_EQ(%s, %s) failed\n"
-           "#  Expected: %.30e\n"
-           "#  Found:    %.30e\n",
-           file, line, expected_source, value_source, expected, value);
-    abort();
-  }
-}
-
 
 class CcTest {
  public:

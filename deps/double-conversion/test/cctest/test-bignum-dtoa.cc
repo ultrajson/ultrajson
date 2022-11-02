@@ -43,7 +43,7 @@ using namespace double_conversion;
 // Removes trailing '0' digits.
 // Can return the empty string if all digits are 0.
 static void TrimRepresentation(Vector<char> representation) {
-  int len = strlen(representation.start());
+  int len = static_cast<int>(strlen(representation.start()));
   int i;
   for (i = len - 1; i >= 0; --i) {
     if (representation[i] != '0') break;
@@ -191,7 +191,12 @@ TEST(BignumDtoaVariousDoubles) {
   CHECK_EQ("35844466", buffer.start());
   CHECK_EQ(299, point);
 
-  uint64_t smallest_normal64 = UINT64_2PART_C(0x00100000, 00000000);
+  BignumDtoa(1e-23, BIGNUM_DTOA_SHORTEST, 0,
+             buffer, &length, &point);
+  CHECK_EQ("1", buffer.start());
+  CHECK_EQ(-22, point);
+
+  uint64_t smallest_normal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x00100000, 00000000);
   double v = Double(smallest_normal64).value();
   BignumDtoa(v, BIGNUM_DTOA_SHORTEST, 0, buffer, &length, &point);
   CHECK_EQ("22250738585072014", buffer.start());
@@ -203,7 +208,7 @@ TEST(BignumDtoaVariousDoubles) {
   CHECK_EQ("22250738585072013831", buffer.start());
   CHECK_EQ(-307, point);
 
-  uint64_t largest_denormal64 = UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
+  uint64_t largest_denormal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
   v = Double(largest_denormal64).value();
   BignumDtoa(v, BIGNUM_DTOA_SHORTEST, 0, buffer, &length, &point);
   CHECK_EQ("2225073858507201", buffer.start());

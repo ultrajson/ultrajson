@@ -1,27 +1,42 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(double-conversion)
+cmake_minimum_required(VERSION 3.0)
+project(double-conversion VERSION 3.2.0)
 
-include(GNUInstallDirs)
+option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" OFF)
 
-# pick a version #
-set(double-conversion_VERSION 2.0.1)
-set(double-conversion_SOVERSION_MAJOR 1)
-set(double-conversion_SOVERSION_MINOR 0)
-set(double-conversion_SOVERSION_PATCH 0)
-set(double-conversion_SOVERSION
-  ${double-conversion_SOVERSION_MAJOR}.${double-conversion_SOVERSION_MINOR}.${double-conversion_SOVERSION_PATCH})
-
-# set suffix for CMake files used for packaging
-if(WIN32 AND NOT CYGWIN)
-  set(INSTALL_CMAKE_DIR CMake)
-else()
-  set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/double-conversion)
+if(BUILD_SHARED_LIBS AND MSVC)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-# Add src subdirectory
-add_subdirectory(double-conversion)
+set(headers
+    double-conversion/bignum.h
+    double-conversion/cached-powers.h
+    double-conversion/diy-fp.h
+    double-conversion/double-conversion.h
+    double-conversion/double-to-string.h
+    double-conversion/fast-dtoa.h
+    double-conversion/fixed-dtoa.h
+    double-conversion/ieee.h
+    double-conversion/string-to-double.h
+    double-conversion/strtod.h
+    double-conversion/utils.h)
 
-#
+add_library(double-conversion
+            double-conversion/bignum.cc
+            double-conversion/bignum-dtoa.cc
+            double-conversion/cached-powers.cc
+            double-conversion/double-to-string.cc
+            double-conversion/fast-dtoa.cc
+            double-conversion/fixed-dtoa.cc
+            double-conversion/string-to-double.cc
+            double-conversion/strtod.cc
+            ${headers})
+target_include_directories(
+    double-conversion PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+
+# pick a version #
+set_target_properties(double-conversion PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 3)
+
 # set up testing if requested
 option(BUILD_TESTING "Build test programs" OFF)
 if(BUILD_TESTING)
@@ -30,41 +45,86 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-#
-# mention the library target as export library
-export(TARGETS double-conversion
-  FILE "${PROJECT_BINARY_DIR}/double-conversionLibraryDepends.cmake")
+####
+# Installation (https://github.com/forexample/package-example)
 
-#
-# set this build as an importable package
-export(PACKAGE double-conversion)
+include(GNUInstallDirs)
 
-#
-# make a cmake file -- in this case, all that needs defining
-# is double-conversion_INCLUDE_DIRS
-configure_file(double-conversionBuildTreeSettings.cmake.in
-  "${PROJECT_BINARY_DIR}/double-conversionBuildTreeSettings.cmake"
-  @ONLY)
+# Layout. This works for all platforms:
+#   * <prefix>/lib/cmake/<PROJECT-NAME>
+#   * <prefix>/lib/
+#   * <prefix>/include/
+set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
-#
-# sets up config to be used by CMake find_package
-configure_file(double-conversionConfig.cmake.in
-  "${PROJECT_BINARY_DIR}/double-conversionConfig.cmake"
-  @ONLY)
-#
-# Export version # checked by find_package
-configure_file(double-conversionConfigVersion.cmake.in
-  "${PROJECT_BINARY_DIR}/double-conversionConfigVersion.cmake"
-  @ONLY)
-#
-# install config files for find_package
-install(FILES
-  "${PROJECT_BINARY_DIR}/double-conversionConfig.cmake"
-  "${PROJECT_BINARY_DIR}/double-conversionConfigVersion.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
+# Configuration
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(targets_export_name "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
 
-#
-# generates install cmake files to find libraries in installation.
-install(EXPORT double-conversionLibraryDepends DESTINATION
-  "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+# Include module with function 'write_basic_package_version_file'
+include(CMakePackageConfigHelpers)
+
+# Configure '<PROJECT-NAME>ConfigVersion.cmake'
+# Note: PROJECT_VERSION is used as a VERSION
+write_basic_package_version_file(
+    "${version_config}" COMPATIBILITY SameMajorVersion
+)
+
+# Configure '<PROJECT-NAME>Config.cmake'
+# Use variables:
+#   * targets_export_name
+#   * PROJECT_NAME
+configure_package_config_file(
+    "cmake/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${config_install_dir}"
+)
+
+# Targets:
+#   * <prefix>/lib/libdouble-conversion.a
+#   * header location after install: <prefix>/include/double-conversion/*.h
+#   * headers can be included by C++ code `#include <double-conversion/*.h>`
+install(
+    TARGETS double-conversion
+    EXPORT "${targets_export_name}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+# Headers:
+#   * double-conversion/*.h -> <prefix>/include/double-conversion/*.h
+install(
+    FILES ${headers}
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/double-conversion"
+)
+
+# Config
+#   * <prefix>/lib/cmake/double-conversion/double-conversionConfig.cmake
+#   * <prefix>/lib/cmake/double-conversion/double-conversionConfigVersion.cmake
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${config_install_dir}"
+)
+
+# Config
+#   * <prefix>/lib/cmake/double-conversion/double-conversionTargets.cmake
+install(
+    EXPORT "${targets_export_name}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}"
+)
+
+if (MSVC AND BUILD_SHARED_LIBS)
+  # Install companion PDB for Visual Studio
+  install(
+    FILES $<TARGET_PDB_FILE:double-conversion>
+    TYPE BIN
+    OPTIONAL
+  )
+endif()
+

@@ -485,6 +485,10 @@ TEST(FastFixedVariousDoubles) {
                       buffer, &length, &point));
   CHECK_EQ("1000000000000000128", buffer.start());
   CHECK_EQ(19, point);
+
+  CHECK(FastFixedDtoa(2.10861548515811875e+15, 17, buffer, &length, &point));
+  CHECK_EQ("210861548515811875", buffer.start());
+  CHECK_EQ(16, point);
 }
 
 

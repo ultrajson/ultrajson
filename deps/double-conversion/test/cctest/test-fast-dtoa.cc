@@ -1,4 +1,29 @@
 // Copyright 2006-2008 the V8 project authors. All rights reserved.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Google Inc. nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
 
@@ -18,7 +43,7 @@ static const int kBufferSize = 100;
 
 // Removes trailing '0' digits.
 static void TrimRepresentation(Vector<char> representation) {
-  int len = strlen(representation.start());
+  int len = static_cast<int>(strlen(representation.start()));
   int i;
   for (i = len - 1; i >= 0; --i) {
     if (representation[i] != '0') break;
@@ -79,7 +104,7 @@ TEST(FastDtoaShortestVariousDoubles) {
     CHECK_EQ(299, point);
   }
 
-  uint64_t smallest_normal64 = UINT64_2PART_C(0x00100000, 00000000);
+  uint64_t smallest_normal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x00100000, 00000000);
   double v = Double(smallest_normal64).value();
   status = FastDtoa(v, FAST_DTOA_SHORTEST, 0, buffer, &length, &point);
   if (status) {
@@ -87,7 +112,7 @@ TEST(FastDtoaShortestVariousDoubles) {
     CHECK_EQ(-307, point);
   }
 
-  uint64_t largest_denormal64 = UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
+  uint64_t largest_denormal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
   v = Double(largest_denormal64).value();
   status = FastDtoa(v, FAST_DTOA_SHORTEST, 0, buffer, &length, &point);
   if (status) {
@@ -244,14 +269,14 @@ TEST(FastDtoaPrecisionVariousDoubles) {
   CHECK_EQ("35844466", buffer.start());
   CHECK_EQ(299, point);
 
-  uint64_t smallest_normal64 = UINT64_2PART_C(0x00100000, 00000000);
+  uint64_t smallest_normal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x00100000, 00000000);
   double v = Double(smallest_normal64).value();
   status = FastDtoa(v, FAST_DTOA_PRECISION, 17, buffer, &length, &point);
   CHECK(status);
   CHECK_EQ("22250738585072014", buffer.start());
   CHECK_EQ(-307, point);
 
-  uint64_t largest_denormal64 = UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
+  uint64_t largest_denormal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
   v = Double(largest_denormal64).value();
   status = FastDtoa(v, FAST_DTOA_PRECISION, 17, buffer, &length, &point);
   CHECK(status);

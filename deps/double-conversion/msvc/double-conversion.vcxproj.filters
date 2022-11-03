@@ -24,12 +24,6 @@
     <ClCompile Include="..\double-conversion\cached-powers.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\double-conversion\diy-fp.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\double-conversion\double-conversion.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\double-conversion\fast-dtoa.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,12 +33,15 @@
     <ClCompile Include="..\double-conversion\strtod.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\double-conversion\double-to-string.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\double-conversion\string-to-double.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\double-conversion\bignum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\double-conversion\bignum-dtoa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\double-conversion\cached-powers.h">
@@ -69,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\double-conversion\utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\double-conversion\double-to-string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\double-conversion\string-to-double.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

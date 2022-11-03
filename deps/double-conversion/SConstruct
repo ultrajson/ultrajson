@@ -16,13 +16,13 @@ optimize = ARGUMENTS.get('optimize', 0)
 env.Replace(CXX = ARGUMENTS.get('CXX', 'g++'))
 
 # for shared lib, requires scons 2.3.0
-env['SHLIBVERSION'] = '1.0.0'
+env['SHLIBVERSION'] = '3.0.0'
 
 CCFLAGS = []
 if int(debug):
-  CCFLAGS.append(ARGUMENTS.get('CXXFLAGS', '-g -Wall -Wshadow -Werror'))
+  CCFLAGS.append(ARGUMENTS.get('CXXFLAGS', '-g -Wall -Wshadow -Werror -UNDEBUG'))
 if int(optimize):
-  CCFLAGS.append(ARGUMENTS.get('CXXFLAGS', '-O3'))
+  CCFLAGS.append(ARGUMENTS.get('CXXFLAGS', '-O3 -DNDEBUG=1'))
 
 env.Append(CCFLAGS = " ".join(CCFLAGS))
 

@@ -66,7 +66,7 @@ static void DoubleToAscii(double v, DtoaMode test_mode, int requested_digits,
 
 // Removes trailing '0' digits.
 static void TrimRepresentation(Vector<char> representation) {
-  int len = strlen(representation.start());
+  int len = static_cast<int>(strlen(representation.start()));
   int i;
   for (i = len - 1; i >= 0; --i) {
     if (representation[i] != '0') break;
@@ -229,13 +229,13 @@ TEST(DtoaVariousDoubles) {
 
   DoubleToAscii(-2147483648.0, SHORTEST, 0,
                 buffer, &sign, &length, &point);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_EQ("2147483648", buffer.start());
   CHECK_EQ(10, point);
 
   DoubleToAscii(-2147483648.0, SHORTEST_SINGLE, 0,
                 buffer, &sign, &length, &point);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_EQ("21474836", buffer.start());
   CHECK_EQ(10, point);
 
@@ -243,7 +243,7 @@ TEST(DtoaVariousDoubles) {
   DoubleToAscii(-2147483648.0, FIXED, 2, buffer, &sign, &length, &point);
   CHECK_GE(2, length - point);
   TrimRepresentation(buffer);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_EQ("2147483648", buffer.start());
   CHECK_EQ(10, point);
 
@@ -251,25 +251,25 @@ TEST(DtoaVariousDoubles) {
                 buffer, &sign, &length, &point);
   CHECK_GE(5, length);
   TrimRepresentation(buffer);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_EQ("21475", buffer.start());
   CHECK_EQ(10, point);
 
   DoubleToAscii(-3.5844466002796428e+298, SHORTEST, 0,
                 buffer, &sign, &length, &point);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_EQ("35844466002796428", buffer.start());
   CHECK_EQ(299, point);
 
   DoubleToAscii(-3.5844466002796428e+298, PRECISION, 10,
                 buffer, &sign, &length, &point);
-  CHECK_EQ(1, sign);
+  CHECK_EQ(true, sign);
   CHECK_GE(10, length);
   TrimRepresentation(buffer);
   CHECK_EQ("35844466", buffer.start());
   CHECK_EQ(299, point);
 
-  uint64_t smallest_normal64 = UINT64_2PART_C(0x00100000, 00000000);
+  uint64_t smallest_normal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x00100000, 00000000);
   double v = Double(smallest_normal64).value();
   DoubleToAscii(v, SHORTEST, 0, buffer, &sign, &length, &point);
   CHECK_EQ("22250738585072014", buffer.start());
@@ -287,7 +287,7 @@ TEST(DtoaVariousDoubles) {
   CHECK_EQ("22250738585072013831", buffer.start());
   CHECK_EQ(-307, point);
 
-  uint64_t largest_denormal64 = UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
+  uint64_t largest_denormal64 = DOUBLE_CONVERSION_UINT64_2PART_C(0x000FFFFF, FFFFFFFF);
   v = Double(largest_denormal64).value();
   DoubleToAscii(v, SHORTEST, 0, buffer, &sign, &length, &point);
   CHECK_EQ("2225073858507201", buffer.start());
@@ -307,7 +307,7 @@ TEST(DtoaVariousDoubles) {
 
   DoubleToAscii(4128420500802942e-24, SHORTEST, 0,
                 buffer, &sign, &length, &point);
-  CHECK_EQ(0, sign);
+  CHECK_EQ(false, sign);
   CHECK_EQ("4128420500802942", buffer.start());
   CHECK_EQ(-8, point);
 

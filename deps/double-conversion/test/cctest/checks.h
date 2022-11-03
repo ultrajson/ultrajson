@@ -35,21 +35,21 @@
 extern "C" void V8_Fatal(const char* file, int line, const char* format, ...);
 void API_Fatal(const char* location, const char* format, ...);
 
-// The FATAL, UNREACHABLE and UNIMPLEMENTED macros are useful during
+// The FATAL, DOUBLE_CONVERSION_UNREACHABLE and DOUBLE_CONVERSION_UNIMPLEMENTED macros are useful during
 // development, but they should not be relied on in the final product.
 #ifdef DEBUG
 #define FATAL(msg)                              \
   V8_Fatal(__FILE__, __LINE__, "%s", (msg))
-#define UNIMPLEMENTED()                         \
+#define DOUBLE_CONVERSION_UNIMPLEMENTED()                         \
   V8_Fatal(__FILE__, __LINE__, "unimplemented code")
-#define UNREACHABLE()                           \
+#define DOUBLE_CONVERSION_UNREACHABLE()                           \
   V8_Fatal(__FILE__, __LINE__, "unreachable code")
 #else
 #define FATAL(msg)                              \
   V8_Fatal("", 0, "%s", (msg))
-#define UNIMPLEMENTED()                         \
+#define DOUBLE_CONVERSION_UNIMPLEMENTED()                         \
   V8_Fatal("", 0, "unimplemented code")
-#define UNREACHABLE() ((void) 0)
+#define DOUBLE_CONVERSION_UNREACHABLE() ((void) 0)
 #endif
 
 
@@ -279,36 +279,36 @@ template <int> class StaticAssertionHelper { };
     SEMI_STATIC_JOIN(__StaticAssertTypedef__, __LINE__)
 
 
-// The ASSERT macro is equivalent to CHECK except that it only
+// The DOUBLE_CONVERSION_ASSERT macro is equivalent to CHECK except that it only
 // generates code in debug builds.
 #ifdef DEBUG
-#define ASSERT_RESULT(expr)  CHECK(expr)
-#define ASSERT(condition)    CHECK(condition)
-#define ASSERT_EQ(v1, v2)    CHECK_EQ(v1, v2)
-#define ASSERT_NE(v1, v2)    CHECK_NE(v1, v2)
-#define ASSERT_GE(v1, v2)    CHECK_GE(v1, v2)
-#define SLOW_ASSERT(condition) if (FLAG_enable_slow_asserts) CHECK(condition)
+#define DOUBLE_CONVERSION_ASSERT_RESULT(expr)  CHECK(expr)
+#define DOUBLE_CONVERSION_ASSERT(condition)    CHECK(condition)
+#define DOUBLE_CONVERSION_ASSERT_EQ(v1, v2)    CHECK_EQ(v1, v2)
+#define DOUBLE_CONVERSION_ASSERT_NE(v1, v2)    CHECK_NE(v1, v2)
+#define DOUBLE_CONVERSION_ASSERT_GE(v1, v2)    CHECK_GE(v1, v2)
+#define SLOW_DOUBLE_CONVERSION_ASSERT(condition) if (FLAG_enable_slow_asserts) CHECK(condition)
 #else
-#define ASSERT_RESULT(expr)     (expr)
-#define ASSERT(condition)      ((void) 0)
-#define ASSERT_EQ(v1, v2)      ((void) 0)
-#define ASSERT_NE(v1, v2)      ((void) 0)
-#define ASSERT_GE(v1, v2)      ((void) 0)
-#define SLOW_ASSERT(condition) ((void) 0)
+#define DOUBLE_CONVERSION_ASSERT_RESULT(expr)     (expr)
+#define DOUBLE_CONVERSION_ASSERT(condition)      ((void) 0)
+#define DOUBLE_CONVERSION_ASSERT_EQ(v1, v2)      ((void) 0)
+#define DOUBLE_CONVERSION_ASSERT_NE(v1, v2)      ((void) 0)
+#define DOUBLE_CONVERSION_ASSERT_GE(v1, v2)      ((void) 0)
+#define SLOW_DOUBLE_CONVERSION_ASSERT(condition) ((void) 0)
 #endif
 // Static asserts has no impact on runtime performance, so they can be
 // safely enabled in release mode. Moreover, the ((void) 0) expression
 // obeys different syntax rules than typedef's, e.g. it can't appear
 // inside class declaration, this leads to inconsistency between debug
 // and release compilation modes behaviour.
-#define STATIC_ASSERT(test)  STATIC_CHECK(test)
+#define STATIC_DOUBLE_CONVERSION_ASSERT(test)  STATIC_CHECK(test)
 
 
-#define ASSERT_TAG_ALIGNED(address) \
-  ASSERT((reinterpret_cast<intptr_t>(address) & kHeapObjectTagMask) == 0)
+#define DOUBLE_CONVERSION_ASSERT_TAG_ALIGNED(address) \
+  DOUBLE_CONVERSION_ASSERT((reinterpret_cast<intptr_t>(address) & kHeapObjectTagMask) == 0)
 
-#define ASSERT_SIZE_TAG_ALIGNED(size) ASSERT((size & kHeapObjectTagMask) == 0)
+#define DOUBLE_CONVERSION_ASSERT_SIZE_TAG_ALIGNED(size) DOUBLE_CONVERSION_ASSERT((size & kHeapObjectTagMask) == 0)
 
-#define ASSERT_NOT_NULL(p)  ASSERT_NE(NULL, p)
+#define DOUBLE_CONVERSION_ASSERT_NOT_NULL(p)  DOUBLE_CONVERSION_ASSERT_NE(NULL, p)
 
 #endif  // V8_CHECKS_H_

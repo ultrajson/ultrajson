@@ -147,24 +147,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\double-conversion\bignum-dtoa.cc" />
     <ClCompile Include="..\double-conversion\bignum.cc" />
+    <ClCompile Include="..\double-conversion\bignum-dtoa.cc" />
     <ClCompile Include="..\double-conversion\cached-powers.cc" />
-    <ClCompile Include="..\double-conversion\diy-fp.cc" />
-    <ClCompile Include="..\double-conversion\double-conversion.cc" />
+    <ClCompile Include="..\double-conversion\double-to-string.cc" />
     <ClCompile Include="..\double-conversion\fast-dtoa.cc" />
     <ClCompile Include="..\double-conversion\fixed-dtoa.cc" />
+    <ClCompile Include="..\double-conversion\string-to-double.cc" />
     <ClCompile Include="..\double-conversion\strtod.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\double-conversion\bignum-dtoa.h" />
     <ClInclude Include="..\double-conversion\bignum.h" />
     <ClInclude Include="..\double-conversion\cached-powers.h" />
     <ClInclude Include="..\double-conversion\diy-fp.h" />
     <ClInclude Include="..\double-conversion\double-conversion.h" />
+    <ClInclude Include="..\double-conversion\double-to-string.h" />
     <ClInclude Include="..\double-conversion\fast-dtoa.h" />
     <ClInclude Include="..\double-conversion\fixed-dtoa.h" />
     <ClInclude Include="..\double-conversion\ieee.h" />
+    <ClInclude Include="..\double-conversion\string-to-double.h" />
     <ClInclude Include="..\double-conversion\strtod.h" />
     <ClInclude Include="..\double-conversion\utils.h" />
   </ItemGroup>

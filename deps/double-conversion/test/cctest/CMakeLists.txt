@@ -18,6 +18,9 @@ set(CCTEST_SRC
 
 add_executable(cctest ${CCTEST_SRC})
 target_link_libraries(cctest double-conversion)
+if(MSVC)
+    target_compile_options(cctest PRIVATE /bigobj)
+endif()
 
 add_test(NAME test_bignum
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

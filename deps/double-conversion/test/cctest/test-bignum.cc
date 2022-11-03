@@ -39,12 +39,14 @@ using namespace double_conversion;
 static const int kBufferSize = 1024;
 
 static void AssignHexString(Bignum* bignum, const char* str) {
-  bignum->AssignHexString(Vector<const char>(str, strlen(str)));
+  int len = static_cast<int>(strlen(str));
+  bignum->AssignHexString(Vector<const char>(str, len));
 }
 
 
 static void AssignDecimalString(Bignum* bignum, const char* str) {
-  bignum->AssignDecimalString(Vector<const char>(str, strlen(str)));
+  int len = static_cast<int>(strlen(str));
+  bignum->AssignDecimalString(Vector<const char>(str, len));
 }
 
 
@@ -81,12 +83,12 @@ TEST(Assign) {
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("12345678", buffer);
 
-  uint64_t big = UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF);
+  uint64_t big = DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF);
   bignum.AssignUInt64(big);
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("FFFFFFFFFFFFFFFF", buffer);
 
-  big = UINT64_2PART_C(0x12345678, 9ABCDEF0);
+  big = DOUBLE_CONVERSION_UINT64_2PART_C(0x12345678, 9ABCDEF0);
   bignum.AssignUInt64(big);
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("123456789ABCDEF0", buffer);
@@ -206,49 +208,49 @@ TEST(AddUInt64) {
   CHECK_EQ("1000000000000000000000FFFF", buffer);
 
   AssignHexString(&bignum, "0");
-  bignum.AddUInt64(UINT64_2PART_C(0xA, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xA, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("A00000000", buffer);
 
   AssignHexString(&bignum, "1");
-  bignum.AddUInt64(UINT64_2PART_C(0xA, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xA, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("A00000001", buffer);
 
   AssignHexString(&bignum, "1");
-  bignum.AddUInt64(UINT64_2PART_C(0x100, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0x100, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10000000001", buffer);
 
   AssignHexString(&bignum, "1");
-  bignum.AddUInt64(UINT64_2PART_C(0xFFFF, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFF, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("FFFF00000001", buffer);
 
   AssignHexString(&bignum, "FFFFFFF");
-  bignum.AddUInt64(UINT64_2PART_C(0x1, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0x1, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10FFFFFFF", buffer);
 
   AssignHexString(&bignum, "10000000000000000000000000000000000000000000");
-  bignum.AddUInt64(UINT64_2PART_C(0xFFFF, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFF, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10000000000000000000000000000000FFFF00000000", buffer);
 
   AssignHexString(&bignum, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-  bignum.AddUInt64(UINT64_2PART_C(0x1, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0x1, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("1000000000000000000000000000000000000FFFFFFFF", buffer);
 
   bignum.AssignUInt16(0x1);
   bignum.ShiftLeft(100);
-  bignum.AddUInt64(UINT64_2PART_C(0x1, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0x1, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10000000000000000100000000", buffer);
 
   bignum.AssignUInt16(0x1);
   bignum.ShiftLeft(100);
-  bignum.AddUInt64(UINT64_2PART_C(0xFFFF, 00000000));
+  bignum.AddUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFF, 00000000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10000000000000FFFF00000000", buffer);
 }
@@ -314,9 +316,13 @@ TEST(AddBignum) {
   CHECK_EQ("10000000000001000000000000", buffer);
 
   other.ShiftLeft(64);
-  // other == "10000000000000000000000000000"
+  CHECK(other.ToHexString(buffer, kBufferSize));
+  CHECK_EQ("10000000000000000000000000000", buffer);
 
   bignum.AssignUInt16(0x1);
+  CHECK(bignum.ToHexString(buffer, kBufferSize));
+  CHECK_EQ("1", buffer);
+
   bignum.AddBignum(other);
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("10000000000000000000000000001", buffer);
@@ -570,7 +576,7 @@ TEST(MultiplyUInt64) {
   CHECK_EQ("FFFF00000000000000", buffer);
 
   AssignHexString(&bignum, "100000000000000");
-  bignum.MultiplyByUInt64(UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
+  bignum.MultiplyByUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("FFFFFFFFFFFFFFFF00000000000000", buffer);
 
@@ -580,7 +586,7 @@ TEST(MultiplyUInt64) {
   CHECK_EQ("12333335552433", buffer);
 
   AssignHexString(&bignum, "1234567ABCD");
-  bignum.MultiplyByUInt64(UINT64_2PART_C(0xFF, FFFFFFFF));
+  bignum.MultiplyByUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFF, FFFFFFFF));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("1234567ABCBDCBA985433", buffer);
 
@@ -600,7 +606,7 @@ TEST(MultiplyUInt64) {
   CHECK_EQ("EFFFFFFFFFFFFFFF1", buffer);
 
   AssignHexString(&bignum, "FFFFFFFFFFFFFFFF");
-  bignum.MultiplyByUInt64(UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
+  bignum.MultiplyByUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("FFFFFFFFFFFFFFFE0000000000000001", buffer);
 
@@ -635,12 +641,12 @@ TEST(MultiplyUInt64) {
   bignum.AssignUInt16(0xFFFF);
   bignum.ShiftLeft(100);
   // "FFFF0 0000 0000 0000 0000 0000 0000"
-  bignum.MultiplyByUInt64(UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
+  bignum.MultiplyByUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0xFFFFFFFF, FFFFFFFF));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("FFFEFFFFFFFFFFFF00010000000000000000000000000", buffer);
 
   AssignDecimalString(&bignum, "15611230384529777");
-  bignum.MultiplyByUInt64(UINT64_2PART_C(0x8ac72304, 89e80000));
+  bignum.MultiplyByUInt64(DOUBLE_CONVERSION_UINT64_2PART_C(0x8ac72304, 89e80000));
   CHECK(bignum.ToHexString(buffer, kBufferSize));
   CHECK_EQ("1E10EE4B11D15A7F3DE7F3C7680000", buffer);
 }

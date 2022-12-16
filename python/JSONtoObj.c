@@ -36,6 +36,8 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
  * Copyright (c) 1994 Sun Microsystems, Inc.
 */
 
+#include <stdbool.h>
+
 #include <Python.h>
 #include <ultrajson.h>
 #include "ujson.h"
@@ -185,24 +187,34 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
       return NULL;
   }
 
-  if (PyBytes_Check(arg))
+  Py_buffer buffer;
+  size_t sarg_length;
+  char * raw;
+  bool is_bytes_like = !PyObject_GetBuffer(arg, &buffer, PyBUF_C_CONTIGUOUS);
+  if (is_bytes_like)
   {
-      sarg = arg;
+    raw = buffer.buf;
+    sarg_length = buffer.len;
   }
   else
-  if (PyUnicode_Check(arg))
   {
-    sarg = PyUnicode_AsEncodedString(arg, NULL, "surrogatepass");
-    if (sarg == NULL)
+    PyErr_Clear();
+    if (PyUnicode_Check(arg))
     {
-      //Exception raised above us by codec according to docs
+      sarg = PyUnicode_AsEncodedString(arg, NULL, "surrogatepass");
+      if (sarg == NULL)
+      {
+        //Exception raised above us by codec according to docs
+        return NULL;
+      }
+      sarg_length = PyBytes_Size(sarg);
+      raw = PyBytes_AsString(sarg);
+    }
+    else
+    {
+      PyErr_Format(PyExc_TypeError, "Expected String or C contiguous Bytes-like object");
       return NULL;
     }
-  }
-  else
-  {
-    PyErr_Format(PyExc_TypeError, "Expected String or Unicode");
-    return NULL;
   }
 
   decoder.errorStr = NULL;
@@ -211,13 +223,17 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   decoder.s2d = NULL;
   dconv_s2d_init(&decoder.s2d, DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
-  ret = JSON_DecodeObject(&decoder, PyBytes_AsString(sarg), PyBytes_Size(sarg));
+  ret = JSON_DecodeObject(&decoder, raw, sarg_length);
 
   dconv_s2d_free(&decoder.s2d);
 
-  if (sarg != arg)
+  if (!is_bytes_like)
   {
     Py_DECREF(sarg);
+  }
+  else
+  {
+    PyBuffer_Release(&buffer);
   }
 
   if (decoder.errorStr)

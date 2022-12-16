@@ -1124,6 +1124,40 @@ def test_separators_errors(separators, expected_exception):
         ujson.dumps({"a": 0, "b": 1}, separators=separators)
 
 
+def test_loads_bytes_like():
+    assert ujson.loads(b"123") == 123
+    assert ujson.loads(memoryview(b'["a", "b", "c"]')) == ["a", "b", "c"]
+    assert ujson.loads(bytearray(b"99")) == 99
+    assert ujson.loads('"🦄🐳"'.encode()) == "🦄🐳"
+
+
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+)
+def test_loads_bytes_like_refcounting():
+    import gc
+
+    gc.collect()
+    buffer = b'{"a": 99}'
+    old = sys.getrefcount(buffer)
+    assert ujson.loads(buffer) == {"a": 99}
+    assert sys.getrefcount(buffer) == old
+
+    buffer = b'{"a": invalid}'
+    old = sys.getrefcount(buffer)
+    with pytest.raises(ValueError):
+        ujson.loads(buffer)
+    assert sys.getrefcount(buffer) == old
+
+
+def test_loads_non_c_contiguous():
+    buffer = memoryview(b"".join(bytes([i]) + b"_" for i in b"[1, 2, 3]"))[::2]
+    assert not buffer.c_contiguous
+    assert ujson.loads(bytes(buffer)) == [1, 2, 3]
+    with pytest.raises(TypeError):
+        ujson.loads(buffer)
+
+
 """
 The following checks are not part of the standard test suite.
 They can be run manually as follows:

@@ -1126,7 +1126,11 @@ def test_separators_errors(separators, expected_exception):
 
 def test_loads_bytes_like():
     assert ujson.loads(b"123") == 123
-    assert ujson.loads(memoryview(b'["a", "b", "c"]')) == ["a", "b", "c"]
+    if hasattr(sys, "pypy_version_info"):
+        with pytest.raises(TypeError, match="PyPy"):
+            ujson.loads(memoryview(b"{}"))
+    else:
+        assert ujson.loads(memoryview(b'["a", "b", "c"]')) == ["a", "b", "c"]
     assert ujson.loads(bytearray(b"99")) == 99
     assert ujson.loads('"🦄🐳"'.encode()) == "🦄🐳"
 

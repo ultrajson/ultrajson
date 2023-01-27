@@ -49,6 +49,21 @@
   name: "changelog: skip"
 
 # Other labels
+- color: 0366d6
+  description: "For dependencies"
+  name: dependencies
+- color: e28acf
+  description: "Documentation"
+  name: documentation
+- color: f4660e
+  description: ""
+  name: Hacktoberfest
+- color: f4660e
+  description: "To credit accepted Hacktoberfest PRs"
+  name: hacktoberfest-accepted
+- color: caffaf
+  description: "Deploy and release"
+  name: release
 - color: fbca04
   description: "Unit tests, linting, CI, etc."
   name: testing
@@ -58,15 +73,3 @@
 - color: F25022
   description: ""
   name: Windows
-- color: e28acf
-  description: ""
-  name: documentation
-- color: f4660e
-  description: ""
-  name: Hacktoberfest
-- color: f4660e
-  description: "To credit accepted Hacktoberfest PRs"
-  name: hacktoberfest-accepted
-- color: caffaf
-  description: ""
-  name: release

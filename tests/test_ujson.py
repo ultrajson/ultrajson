@@ -1,5 +1,6 @@
 import datetime as dt
 import decimal
+import enum
 import io
 import json
 import math
@@ -1160,6 +1161,20 @@ def test_loads_non_c_contiguous():
     assert ujson.loads(bytes(buffer)) == [1, 2, 3]
     with pytest.raises(TypeError):
         ujson.loads(buffer)
+
+
+@pytest.mark.parametrize(
+    "enum_classes, value, expected",
+    [
+        ((enum.IntEnum,), 42, "42"),
+        ((float, enum.Enum), 3.1416, "3.1416"),
+    ],
+)
+def test_enum(enum_classes, value, expected):
+    class MyEnum(*enum_classes):
+        FOO = value
+
+    assert ujson.dumps(MyEnum.FOO) == expected
 
 
 """

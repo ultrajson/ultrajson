@@ -85,44 +85,46 @@ specified below each.
 
 ### Test machine
 
-Linux 5.0.0-1032-azure x86_64 #34-Ubuntu SMP Mon Feb 10 19:37:25 UTC 2020
+Linux 5.15.0-1038-azure x86_64 #45-Ubuntu SMP Mon Apr 24 15:40:42 UTC 2023
 
 ### Versions
 
-- CPython 3.8.2 (default, Feb 28 2020, 14:28:43) [GCC 7.4.0]
-- nujson    : 1.35.2
-- orjson    : 2.6.1
-- simplejson: 3.17.0
-- ujson     : 2.0.2
+- CPython 3.11.3 (main, Apr  6 2023, 07:55:46) [GCC 11.3.0]
+- ujson        : 0.1.dev1
+- orjson       : 3.8.14
+- simplejson   : 3.19.1
+- json         : 2.0.9
 
-|                                                                               | ujson      | nujson     | orjson     | simplejson | json       |
-|-------------------------------------------------------------------------------|-----------:|-----------:|-----------:|-----------:|-----------:|
-| Array with 256 doubles                                                        |            |            |            |            |            |
-| encode                                                                        |     22,082 |      4,282 |     76,975 |      5,328 |      5,436 |
-| decode                                                                        |     24,127 |     34,349 |     29,059 |     14,174 |     13,822 |
-| Array with 256 UTF-8 strings                                                  |            |            |            |            |            |
-| encode                                                                        |      3,557 |      2,528 |     24,300 |      3,061 |      2,068 |
-| decode                                                                        |      2,030 |      2,490 |        931 |        406 |        358 |
-| Array with 256 strings                                                        |            |            |            |            |            |
-| encode                                                                        |     39,041 |     31,769 |     76,403 |     16,615 |     16,910 |
-| decode                                                                        |     25,185 |     24,287 |     34,437 |     32,388 |     27,999 |
-| Medium complex object                                                         |            |            |            |            |            |
-| encode                                                                        |     10,382 |     11,427 |     32,995 |      3,959 |      5,275 |
-| decode                                                                        |      9,785 |      9,796 |     11,515 |      5,898 |      7,200 |
-| Array with 256 True values                                                    |            |            |            |            |            |
-| encode                                                                        |    114,341 |    101,039 |    344,256 |     62,382 |     72,872 |
-| decode                                                                        |    149,367 |    151,615 |    181,123 |    114,597 |    130,392 |
-| Array with 256 dict{string, int} pairs                                        |            |            |            |            |            |
-| encode                                                                        |     13,715 |     14,420 |     51,942 |      3,271 |      6,584 |
-| decode                                                                        |     12,670 |     11,788 |     12,176 |      6,743 |      8,278 |
-| Dict with 256 arrays with 256 dict{string, int} pairs                         |            |            |            |            |            |
-| encode                                                                        |         50 |         54 |        216 |         10 |         23 |
-| decode                                                                        |         32 |         32 |         30 |         20 |         23 |
-| Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys |            |            |            |            |            |
-| encode                                                                        |         46 |         41 |            |          8 |         24 |
-| Complex object                                                                |            |            |            |            |            |
-| encode                                                                        |        533 |        582 |            |        408 |        431 |
-| decode                                                                        |        466 |        454 |            |        154 |        164 |
+|                                                                               | ujson      | orjson     | simplejson | json       |
+|-------------------------------------------------------------------------------|-----------:|-----------:|-----------:|-----------:|
+| Array with 256 doubles                                                        |            |            |            |            |
+| encode                                                                        |     12,600 |     66,051 |      4,126 |      4,264 |
+| decode                                                                        |     19,852 |     64,581 |     10,330 |     10,378 |
+| Array with 256 UTF-8 strings                                                  |            |            |            |            |
+| encode                                                                        |      2,355 |     24,212 |      2,086 |      2,134 |
+| decode                                                                        |      1,898 |      2,878 |        342 |      1,207 |
+| Array with 256 strings                                                        |            |            |            |            |
+| encode                                                                        |     35,411 |    108,693 |     12,733 |     17,228 |
+| decode                                                                        |     23,124 |     60,845 |     30,166 |     27,527 |
+| Medium complex object                                                         |            |            |            |            |
+| encode                                                                        |      8,713 |     39,394 |      3,331 |      4,573 |
+| decode                                                                        |      9,658 |     17,423 |      6,327 |      7,553 |
+| Array with 256 True values                                                    |            |            |            |            |
+| encode                                                                        |     81,437 |    344,365 |     63,885 |     59,843 |
+| decode                                                                        |    157,638 |    270,217 |    120,104 |    121,518 |
+| Array with 256 dict{string, int} pairs                                        |            |            |            |            |
+| encode                                                                        |     10,942 |     56,421 |      2,527 |      5,743 |
+| decode                                                                        |     13,976 |     20,372 |      7,828 |     10,215 |
+| Dict with 256 arrays with 256 dict{string, int} pairs                         |            |            |            |            |
+| encode                                                                        |         42 |        221 |          8 |         21 |
+| decode                                                                        |         35 |         43 |         22 |         27 |
+| Dict with 256 arrays with 256 dict{string, int} pairs, outputting sorted keys |            |            |            |            |
+| encode                                                                        |         33 |            |          7 |         22 |
+| Complex object                                                                |            |            |            |            |
+| encode                                                                        |        395 |            |        341 |        376 |
+| decode                                                                        |        401 |        530 |        150 |        249 |
+
+Above metrics are in call/sec, larger is better.
 
 ## Build options
 

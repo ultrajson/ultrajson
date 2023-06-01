@@ -11,7 +11,6 @@ import ujson
 
 # Will be set by "main" if user requests them
 simplejson = None
-nujson = None
 orjson = None
 
 USER = {
@@ -160,11 +159,6 @@ def dumps_with_json():
     json.dumps(test_object)
 
 
-@register_benchmark("nujson", _testname)
-def dumps_with_nujson():
-    nujson.dumps(test_object)
-
-
 @register_benchmark("orjson", _testname)
 def dumps_with_orjson():
     orjson.dumps(test_object)
@@ -197,11 +191,6 @@ def dumps_sorted_with_simplejson():
     simplejson.dumps(test_object, sort_keys=True)
 
 
-@register_benchmark("nujson", _testname)
-def dumps_sorted_with_nujson():
-    nujson.dumps(test_object, sort_keys=True)
-
-
 @register_benchmark("orjson", _testname)
 def dumps_sorted_with_orjson():
     orjson.dumps(test_object, sort_keys=True)
@@ -222,11 +211,6 @@ _testname = "loads"
 @register_benchmark("json", _testname)
 def loads_with_json():
     json.loads(decode_data)
-
-
-@register_benchmark("nujson", _testname)
-def loads_with_nujson():
-    nujson.loads(decode_data)
 
 
 @register_benchmark("orjson", _testname)
@@ -437,7 +421,6 @@ def main():
 
     known_libraries = [
         "ujson",
-        "nujson",
         "orjson",
         "simplejson",
         "json",

@@ -35,10 +35,6 @@ jobs:
           cache: pip
           cache-dependency-path: ".github/workflows/deploy.yml"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install -U twine
-
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.13.0
@@ -64,20 +60,22 @@ jobs:
 
       - name: Publish package to PyPI
         if: github.event.action == 'published'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_password }}
-        run: twine upload --skip-existing dist/*.whl
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          skip-existing: true
 
       - name: Publish package to TestPyPI
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
-        run: |
-          twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.test_pypi_password }}
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
 
   build-QEMU-emulated-wheels:
     runs-on: ubuntu-latest
@@ -105,10 +103,6 @@ jobs:
           python-version: "3.x"
           cache: pip
           cache-dependency-path: ".github/workflows/deploy.yml"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install -U twine
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
@@ -144,20 +138,22 @@ jobs:
 
       - name: Publish package to PyPI
         if: github.event.action == 'published'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_password }}
-        run: twine upload --skip-existing dist/*.whl
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          skip-existing: true
 
       - name: Publish package to TestPyPI
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
-        run: |
-          twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing dist/*.whl
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.test_pypi_password }}
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
 
   build-sdist:
     runs-on: ubuntu-latest
@@ -178,7 +174,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          python -m pip install -U build twine wheel
+          python -m pip install -U build twine
 
       - name: Build package
         run: |

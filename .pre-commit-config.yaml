@@ -1,15 +1,15 @@
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.4.0
     hooks:
       - id: pyupgrade
-        args: [--py37-plus]
+        args: [--py38-plus]
 
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
       - id: black
-        args: [--target-version=py37]
+        args: [--target-version=py38]
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
@@ -38,7 +38,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
-
 
   - repo: https://github.com/asottile/setup-cfg-fmt
     rev: v2.3.0

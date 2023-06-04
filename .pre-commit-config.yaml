@@ -43,7 +43,6 @@ repos:
     rev: v2.3.0
     hooks:
       - id: setup-cfg-fmt
-        args: [--include-version-classifiers]
-
+        args: [--include-version-classifiers, --max-py-version=3.12]
 ci:
   autoupdate_schedule: quarterly

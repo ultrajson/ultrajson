@@ -58,25 +58,6 @@ jobs:
           name: wheels
           path: dist/*.whl
 
-      - name: Publish package to PyPI
-        if: github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          skip-existing: true
-
-      - name: Publish package to TestPyPI
-        if: |
-          github.repository == 'ultrajson/ultrajson' &&
-          github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.test_pypi_password }}
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-
   build-QEMU-emulated-wheels:
     runs-on: ubuntu-latest
     strategy:
@@ -134,26 +115,7 @@ jobs:
           name: wheels
           path: dist/*.whl
 
-      - name: Publish package to PyPI
-        if: github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          skip-existing: true
-
-      - name: Publish package to TestPyPI
-        if: |
-          github.repository == 'ultrajson/ultrajson' &&
-          github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.test_pypi_password }}
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-
-  build-sdist:
+  build-sdist-and-upload:
     runs-on: ubuntu-latest
     needs: ['build-native-wheels', 'build-QEMU-emulated-wheels']
 
@@ -173,6 +135,12 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip install -U build twine
+
+      - name: Download wheels from build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: dist/
 
       - name: Build package
         run: |

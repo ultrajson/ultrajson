@@ -140,7 +140,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wheels
-          path: dist/
+          path: dist-wheels/
 
       - name: Build package
         run: |
@@ -148,15 +148,35 @@ jobs:
           python setup.py --version
           python -m build --sdist
           twine check --strict dist/*
+          twine check --strict dist-wheels/*
 
-      - name: Publish package to PyPI
+      - name: Publish wheels to PyPI
+        if: github.event.action == 'published'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          packages-dir: dist-wheels/
+
+      - name: Publish sdist to PyPI
         if: github.event.action == 'published'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
 
-      - name: Publish package to TestPyPI
+      - name: Publish wheels to TestPyPI
+        if: |
+          github.repository == 'ultrajson/ultrajson' &&
+          github.ref == 'refs/heads/main'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.test_pypi_password }}
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist-wheels/
+
+      - name: Publish sdist to TestPyPI
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'

@@ -11,11 +11,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["pypy-3.8", "3.8", "3.9", "3.10", "3.11", "3.12-dev"]
+        python-version: ["pypy-3.10", "3.8", "3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest]
         include:
-          - { python-version: "pypy-3.8", os: windows-latest }
-          - { python-version: "pypy-3.8", os: macos-latest }
+          - { python-version: "pypy-3.10", os: windows-latest }
+          - { python-version: "pypy-3.10", os: macos-latest }
           - { python-version: "3.10", os: windows-latest }
           - { python-version: "3.10", os: macos-latest }
           - { python-version: "3.11", os: windows-latest }
@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
           cache: pip
           cache-dependency-path: "setup.py"
 

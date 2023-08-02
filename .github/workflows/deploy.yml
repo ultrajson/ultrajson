@@ -118,6 +118,9 @@ jobs:
   build-sdist-and-upload:
     runs-on: ubuntu-latest
     needs: ['build-native-wheels', 'build-QEMU-emulated-wheels']
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
 
     steps:
       - uses: actions/checkout@v3
@@ -154,16 +157,11 @@ jobs:
         if: github.event.action == 'published'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
           packages-dir: dist-wheels/
 
       - name: Publish sdist to PyPI
         if: github.event.action == 'published'
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
 
       - name: Publish wheels to TestPyPI
         if: |
@@ -171,8 +169,6 @@ jobs:
           github.ref == 'refs/heads/main'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.test_pypi_password }}
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist-wheels/
 
@@ -182,6 +178,4 @@ jobs:
           github.ref == 'refs/heads/main'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.test_pypi_password }}
           repository-url: https://test.pypi.org/legacy/

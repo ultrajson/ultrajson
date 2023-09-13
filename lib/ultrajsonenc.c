@@ -584,7 +584,13 @@ static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 {
   char* wstr;
-  JSUINT64 uvalue = (value < 0) ? -value : value;
+  JSUINT64 uvalue;
+
+  if (value == INT64_MIN) {
+    uvalue = INT64_MAX + UINT64_C(1);
+  } else {
+    uvalue = (value < 0) ? -value : value;
+  }
 
   wstr = enc->offset;
 #ifdef DEBUG

@@ -42,6 +42,7 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <limits.h>
 #include <math.h>
 
 #include <float.h>

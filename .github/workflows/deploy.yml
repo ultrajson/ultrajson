@@ -25,7 +25,7 @@ jobs:
         os: [windows-latest, macOS-latest, ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
@@ -37,7 +37,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.1
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -73,7 +73,7 @@ jobs:
           - cp312
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
@@ -85,15 +85,15 @@ jobs:
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.1
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -123,7 +123,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
             git fetch --prune --unshallow
 

@@ -325,7 +325,7 @@ class DoubleToStringConverter {
   // except for the following cases:
   //   - the input value is special and no infinity_symbol or nan_symbol has
   //     been provided to the constructor,
-  //   - precision < kMinPericisionDigits
+  //   - precision < kMinPrecisionDigits
   //   - precision > kMaxPrecisionDigits
   //
   // The last condition implies that the result never contains more than

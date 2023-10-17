@@ -201,12 +201,12 @@ typedef struct __JSONObjectEncoder
 
   /*
   Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items.
-  Implementor is responsible for keeping state of the iteration. Use ti->prv fields for this
+  Implementer is responsible for keeping state of the iteration. Use ti->prv fields for this
   */
   JSPFN_ITERNEXT iterNext;
 
   /*
-  Ends the iteration of an iteratable object.
+  Ends the iteration of an iterable object.
   Any iteration state stored in ti->prv can be freed here
   */
   JSPFN_ITEREND iterEnd;
@@ -284,7 +284,7 @@ typedef struct __JSONObjectEncoder
   void *d2s;
 
   /*
-  Set to an error message if error occured */
+  Set to an error message if error occurred */
   const char *errorMsg;
   JSOBJ errorObj;
 

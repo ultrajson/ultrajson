@@ -59,10 +59,10 @@ save space:
 Controls whether forward slashes (`/`) are escaped. Default is `True`:
 
 ```pycon
->>> ujson.dumps("http://esn.me")
-'"http:\\/\\/esn.me"'
->>> ujson.dumps("http://esn.me", escape_forward_slashes=False)
-'"http://esn.me"'
+>>> ujson.dumps("https://example.com")
+'"https:\\/\\/example.com"'
+>>> ujson.dumps("https://example.com", escape_forward_slashes=False)
+'"https://example.com"'
 ```
 
 #### indent

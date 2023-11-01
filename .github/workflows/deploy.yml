@@ -148,7 +148,6 @@ jobs:
       - name: Build package
         run: |
           git tag
-          python setup.py --version
           python -m build --sdist
           twine check --strict dist/*
           twine check --strict dist-wheels/*

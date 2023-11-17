@@ -242,7 +242,7 @@ def test_encode_dict_values_ref_counting():
 @pytest.mark.skipif(
     hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
 )
-@pytest.mark.parametrize("key", ["key", b"key", 1, True, None])
+@pytest.mark.parametrize("key", ["key", b"key", 1, True, False, None])
 @pytest.mark.parametrize("sort_keys", [False, True])
 def test_encode_dict_key_ref_counting(key, sort_keys):
     import gc
@@ -975,9 +975,13 @@ def test_reject_bytes_false():
     assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
 
 
-def test_encode_none_key():
-    data = {None: None}
-    assert ujson.dumps(data) == '{"null":null}'
+def test_encode_special_keys():
+    data = {None: 0, True: 1, False: 2}
+    assert ujson.dumps(data) == '{"null":0,"true":1,"false":2}'
+    data = {None: 0}
+    assert ujson.dumps(data, sort_keys=True) == '{"null":0}'
+    data = {True: 1, False: 2}
+    assert ujson.dumps(data, sort_keys=True) == '{"false":2,"true":1}'
 
 
 def test_default_function():
@@ -1069,8 +1073,12 @@ def test_obj_str_exception(sort_keys):
         def __str__(self):
             raise NotImplementedError
 
+    key = Obj()
+    getrefcount = getattr(sys, "getrefcount", lambda x: 0)
+    old = getrefcount(key)
     with pytest.raises(NotImplementedError):
-        ujson.dumps({Obj(): 1}, sort_keys=sort_keys)
+        ujson.dumps({key: 1}, sort_keys=sort_keys)
+    assert getrefcount(key) == old
 
 
 def no_memory_leak(func_code, n=None):

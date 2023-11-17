@@ -232,19 +232,49 @@ static char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 //=============================================================================
 // Dict iteration functions
-// itemName might converted to string (Python_Str). Do refCounting
+// itemName might converted to string (PyObject_Str). Do refCounting
 // itemValue is borrowed from object (which is dict). No refCounting
 //=============================================================================
+
+static int Dict_convertKey(PyObject** pkey)
+{
+  PyObject* key = *pkey;
+  if (PyUnicode_Check(key))
+  {
+    *pkey = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
+    return 1;
+  }
+  if (PyBytes_Check(key))
+  {
+    Py_INCREF(key);
+    return 1;
+  }
+  if (UNLIKELY(PyBool_Check(key)))
+  {
+    *pkey = PyBytes_FromString(key == Py_True ? "true" : "false");
+    return 1;
+  }
+  if (UNLIKELY(key == Py_None))
+  {
+    *pkey = PyBytes_FromString("null");
+    return 1;
+  }
+  key = PyObject_Str(key);
+  if (!key)
+  {
+    PRINTMARK();
+    return -1;
+  }
+  *pkey = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
+  Py_DECREF(key);
+  return 1;
+}
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject* itemNameTmp;
 
-  if (GET_TC(tc)->itemName)
-  {
-    Py_DECREF(GET_TC(tc)->itemName);
-    GET_TC(tc)->itemName = NULL;
-  }
+  Py_CLEAR(GET_TC(tc)->itemName);
 
   if (!(GET_TC(tc)->itemName = PyIter_Next(GET_TC(tc)->iterator)))
   {
@@ -258,46 +288,19 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  if (PyUnicode_Check(GET_TC(tc)->itemName))
+  itemNameTmp = GET_TC(tc)->itemName;
+  if (Dict_convertKey(&GET_TC(tc)->itemName) < 0)
   {
-    itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, NULL, "surrogatepass");
-    Py_DECREF(itemNameTmp);
+    return -1;
   }
-  else
-  if (!PyBytes_Check(GET_TC(tc)->itemName))
-  {
-    if (UNLIKELY(GET_TC(tc)->itemName == Py_None))
-    {
-      itemNameTmp = PyUnicode_FromString("null");
-      GET_TC(tc)->itemName = PyUnicode_AsUTF8String(itemNameTmp);
-      Py_DECREF(Py_None);
-      return 1;
-    }
-
-    itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyObject_Str(GET_TC(tc)->itemName);
-    Py_DECREF(itemNameTmp);
-    if (PyErr_Occurred())
-    {
-      PRINTMARK();
-      return -1;
-    }
-    itemNameTmp = GET_TC(tc)->itemName;
-    GET_TC(tc)->itemName = PyUnicode_AsEncodedString (GET_TC(tc)->itemName, NULL, "surrogatepass");
-    Py_DECREF(itemNameTmp);
-  }
+  Py_DECREF(itemNameTmp);
   PRINTMARK();
   return 1;
 }
 
 static void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
-  if (GET_TC(tc)->itemName)
-  {
-    Py_DECREF(GET_TC(tc)->itemName);
-    GET_TC(tc)->itemName = NULL;
-  }
+  Py_CLEAR(GET_TC(tc)->itemName);
   Py_CLEAR(GET_TC(tc)->iterator);
   Py_DECREF(GET_TC(tc)->dictObj);
   PRINTMARK();
@@ -318,7 +321,6 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   PyObject *items = NULL, *item = NULL, *key = NULL, *value = NULL;
   Py_ssize_t i, nitems;
-  PyObject* keyTmp;
 
   // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
   // standard library's _json.c sort_keys handler.
@@ -350,27 +352,11 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
       key = PyList_GetItem(items, i);
       value = PyDict_GetItem(GET_TC(tc)->dictObj, key);
 
-      // Subject the key to the same type restrictions and conversions as in Dict_iterGetValue.
-      if (PyUnicode_Check(key))
+      if (Dict_convertKey(&key) < 0)
       {
-        key = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
+        key = NULL;  // key is not owned at this point
+        goto error;
       }
-      else if (!PyBytes_Check(key))
-      {
-        key = PyObject_Str(key);
-        if (PyErr_Occurred())
-        {
-          goto error;
-        }
-        keyTmp = key;
-        key = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
-        Py_DECREF(keyTmp);
-      }
-      else
-      {
-        Py_INCREF(key);
-      }
-
       item = PyTuple_Pack(2, key, value);
       if (item == NULL)
       {

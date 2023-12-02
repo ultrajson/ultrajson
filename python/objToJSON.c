@@ -59,8 +59,6 @@ typedef struct __TypeContext
   Py_ssize_t size;
   PyObject *itemValue;
   PyObject *itemName;
-  PyObject *attrList;
-  PyObject *iterator;
 
   union
   {
@@ -77,13 +75,6 @@ typedef struct __TypeContext
 
 // Avoid infinite loop caused by the default function
 #define DEFAULT_FN_MAX_DEPTH 3
-
-struct PyDictIterState
-{
-  PyObject *keys;
-  size_t i;
-  size_t sz;
-};
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
@@ -102,11 +93,7 @@ static void *PyLongToUINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, siz
 
 static void *PyLongToINTSTR(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  PyObject *obj = PyNumber_ToBase(_obj, 10);
-  if (!obj)
-  {
-    return NULL;
-  }
+  PyObject *obj = GET_TC(tc)->rawJSONValue;
   *_outLen = PyUnicode_GET_LENGTH(obj);
   return PyUnicode_1BYTE_DATA(obj);
 }
@@ -121,8 +108,8 @@ static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = (PyObject *) _obj;
-  *_outLen = PyBytes_Size(obj);
-  return PyBytes_AsString(obj);
+  *_outLen = PyBytes_GET_SIZE(obj);
+  return PyBytes_AS_STRING(obj);
 }
 
 static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesObj)
@@ -151,8 +138,8 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
     return NULL;
   }
 
-  *_outLen = PyBytes_Size(bytesObj);
-  return PyBytes_AsString(bytesObj);
+  *_outLen = PyBytes_GET_SIZE(bytesObj);
+  return PyBytes_AS_STRING(bytesObj);
 }
 
 static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -175,16 +162,12 @@ static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
 
 static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-  PyObject *item;
-
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
   {
     return 0;
   }
 
-  item = PyTuple_GetItem (obj, GET_TC(tc)->index);
-
-  GET_TC(tc)->itemValue = item;
+  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(obj, GET_TC(tc)->index);
   GET_TC(tc)->index ++;
   return 1;
 }
@@ -198,11 +181,6 @@ static JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
   return GET_TC(tc)->itemValue;
 }
 
-static char *Tuple_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
-{
-  return NULL;
-}
-
 static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
@@ -211,7 +189,7 @@ static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyList_GetItem (obj, GET_TC(tc)->index);
+  GET_TC(tc)->itemValue = PyList_GET_ITEM(obj, GET_TC(tc)->index);
   GET_TC(tc)->index ++;
   return 1;
 }
@@ -223,11 +201,6 @@ static void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->itemValue;
-}
-
-static char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
-{
-  return NULL;
 }
 
 //=============================================================================
@@ -272,28 +245,18 @@ static int Dict_convertKey(PyObject** pkey)
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-  PyObject* itemNameTmp;
-
   Py_CLEAR(GET_TC(tc)->itemName);
-
-  if (!(GET_TC(tc)->itemName = PyIter_Next(GET_TC(tc)->iterator)))
+  if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &GET_TC(tc)->itemName,
+                   &GET_TC(tc)->itemValue))
   {
     PRINTMARK();
     return 0;
   }
-
-  if (!(GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, GET_TC(tc)->itemName)))
-  {
-    PRINTMARK();
-    return 0;
-  }
-
-  itemNameTmp = GET_TC(tc)->itemName;
   if (Dict_convertKey(&GET_TC(tc)->itemName) < 0)
   {
+    GET_TC(tc)->itemName = NULL;  // itemName is not owned at this point
     return -1;
   }
-  Py_DECREF(itemNameTmp);
   PRINTMARK();
   return 1;
 }
@@ -301,7 +264,6 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 static void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_CLEAR(GET_TC(tc)->itemName);
-  Py_CLEAR(GET_TC(tc)->iterator);
   Py_DECREF(GET_TC(tc)->dictObj);
   PRINTMARK();
 }
@@ -313,8 +275,8 @@ static JSOBJ Dict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 
 static char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 {
-  *outLen = PyBytes_Size(GET_TC(tc)->itemName);
-  return PyBytes_AsString(GET_TC(tc)->itemName);
+  *outLen = PyBytes_GET_SIZE(GET_TC(tc)->itemName);
+  return PyBytes_AS_STRING(GET_TC(tc)->itemName);
 }
 
 static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
@@ -346,10 +308,10 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     }
 
     // Obtain the value for each key, and pack a list of (key, value) 2-tuples.
-    nitems = PyList_Size(items);
+    nitems = PyList_GET_SIZE(items);
     for (i = 0; i < nitems; i++)
     {
-      key = PyList_GetItem(items, i);
+      key = PyList_GET_ITEM(items, i);
       value = PyDict_GetItem(GET_TC(tc)->dictObj, key);
 
       if (Dict_convertKey(&key) < 0)
@@ -380,9 +342,9 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  item = PyList_GetItem(GET_TC(tc)->newObj, GET_TC(tc)->index);
-  GET_TC(tc)->itemName = PyTuple_GetItem(item, 0);
-  GET_TC(tc)->itemValue = PyTuple_GetItem(item, 1);
+  item = PyList_GET_ITEM(GET_TC(tc)->newObj, GET_TC(tc)->index);
+  GET_TC(tc)->itemName = PyTuple_GET_ITEM(item, 0);
+  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(item, 1);
   GET_TC(tc)->index++;
   return 1;
 
@@ -402,17 +364,6 @@ static void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
   PRINTMARK();
 }
 
-static JSOBJ SortedDict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
-{
-  return GET_TC(tc)->itemValue;
-}
-
-static char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
-{
-  *outLen = PyBytes_Size(GET_TC(tc)->itemName);
-  return PyBytes_AsString(GET_TC(tc)->itemName);
-}
-
 static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
 {
   pc->dictObj = dictObj;
@@ -420,23 +371,20 @@ static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder 
   {
     pc->iterEnd = SortedDict_iterEnd;
     pc->iterNext = SortedDict_iterNext;
-    pc->iterGetValue = SortedDict_iterGetValue;
-    pc->iterGetName = SortedDict_iterGetName;
-    pc->index = 0;
   }
   else
   {
     pc->iterEnd = Dict_iterEnd;
     pc->iterNext = Dict_iterNext;
-    pc->iterGetValue = Dict_iterGetValue;
-    pc->iterGetName = Dict_iterGetName;
-    pc->iterator = PyObject_GetIter(dictObj);
   }
+  pc->iterGetValue = Dict_iterGetValue;
+  pc->iterGetName = Dict_iterGetName;
+  pc->index = 0;
 }
 
 static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
-  PyObject *obj, *objRepr, *exc, *defaultFn, *newObj;
+  PyObject *obj, *objRepr, *defaultFn, *newObj;
   int level = 0;
   TypeContext *pc;
   PRINTMARK();
@@ -461,8 +409,6 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   pc->dictObj = NULL;
   pc->itemValue = NULL;
   pc->itemName = NULL;
-  pc->iterator = NULL;
-  pc->attrList = NULL;
   pc->index = 0;
   pc->size = 0;
   pc->longValue = 0;
@@ -488,39 +434,34 @@ BEGIN:
     pc->PyTypeToJSON = PyLongToINT64;
     tc->type = JT_LONG;
     GET_TC(tc)->longValue = PyLong_AsLongLong(obj);
-
-    exc = PyErr_Occurred();
-    if (!exc)
+    if (!(GET_TC(tc)->longValue == -1 && PyErr_Occurred()))
     {
-        return;
-    }
-
-    if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
-    {
-      PyErr_Clear();
-      pc->PyTypeToJSON = PyLongToUINT64;
-      tc->type = JT_ULONG;
-      GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
-
-      exc = PyErr_Occurred();
-    }
-
-    if (exc && PyErr_ExceptionMatches(PyExc_OverflowError))
-    {
-      PyErr_Clear();
-      pc->PyTypeToJSON = PyLongToINTSTR;
-      tc->type = JT_RAW;
-      // Overwritten by PyLong_* due to the union, which would lead to a DECREF in endTypeContext.
-      GET_TC(tc)->rawJSONValue = NULL;
       return;
     }
-
-    if (exc)
+    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
     {
-      PRINTMARK();
       goto INVALID;
     }
-
+    PyErr_Clear();
+    pc->PyTypeToJSON = PyLongToUINT64;
+    tc->type = JT_ULONG;
+    GET_TC(tc)->unsignedLongValue = PyLong_AsUnsignedLongLong(obj);
+    if (!(GET_TC(tc)->unsignedLongValue == (unsigned long long)-1 && PyErr_Occurred()))
+    {
+      return;
+    }
+    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+    {
+      goto INVALID;
+    }
+    PyErr_Clear();
+    GET_TC(tc)->rawJSONValue = PyNumber_ToBase(obj, 10);
+    if (!GET_TC(tc)->rawJSONValue)
+    {
+      goto INVALID;
+    }
+    pc->PyTypeToJSON = PyLongToINTSTR;
+    tc->type = JT_RAW;
     return;
   }
   else
@@ -529,7 +470,7 @@ BEGIN:
     PRINTMARK();
     if (enc->rejectBytes)
     {
-      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AsString(obj));
+      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AS_STRING(obj));
       goto INVALID;
     }
     else
@@ -577,9 +518,8 @@ ISITERABLE:
     pc->iterEnd = List_iterEnd;
     pc->iterNext = List_iterNext;
     pc->iterGetValue = List_iterGetValue;
-    pc->iterGetName = List_iterGetName;
     GET_TC(tc)->index =  0;
-    GET_TC(tc)->size = PyList_Size( (PyObject *) obj);
+    GET_TC(tc)->size = PyList_GET_SIZE( (PyObject *) obj);
     return;
   }
   else
@@ -590,9 +530,8 @@ ISITERABLE:
     pc->iterEnd = Tuple_iterEnd;
     pc->iterNext = Tuple_iterNext;
     pc->iterGetValue = Tuple_iterGetValue;
-    pc->iterGetName = Tuple_iterGetName;
     GET_TC(tc)->index = 0;
-    GET_TC(tc)->size = PyTuple_Size( (PyObject *) obj);
+    GET_TC(tc)->size = PyTuple_GET_SIZE( (PyObject *) obj);
     GET_TC(tc)->itemValue = NULL;
 
     return;
@@ -600,12 +539,7 @@ ISITERABLE:
 
   if (UNLIKELY(PyObject_HasAttrString(obj, "toDict")))
   {
-    PyObject* toDictFunc = PyObject_GetAttrString(obj, "toDict");
-    PyObject* tuple = PyTuple_New(0);
-    PyObject* toDictResult = PyObject_Call(toDictFunc, tuple, NULL);
-    Py_DECREF(tuple);
-    Py_DECREF(toDictFunc);
-
+    PyObject* toDictResult = PyObject_CallMethod(obj, "toDict", NULL);
     if (toDictResult == NULL)
     {
       goto INVALID;
@@ -613,9 +547,10 @@ ISITERABLE:
 
     if (!PyDict_Check(toDictResult))
     {
+      PyErr_Format(PyExc_TypeError, "toDict() should return a dict, got %s",
+                   Py_TYPE(toDictResult)->tp_name);
       Py_DECREF(toDictResult);
-      tc->type = JT_NULL;
-      return;
+      goto INVALID;
     }
 
     PRINTMARK();
@@ -626,27 +561,17 @@ ISITERABLE:
   else
   if (UNLIKELY(PyObject_HasAttrString(obj, "__json__")))
   {
-    PyObject* toJSONFunc = PyObject_GetAttrString(obj, "__json__");
-    PyObject* tuple = PyTuple_New(0);
-    PyObject* toJSONResult = PyObject_Call(toJSONFunc, tuple, NULL);
-    Py_DECREF(tuple);
-    Py_DECREF(toJSONFunc);
-
+    PyObject* toJSONResult = PyObject_CallMethod(obj, "__json__", NULL);
     if (toJSONResult == NULL)
     {
       goto INVALID;
     }
 
-    if (PyErr_Occurred())
-    {
-      Py_DECREF(toJSONResult);
-      goto INVALID;
-    }
-
     if (!PyBytes_Check(toJSONResult) && !PyUnicode_Check(toJSONResult))
     {
+      PyErr_Format(PyExc_TypeError, "__json__() should return str or bytes, got %s",
+                   Py_TYPE(toJSONResult)->tp_name);
       Py_DECREF(toJSONResult);
-      PyErr_Format (PyExc_TypeError, "expected string");
       goto INVALID;
     }
 
@@ -657,7 +582,6 @@ ISITERABLE:
     return;
   }
 
-DEFAULT:
   if (defaultFn)
   {
     // Break infinite loop
@@ -694,7 +618,7 @@ DEFAULT:
   PyObject* str = PyUnicode_AsEncodedString(objRepr, NULL, "strict");
   if (str)
   {
-    PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AsString(str));
+    PyErr_Format (PyExc_TypeError, "%s is not JSON serializable", PyBytes_AS_STRING(str));
   }
   Py_XDECREF(str);
   Py_DECREF(objRepr);
@@ -889,26 +813,18 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
       PyErr_SetString(PyExc_TypeError, "expected tuple or None as separator");
       return NULL;
     }
-    if (PyTuple_Size (oseparators) != 2)
+    if (PyTuple_GET_SIZE(oseparators) != 2)
     {
       PyErr_SetString(PyExc_ValueError, "expected tuple of size 2 as separator");
       return NULL;
     }
-    oseparatorsItem = PyTuple_GetItem(oseparators, 0);
-    if (PyErr_Occurred())
-    {
-      return NULL;
-    }
+    oseparatorsItem = PyTuple_GET_ITEM(oseparators, 0);
     if (!PyUnicode_Check(oseparatorsItem))
     {
       PyErr_SetString(PyExc_TypeError, "expected str as item separator");
       return NULL;
     }
-    oseparatorsKey = PyTuple_GetItem(oseparators, 1);
-    if (PyErr_Occurred())
-    {
-      return NULL;
-    }
+    oseparatorsKey = PyTuple_GET_ITEM(oseparators, 1);
     if (!PyUnicode_Check(oseparatorsKey))
     {
       PyErr_SetString(PyExc_TypeError, "expected str as key separator");
@@ -957,10 +873,12 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   Py_XDECREF(separatorsItemBytes);
   Py_XDECREF(separatorsKeyBytes);
 
-  if (encoder.errorMsg && !PyErr_Occurred())
+  if (encoder.errorMsg)
   {
     // If there is an error message and we don't already have a Python exception, set one.
-    PyErr_Format (PyExc_OverflowError, "%s", encoder.errorMsg);
+    if (!PyErr_Occurred())
+      PyErr_Format(PyExc_OverflowError, "%s", encoder.errorMsg);
+    return NULL;
   }
 
   if (PyErr_Occurred())

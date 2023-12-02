@@ -198,8 +198,8 @@ def test_encode_symbols():
     assert s == decoded
 
 
-def test_encode_long_neg_conversion():
-    test_input = -9223372036854775808
+@pytest.mark.parametrize("test_input", [-1, -9223372036854775808, 18446744073709551615])
+def test_encode_special_longs(test_input):
     output = ujson.encode(test_input)
 
     json.loads(output)
@@ -488,6 +488,30 @@ def test_object_with_json_attribute_error():
     # If __json__ raises an error, make sure python actually raises it.
     class JSONTest:
         def __json__(self):
+            raise AttributeError
+
+    d = {"key": JSONTest()}
+    with pytest.raises(AttributeError):
+        ujson.encode(d)
+
+
+def test_object_with_to_dict_type_error():
+    # toDict must return a dict, otherwise it should raise an error.
+    for return_value in (None, 1234, 12.34, True, "json"):
+
+        class JSONTest:
+            def toDict(self):
+                return return_value
+
+        d = {"key": JSONTest()}
+        with pytest.raises(TypeError):
+            ujson.encode(d)
+
+
+def test_object_with_to_dict_attribute_error():
+    # If toDict raises an error, make sure python actually raises it.
+    class JSONTest:
+        def toDict(self):
             raise AttributeError
 
     d = {"key": JSONTest()}

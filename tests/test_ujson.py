@@ -576,6 +576,13 @@ def test_sort_keys():
     assert sorted_keys == '{"a":1,"b":1,"c":1,"d":1,"e":1,"f":1}'
 
 
+def test_sort_keys_unordered():
+    data = {"a": 1, 1: 2, None: 3}
+    assert ujson.dumps(data) == '{"a":1,"1":2,"null":3}'
+    with pytest.raises(TypeError):
+        ujson.dumps(data, sort_keys=True)
+
+
 @pytest.mark.parametrize(
     "test_input",
     [

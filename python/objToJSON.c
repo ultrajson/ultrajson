@@ -209,52 +209,48 @@ static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
 // itemValue is borrowed from object (which is dict). No refCounting
 //=============================================================================
 
-static int Dict_convertKey(PyObject** pkey)
+static PyObject* Dict_convertKey(PyObject* key)
 {
-  PyObject* key = *pkey;
   if (PyUnicode_Check(key))
   {
-    *pkey = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
-    return 1;
+    return PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
   }
   if (PyBytes_Check(key))
   {
     Py_INCREF(key);
-    return 1;
+    return key;
   }
   if (UNLIKELY(PyBool_Check(key)))
   {
-    *pkey = PyBytes_FromString(key == Py_True ? "true" : "false");
-    return 1;
+    return PyBytes_FromString(key == Py_True ? "true" : "false");
   }
   if (UNLIKELY(key == Py_None))
   {
-    *pkey = PyBytes_FromString("null");
-    return 1;
+    return PyBytes_FromString("null");
   }
-  key = PyObject_Str(key);
-  if (!key)
+  PyObject* keystr = PyObject_Str(key);
+  if (!keystr)
   {
     PRINTMARK();
-    return -1;
+    return NULL;
   }
-  *pkey = PyUnicode_AsEncodedString(key, NULL, "surrogatepass");
-  Py_DECREF(key);
-  return 1;
+  key = PyUnicode_AsEncodedString(keystr, NULL, "surrogatepass");
+  Py_DECREF(keystr);
+  return key;
 }
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-  Py_CLEAR(GET_TC(tc)->itemName);
-  if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &GET_TC(tc)->itemName,
-                   &GET_TC(tc)->itemValue))
+  PyObject* key;
+  if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &key, &GET_TC(tc)->itemValue))
   {
     PRINTMARK();
     return 0;
   }
-  if (Dict_convertKey(&GET_TC(tc)->itemName) < 0)
+  Py_XDECREF(GET_TC(tc)->itemName);
+  GET_TC(tc)->itemName = Dict_convertKey(key);
+  if (!GET_TC(tc)->itemName)
   {
-    GET_TC(tc)->itemName = NULL;  // itemName is not owned at this point
     return -1;
   }
   PRINTMARK();
@@ -281,59 +277,25 @@ static char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
-  PyObject *items = NULL, *item = NULL, *key = NULL, *value = NULL;
-  Py_ssize_t i, nitems;
-
   // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
   // standard library's _json.c sort_keys handler.
   if (GET_TC(tc)->newObj == NULL)
   {
     // Obtain the list of keys from the dictionary.
-    items = PyMapping_Keys(GET_TC(tc)->dictObj);
-    if (items == NULL)
+    PyObject *keys = PyDict_Keys(GET_TC(tc)->dictObj);
+    if (keys == NULL)
     {
-      goto error;
+      return -1;
     }
-    else if (!PyList_Check(items))
-    {
-      PyErr_SetString(PyExc_ValueError, "keys must return list");
-      goto error;
-    }
-
     // Sort the list.
-    if (PyList_Sort(items) < 0)
+    if (PyList_Sort(keys) < 0)
     {
-      PyErr_SetString(PyExc_ValueError, "unorderable keys");
-      goto error;
+      Py_DECREF(keys);
+      return -1;
     }
-
-    // Obtain the value for each key, and pack a list of (key, value) 2-tuples.
-    nitems = PyList_GET_SIZE(items);
-    for (i = 0; i < nitems; i++)
-    {
-      key = PyList_GET_ITEM(items, i);
-      value = PyDict_GetItem(GET_TC(tc)->dictObj, key);
-
-      if (Dict_convertKey(&key) < 0)
-      {
-        key = NULL;  // key is not owned at this point
-        goto error;
-      }
-      item = PyTuple_Pack(2, key, value);
-      if (item == NULL)
-      {
-        goto error;
-      }
-      if (PyList_SetItem(items, i, item))
-      {
-        goto error;
-      }
-      Py_DECREF(key);
-    }
-
-    // Store the sorted list of tuples in the newObj slot.
-    GET_TC(tc)->newObj = items;
-    GET_TC(tc)->size = nitems;
+    // Store the sorted list of keys in the newObj slot.
+    GET_TC(tc)->newObj = keys;
+    GET_TC(tc)->size = PyList_GET_SIZE(keys);
   }
 
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
@@ -342,26 +304,20 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  item = PyList_GET_ITEM(GET_TC(tc)->newObj, GET_TC(tc)->index);
-  GET_TC(tc)->itemName = PyTuple_GET_ITEM(item, 0);
-  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(item, 1);
+  PyObject* key = PyList_GET_ITEM(GET_TC(tc)->newObj, GET_TC(tc)->index);
+  Py_XDECREF(GET_TC(tc)->itemName);
+  GET_TC(tc)->itemName = Dict_convertKey(key);
+  if (!GET_TC(tc)->itemName)
+  {
+    return -1;
+  }
+  GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
+  if (!GET_TC(tc)->itemValue)
+  {
+    return -1;
+  }
   GET_TC(tc)->index++;
   return 1;
-
-error:
-  Py_XDECREF(item);
-  Py_XDECREF(key);
-  Py_XDECREF(value);
-  Py_XDECREF(items);
-  return -1;
-}
-
-static void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
-{
-  GET_TC(tc)->itemName = NULL;
-  GET_TC(tc)->itemValue = NULL;
-  Py_DECREF(GET_TC(tc)->dictObj);
-  PRINTMARK();
 }
 
 static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
@@ -369,14 +325,13 @@ static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder 
   pc->dictObj = dictObj;
   if (enc->sortKeys)
   {
-    pc->iterEnd = SortedDict_iterEnd;
     pc->iterNext = SortedDict_iterNext;
   }
   else
   {
-    pc->iterEnd = Dict_iterEnd;
     pc->iterNext = Dict_iterNext;
   }
+  pc->iterEnd = Dict_iterEnd;
   pc->iterGetValue = Dict_iterGetValue;
   pc->iterGetName = Dict_iterGetName;
   pc->index = 0;

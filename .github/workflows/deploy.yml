@@ -29,7 +29,7 @@ jobs:
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: pip
@@ -53,9 +53,9 @@ jobs:
           CIBW_TEST_COMMAND: pytest {package}/tests
 
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}
           path: dist/*.whl
 
   build-QEMU-emulated-wheels:
@@ -77,7 +77,7 @@ jobs:
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: pip
@@ -110,9 +110,9 @@ jobs:
           CIBW_TEST_COMMAND: pytest {package}/tests
 
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-qemu-${{ matrix.python-version }}
           path: dist/*.whl
 
   build-sdist-and-upload:
@@ -128,7 +128,7 @@ jobs:
             git fetch --prune --unshallow
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: pip
@@ -140,9 +140,10 @@ jobs:
           python -m pip install -U build twine
 
       - name: Download wheels from build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
+          merge-multiple: true
           path: dist-wheels/
 
       - name: Build package

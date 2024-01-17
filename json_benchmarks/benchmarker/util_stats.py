@@ -190,8 +190,8 @@ def combine_stats(s1, s2):
         >>>     assert np.allclose(compare.raw, compare.combo)
 
     References:
-        https://stackoverflow.com/questions/7753002/adding-combining-standard-deviations
-        https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
+        .. [SO7753002] https://stackoverflow.com/questions/7753002/adding-combining-standard-deviations
+        .. [SO2971315] https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
     """
     stats = [s1, s2]
     data = {
@@ -201,7 +201,7 @@ def combine_stats(s1, s2):
         "min": np.array([s["min"] for s in stats]),
         "max": np.array([s["max"] for s in stats]),
     }
-    combine_stats_arrs(data)
+    return combine_stats_arrs(data)
 
 
 def combine_stats_arrs(data):

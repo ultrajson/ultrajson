@@ -911,13 +911,20 @@ class ResultAnalysis(ub.NiceRepr):
             )
             from json_benchmarks.benchmarker.util_stats import aggregate_stats
 
-            facet_data_groups = dict(list(facet.data.groupby(facet._col_var)))
+            # print(f'facet._col_var={facet._col_var}')
+            if facet._col_var is not None:
+                facet_data_groups = dict(list(facet.data.groupby(facet._col_var)))
+            else:
+                facet_data_groups = None
             # facet_data_group_iter = iter(facet_data_groups.keys())
 
             for ax in facet.axes.ravel():
                 col_key = ax.get_title().split("=", 1)[-1].strip()
                 # col_key = next(facet_data_group_iter)
-                col_data = facet_data_groups[col_key]
+                if facet_data_groups is not None:
+                    col_data = facet_data_groups[col_key]
+                else:
+                    col_data = facet.data
                 col_data["mean_time"]
                 col_data["std_time"]
                 xlabel = plot_kws["x"]

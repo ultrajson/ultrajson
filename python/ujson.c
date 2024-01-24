@@ -59,7 +59,8 @@ PyObject* JSONDecodeError;
     "Set encode_html_chars=True to encode < > & as unicode escape sequences. "\
     "Set escape_forward_slashes=False to prevent escaping / characters." \
     "Set allow_nan=False to raise an exception when NaN or Infinity would be serialized." \
-    "Set reject_bytes=True to raise TypeError on bytes."
+    "Set reject_bytes=True to raise TypeError on bytes." \
+    "Set zero_pad_negative_9_to_5_exponent=True to add 0-pad for exponents -9 to -5."
 
 static PyMethodDef ujsonMethods[] = {
   {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},

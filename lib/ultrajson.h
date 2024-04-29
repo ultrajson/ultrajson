@@ -347,49 +347,11 @@ typedef struct __JSONObjectDecoder
   char *errorStr;
   char *errorOffset;
   void *prv;
-  void *s2d;
 } JSONObjectDecoder;
 
 EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
 
-#define DCONV_DECIMAL_IN_SHORTEST_LOW -4
-#define DCONV_DECIMAL_IN_SHORTEST_HIGH 16
-
-enum dconv_d2s_flags {
-  DCONV_D2S_NO_FLAGS = 0,
-  DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN = 1,
-  DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT = 2,
-  DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT = 4,
-  DCONV_D2S_UNIQUE_ZERO = 8
-};
-
-enum dconv_s2d_flags
-{
-  DCONV_S2D_NO_FLAGS = 0,
-  DCONV_S2D_ALLOW_HEX = 1,
-  DCONV_S2D_ALLOW_OCTALS = 2,
-  DCONV_S2D_ALLOW_TRAILING_JUNK = 4,
-  DCONV_S2D_ALLOW_LEADING_SPACES = 8,
-  DCONV_S2D_ALLOW_TRAILING_SPACES = 16,
-  DCONV_S2D_ALLOW_SPACES_AFTER_SIGN = 32
-};
-
-void dconv_d2s_init(void **d2s,
-                    int flags,
-                    const char* infinity_symbol,
-                    const char* nan_symbol,
-                    char exponent_character,
-                    int decimal_in_shortest_low,
-                    int decimal_in_shortest_high,
-                    int max_leading_padding_zeroes_in_precision_mode,
-                    int max_trailing_padding_zeroes_in_precision_mode);
-int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength);
-void dconv_d2s_free(void **d2s);
-
-void dconv_s2d_init(void **s2d, int flags, double empty_string_value,
-                    double junk_string_value, const char* infinity_symbol,
-                    const char* nan_symbol);
-double dconv_s2d(void *s2d, const char* buffer, int length, int* processed_characters_count);
-void dconv_s2d_free(void **s2d);
+int dconv_d2s(double value, char* buf, int buflen, int* strlength, int allow_nan);
+double dconv_s2d(const char* buffer, int length, int* processed_characters_count);
 
 #endif

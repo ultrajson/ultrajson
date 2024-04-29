@@ -403,7 +403,6 @@ class DoubleToStringConverter {
                             int* length,
                             int* point);
 
- private:
   // Implementation for ToShortest and ToShortestSingle.
   bool ToShortestIeeeNumber(double value,
                             StringBuilder* result_builder,
@@ -428,8 +427,8 @@ class DoubleToStringConverter {
                                    StringBuilder* result_builder) const;
 
   const int flags_;
-  const char* const infinity_symbol_;
-  const char* const nan_symbol_;
+  const char* infinity_symbol_;
+  const char* nan_symbol_;
   const char exponent_character_;
   const int decimal_in_shortest_low_;
   const int decimal_in_shortest_high_;

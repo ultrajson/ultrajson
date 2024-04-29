@@ -82,7 +82,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
   /* Prevent int overflow if ds->end - ds->start is too large. See check_decode_decimal_no_int_overflow()
   inside tests/test_ujson.py for an example where this check is necessary. */
   int len = ((size_t) (ds->end - ds->start) < (size_t) INT_MAX) ? (int) (ds->end - ds->start) : INT_MAX;
-  double value = dconv_s2d(ds->dec->s2d, ds->start, len, &processed_characters_count);
+  double value = dconv_s2d(ds->start, len, &processed_characters_count);
   ds->lastType = JT_DOUBLE;
   ds->start += processed_characters_count;
   return ds->dec->newDouble(ds->prv, value);

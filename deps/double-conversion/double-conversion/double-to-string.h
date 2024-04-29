@@ -403,7 +403,7 @@ class DoubleToStringConverter {
                             int* length,
                             int* point);
 
-private:
+ private:
   // Implementation for ToShortest and ToShortestSingle.
   bool ToShortestIeeeNumber(double value,
                             StringBuilder* result_builder,

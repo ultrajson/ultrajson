@@ -39,7 +39,7 @@ namespace double_conversion
       d2s = &d2s_wo_nan;
     }
 
-		
+
         StringBuilder sb(buf, buflen);
         int success =  static_cast<int>(d2s->ToShortest(value, &sb));
         *strlength = success ? sb.position() : -1;

@@ -29,17 +29,10 @@ namespace double_conversion
     int dconv_d2s(double value, char* buf, int buflen, int* strlength, int allow_nan)
     {
         static auto d2s = DoubleToStringConverter(DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
-                 "Inf", "NaN", 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
-        if(allow_nan)
-        {
-            d2s.nan_symbol_ = "NaN";
-            d2s.infinity_symbol_ = "Infinity";
-        }else{
-            d2s.nan_symbol_ = NULL;
-            d2s.infinity_symbol_ = NULL;
-        }
+                 "Infinity", "NaN", 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
         StringBuilder sb(buf, buflen);
         int success =  static_cast<int>(d2s.ToShortest(value, &sb));
+        success = success && (!allow_nan || (strcmp(buf, "NaN") != 0 && strcmp(buf, "Infinity") != 0));
         *strlength = success ? sb.position() : -1;
         return success;
     }

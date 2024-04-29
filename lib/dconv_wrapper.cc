@@ -28,11 +28,20 @@ namespace double_conversion
   {
     int dconv_d2s(double value, char* buf, int buflen, int* strlength, int allow_nan)
     {
-        static DoubleToStringConverter d2s(DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
-                 "Infinity", "NaN", 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
+    DoubleToStringConverter* d2s;
+		if(allow_nan){
+      static DoubleToStringConverter d2s_w_nan(DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
+                    "Infinity", "NaN", 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
+      d2s = &d2s_w_nan;
+    }else{
+      static DoubleToStringConverter d2s_wo_nan(DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
+                 NULL, NULL, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
+      d2s = &d2s_wo_nan;
+    }
+
+		
         StringBuilder sb(buf, buflen);
-        int success =  static_cast<int>(d2s.ToShortest(value, &sb));
-        success = success && (!allow_nan || ((strcmp(buf, "NaN") != 0 && strcmp(buf, "Infinity") != 0 && strcmp(buf, "-Infinity") != 0)));
+        int success =  static_cast<int>(d2s->ToShortest(value, &sb));
         *strlength = success ? sb.position() : -1;
         return success;
     }

@@ -32,7 +32,7 @@ namespace double_conversion
                  "Infinity", "NaN", 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
         StringBuilder sb(buf, buflen);
         int success =  static_cast<int>(d2s.ToShortest(value, &sb));
-        success = success && (!allow_nan || ((strcmp(buf, "NaN") != 0 && strcmp(buf, "Infinity") != 0)));
+        success = success && (!allow_nan || ((strcmp(buf, "NaN") != 0 && strcmp(buf, "Infinity") != 0 && strcmp(buf, "-Infinity") != 0)));
         *strlength = success ? sb.position() : -1;
         return success;
     }

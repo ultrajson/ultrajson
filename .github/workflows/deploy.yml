@@ -37,7 +37,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.18.0
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -71,6 +71,7 @@ jobs:
           - cp310
           - cp311
           - cp312
+          - cp313
 
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +90,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.18.0
         with:
           output-dir: dist
         # Options are supplied via environment variables:

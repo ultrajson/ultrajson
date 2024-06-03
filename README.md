@@ -90,6 +90,19 @@ Controls whether indentation ("pretty output") is enabled. Default is `0` (disab
 }
 ```
 
+#### zero_pad_negative_9_to_5_exponent
+
+If true, adds a single `0` padding to the exponent in scientific notation if it
+is between `-9` and `-5` both inclusive, which replicates the Python standard
+library's `json` behavior.  Default is `False`:
+
+```pycon
+>>> ujson.dumps([1e-10, 1e-9, 1e-5, 1e-4])
+'[1e-10,1e-9,1e-5,0.0001]'
+>>> ujson.dumps([1e-10, 1e-9, 1e-5, 1e-4], zero_pad_negative_9_to_5_exponent=True)
+'[1e-10,1e-09,1e-05,0.0001]'
+```
+
 ## Benchmarks
 
 *UltraJSON* calls/sec compared to other popular JSON parsers with performance gain

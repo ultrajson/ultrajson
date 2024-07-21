@@ -25,9 +25,7 @@ python -m pip install ujson
 > has been put into a *maintenance-only* mode. Support for new Python versions
 > will be added and critical bugs and security issues will still be
 > fixed but all other changes will be rejected. Users are encouraged to migrate
-> to [orjson](https://pypi.org/project/orjson/) which is both much faster and
-> less likely to introduce a surprise buffer overflow vulnerability in the
-> future.
+> to any actively supported and up-to-date alternative library.
 
 ## Usage
 

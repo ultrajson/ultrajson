@@ -48,6 +48,8 @@ jobs:
           CIBW_ARCHS_LINUX: "x86_64 i686"
           # Include latest Python beta.
           CIBW_PRERELEASE_PYTHONS: True
+          # Skip EOL Python versions.
+          CIBW_SKIP: "pp38* pp39*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests
@@ -64,7 +66,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - pp39
           - pp310
           - cp38
           - cp39

@@ -49,7 +49,7 @@ jobs:
           # Include latest Python beta.
           CIBW_PRERELEASE_PYTHONS: True
           # Skip EOL Python versions.
-          CIBW_SKIP: "pp38* pp39*"
+          CIBW_SKIP: "pp39*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests
@@ -67,7 +67,6 @@ jobs:
       matrix:
         python-version:
           - pp310
-          - cp38
           - cp39
           - cp310
           - cp311

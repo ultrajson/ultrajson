@@ -47,7 +47,7 @@ jobs:
           # Build only on Linux architectures that don't need qemu emulation.
           CIBW_ARCHS_LINUX: "x86_64 i686"
           # Include latest Python beta.
-          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_ENABLE: cpython-prerelease
           # Skip EOL Python versions.
           CIBW_SKIP: "pp39*"
           # Run the test suite after each build.
@@ -101,7 +101,7 @@ jobs:
           # Likewise, select only one Python version per job to speed this up.
           CIBW_BUILD: "${{ matrix.python-version }}-*"
           # Include latest Python beta.
-          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_ENABLE: cpython-prerelease
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests

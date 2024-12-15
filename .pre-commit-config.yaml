@@ -1,12 +1,12 @@
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.19.0
     hooks:
       - id: pyupgrade
         args: [--py39-plus]
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.8.0
+    rev: 24.10.0
     hooks:
       - id: black
         args: [--target-version=py39]
@@ -39,8 +39,13 @@ repos:
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
 
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v0.9.1
+    hooks:
+      - id: zizmor
+
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.5.0
+    rev: v2.7.0
     hooks:
       - id: setup-cfg-fmt
         args: [--include-version-classifiers, --max-py-version=3.13]

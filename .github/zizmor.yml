@@ -1,0 +1,9 @@
+rules:
+  artipacked:
+    ignore:
+      - benchmark.yml
+      - deploy.yml
+      - fuzz.yml
+      - labels.yml
+      - lint.yml
+      - test.yml

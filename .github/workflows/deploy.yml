@@ -32,8 +32,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-          cache: pip
-          cache-dependency-path: ".github/workflows/deploy.yml"
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
@@ -128,8 +126,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-          cache: pip
-          cache-dependency-path: "setup.py"
 
       - name: Install dependencies
         run: |

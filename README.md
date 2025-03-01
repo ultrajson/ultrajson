@@ -86,7 +86,7 @@ Controls whether indentation ("pretty output") is enabled. Default is `0` (disab
 '{"foo":"bar"}'
 >>> print(ujson.dumps({"foo": "bar"}, indent=4))
 {
-    "foo":"bar"
+    "foo": "bar"
 }
 ```
 

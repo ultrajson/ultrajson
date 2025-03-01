@@ -89,8 +89,6 @@ Controls whether indentation ("pretty output") is enabled. Default is `0` (disab
     "foo": "bar"
 }
 ```
-The space after the colon (`:`) was added in version 2.0. It was added for
-compatibility with `json` in the standard library.
 
 ## Benchmarks
 

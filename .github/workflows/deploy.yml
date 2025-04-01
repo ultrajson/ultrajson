@@ -43,7 +43,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.0
+        uses: pypa/cibuildwheel@v2.23.2
         with:
           output-dir: dist
         # Options are supplied via environment variables:

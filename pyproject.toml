@@ -1,7 +1,7 @@
 [build-system]
 requires = [
   "setuptools>=42",
-  'setuptools<72.2; implementation_name == "pypy"', # https://github.com/pypa/distutils/issues/283
+  'setuptools<78.2; implementation_name == "pypy"', # https://github.com/pypa/distutils/issues/283
   "setuptools_scm[toml]>=3.4",
 ]
 

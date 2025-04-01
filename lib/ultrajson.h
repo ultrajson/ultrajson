@@ -269,6 +269,12 @@ typedef struct __JSONObjectEncoder
   int rejectBytes;
 
   /*
+  If true, adds a single 0 padding to the exponent in scientific notation if it
+  is between -9 and -5 both inclusive, which replicates the Python standard
+  library's JSON behavior, e.g. 1e-5 will become 1e-05. */
+  int zeroPadNegative9to5Exponent;
+
+  /*
   Configuration for item and key separators, e.g. "," and ":" for a compact representation or ", " and ": " to match the Python standard library's defaults. */
   size_t itemSeparatorLength;
   const char *itemSeparatorChars;
@@ -382,7 +388,8 @@ void dconv_d2s_init(void **d2s,
                     int decimal_in_shortest_low,
                     int decimal_in_shortest_high,
                     int max_leading_padding_zeroes_in_precision_mode,
-                    int max_trailing_padding_zeroes_in_precision_mode);
+                    int max_trailing_padding_zeroes_in_precision_mode,
+                    int min_exponent_width);
 int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength);
 void dconv_d2s_free(void **d2s);
 

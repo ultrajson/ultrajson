@@ -1,6 +1,6 @@
 """
 Module: ultrajson
-Purpose: Provides the ultrajson library compileable as a Bazel target. Includes tests through Bazel
+Purpose: Provides the ultrajson library as a Bazel cc_library target
 """
 
 module(

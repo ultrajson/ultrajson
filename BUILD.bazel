@@ -1,0 +1,12 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "ultrajson",
+    srcs = [
+        "lib/ultrajsondec.c",
+        "lib/ultrajsonenc.c",
+    ],
+    hdrs = ["lib/ultrajson.h"],
+    includes = ["lib"],
+    visibility = ["//visibility:public"],
+)

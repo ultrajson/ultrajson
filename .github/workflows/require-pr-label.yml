@@ -17,6 +17,11 @@ jobs:
         with:
           mode: minimum
           count: 1
-          labels:
-            "changelog: Added, changelog: Changed, changelog: Deprecated, changelog:
-            Fixed, changelog: Removed, changelog: Security, changelog: skip"
+          labels: |
+            changelog: Added
+            changelog: Changed
+            changelog: Deprecated
+            changelog: Fixed
+            changelog: Removed
+            changelog: Security
+            changelog: skip

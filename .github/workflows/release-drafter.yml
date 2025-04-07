@@ -5,11 +5,21 @@ on:
     # branches to consider in the event; optional, defaults to all
     branches:
       - main
+  # pull_request event is required only for autolabeler
+  pull_request:
+    # Only following types are handled by the action, but one can default to all as well
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 jobs:
   update_release_draft:
     if: github.repository_owner == 'ultrajson'
+    permissions:
+      # write permission is required to create a GitHub Release
+      contents: write
+      # write permission is required for autolabeler
+      # otherwise, read permission is required at least
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       # Drafts your next release notes as pull requests are merged into "main"

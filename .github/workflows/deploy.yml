@@ -27,7 +27,7 @@ jobs:
           - os: windows-latest
             cibw_arch: "auto"
           - os: windows-11-arm
-            cibw_arch: "arm64"
+            cibw_arch: "ARM64"
           - os: macos-latest
             cibw_arch: "x86_64 arm64"
           - os: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           # Include latest Python beta.
           CIBW_ENABLE: cpython-prerelease pypy
           # Skip EOL Python versions.
-          CIBW_SKIP: "pp39*"
+          CIBW_SKIP: "pp39* pp*-win_arm64"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests

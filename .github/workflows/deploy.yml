@@ -26,6 +26,8 @@ jobs:
         include:
           - os: windows-latest
             cibw_arch: "auto"
+          - os: windows-11-arm
+            cibw_arch: "ARM64"
           - os: macos-latest
             cibw_arch: "x86_64 arm64"
           - os: ubuntu-latest

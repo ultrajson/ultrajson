@@ -16,8 +16,8 @@ case "${unameOut}" in
 esac
 
 # The actual gcov instructions:
-gcov "${gcov_options[@]}" python/**.c -o build/temp.*/python
-gcov "${gcov_options[@]}" lib/**.c -o build/temp.*/lib
+gcov "${gcov_options[@]}" src/ujson/python/**.c -o build/temp.*/src/ujson/python
+gcov "${gcov_options[@]}" src/ujson/lib/**.c -o build/temp.*/src/ujson/lib
 
 # gcov dumps everything in the cwd without any option to change this.
 # Manually move the .gcov files to a `cov` folder.

@@ -13,6 +13,8 @@ on:
       - published
   workflow_dispatch:
 
+permissions: {}
+
 env:
   FORCE_COLOR: 1
 

@@ -10,6 +10,8 @@ on:
       - "tests/benchmark.py"
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}

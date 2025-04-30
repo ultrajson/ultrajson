@@ -6,18 +6,18 @@ repos:
         args: [--py39-plus]
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
         args: [--target-version=py39]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
+    rev: 7.2.0
     hooks:
       - id: flake8
         additional_dependencies: [flake8-2020, flake8-implicit-str-concat]
@@ -40,12 +40,12 @@ repos:
         exclude: "^.github/.*_TEMPLATE.md"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.0.0
+    rev: v1.5.2
     hooks:
       - id: zizmor
 
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.7.0
+    rev: v2.8.0
     hooks:
       - id: setup-cfg-fmt
         args: [--include-version-classifiers, --max-py-version=3.13]

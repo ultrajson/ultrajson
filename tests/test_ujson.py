@@ -1217,7 +1217,7 @@ def test_enum(enum_classes, value, expected):
 
 
 def test_nested_json_decode_error():
-    """Test that parsing a nested json string raises JSONDecodeError and not SystemError."""
+    """Parsing a nested json string raises JSONDecodeError and not SystemError."""
 
     # Test that nested JSON with invalid format raises JSONDecodeError
     with pytest.raises(ujson.JSONDecodeError):

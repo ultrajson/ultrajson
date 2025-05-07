@@ -42,13 +42,22 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <ultrajson.h>
 #include "ujson.h"
 
+// Import JSONDecodeError from ujson.c
+extern PyObject* JSONDecodeError;
+
 
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
 static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
-  PyDict_SetItem (obj, name, value);
+  int result = PyDict_SetItem(obj, name, value);
+  if (result == -1) {
+    // Clear the Python error state to prevent SystemError
+    PyErr_Clear();
+    // Set our own error
+    PyErr_SetString(JSONDecodeError, "Invalid JSON: object keys must be strings");
+  }
   Py_DECREF( (PyObject *) name);
   Py_DECREF( (PyObject *) value);
   return;
@@ -246,6 +255,16 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   else
   {
     PyBuffer_Release(&buffer);
+  }
+
+  // Check if a Python error occurred during decoding
+  if (PyErr_Occurred())
+  {
+    if (ret)
+    {
+        Py_DECREF( (PyObject *) ret);
+    }
+    return NULL;
   }
 
   if (decoder.errorStr)

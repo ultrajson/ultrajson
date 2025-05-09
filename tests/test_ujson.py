@@ -1216,6 +1216,21 @@ def test_enum(enum_classes, value, expected):
     assert ujson.dumps(MyEnum.FOO) == expected
 
 
+def test_nested_json_decode_error():
+    """Parsing a nested json string raises JSONDecodeError and not SystemError."""
+
+    # Test that nested JSON with invalid format raises JSONDecodeError
+    with pytest.raises(ujson.JSONDecodeError):
+        ujson.loads(b'{{"a":"b"}:"c"}')
+
+    # Test with another nested JSON case
+    with pytest.raises(ujson.JSONDecodeError):
+        ujson.loads('{"a":{"b":"c"}:"d"}')
+
+    # Test that JSONDecodeError is a subclass of ValueError
+    assert issubclass(ujson.JSONDecodeError, ValueError)
+
+
 """
 The following checks are not part of the standard test suite.
 They can be run manually as follows:

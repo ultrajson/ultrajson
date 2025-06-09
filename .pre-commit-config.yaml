@@ -49,5 +49,11 @@ repos:
     hooks:
       - id: setup-cfg-fmt
         args: [--include-version-classifiers, --max-py-version=3.13]
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: 1.5.0
+    hooks:
+      - id: tox-ini-fmt
+
 ci:
   autoupdate_schedule: quarterly

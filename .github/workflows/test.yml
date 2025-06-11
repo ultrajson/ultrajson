@@ -65,6 +65,7 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -X gcov
 
       - name: Stubtest
+        if: "!startsWith(matrix.python-version, 'pypy')"
         run: |
           # Check that stubs have no omitted / extraneous symbols.
           # This does not check the signatures: https://github.com/python/mypy/issues/19261.

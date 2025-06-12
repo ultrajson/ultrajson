@@ -1,1 +1,1 @@
-include python/version.h
+include src/ujson/python/version.h

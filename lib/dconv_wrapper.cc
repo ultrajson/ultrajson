@@ -12,12 +12,13 @@ namespace double_conversion
                         int decimal_in_shortest_low,
                         int decimal_in_shortest_high,
                         int max_leading_padding_zeroes_in_precision_mode,
-                        int max_trailing_padding_zeroes_in_precision_mode)
+                        int max_trailing_padding_zeroes_in_precision_mode,
+                        int min_exponent_width)
     {
         *d2s = new DoubleToStringConverter(flags, infinity_symbol, nan_symbol,
                                         exponent_character, decimal_in_shortest_low,
                                         decimal_in_shortest_high, max_leading_padding_zeroes_in_precision_mode,
-                                        max_trailing_padding_zeroes_in_precision_mode);
+                                        max_trailing_padding_zeroes_in_precision_mode, min_exponent_width);
     }
 
     int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength)

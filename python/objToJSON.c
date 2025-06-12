@@ -659,7 +659,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
 
 PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 {
-  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", "separators", NULL };
+  static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", "separators", "zero_pad_negative_9_to_5_exponent", NULL };
 
   char buffer[65536];
   char *ret;
@@ -676,9 +676,11 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *separatorsItemBytes = NULL;
   PyObject *oseparatorsKey = NULL;
   PyObject *separatorsKeyBytes = NULL;
+  PyObject *ozero_pad_negative_9_to_5_exponent = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
   size_t retLen;
+  int minExponentWidth = 0;
 
   JSONObjectEncoder encoder =
   {
@@ -704,6 +706,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     0, //indent
     1, //allowNan
     1, //rejectBytes
+    0, //zeroPadNegative9to5Exponent
     0, //itemSeparatorLength
     NULL, //itemSeparatorChars
     0, //keySeparatorLength
@@ -714,7 +717,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators, &ozero_pad_negative_9_to_5_exponent))
   {
     return NULL;
   }
@@ -816,9 +819,14 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     }
   }
 
+  if (ozero_pad_negative_9_to_5_exponent != NULL && PyObject_IsTrue(ozero_pad_negative_9_to_5_exponent))
+  {
+    minExponentWidth = 2;
+  }
+
   encoder.d2s = NULL;
   dconv_d2s_init(&encoder.d2s, DCONV_D2S_EMIT_TRAILING_DECIMAL_POINT | DCONV_D2S_EMIT_TRAILING_ZERO_AFTER_POINT | DCONV_D2S_EMIT_POSITIVE_EXPONENT_SIGN,
-                 csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0);
+                 csInf, csNan, 'e', DCONV_DECIMAL_IN_SHORTEST_LOW, DCONV_DECIMAL_IN_SHORTEST_HIGH, 0, 0, minExponentWidth);
 
   PRINTMARK();
   ret = JSON_EncodeObject (oinput, &encoder, buffer, sizeof (buffer), &retLen);

@@ -134,6 +134,13 @@ parser.add_argument(
     "May be 0 or 1 or 0,1 to test both.",
 )
 parser.add_argument(
+    "--zero_pad_negative_9_to_5_exponent",
+    default=(0, 1),
+    action=ListOption,
+    help="Sets the zero_pad_negative_9_to_5_exponent option to ujson.dumps(). "
+    "May be 0 or 1 or 0,1 to test both.",
+)
+parser.add_argument(
     "--dump-python",
     action="store_true",
     help="Print the randomly generated object as a Python literal and exit.",

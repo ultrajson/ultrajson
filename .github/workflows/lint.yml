@@ -14,3 +14,29 @@ jobs:
         with:
           python-version: "3.x"
       - uses: pre-commit/action@v3.0.1
+
+  stubtest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+          cache: pip
+          cache-dependency-path: "setup.py"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -U mypy
+          python -m pip install .
+        env:
+          CFLAGS: '-DDEBUG'
+
+      - name: Run stubtest
+        run: |
+          # Check that stubs have no omitted / extraneous symbols.
+          # This does not check the signatures: https://github.com/python/mypy/issues/19261.
+          python -m mypy.stubtest ujson

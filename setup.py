@@ -9,15 +9,17 @@ dconv_includes = [
     dir
     for dir in environ.get(
         "UJSON_BUILD_DC_INCLUDES",
-        "./deps/double-conversion/double-conversion",
+        "./src/ujson/deps/double-conversion/double-conversion",
     ).split(pathsep)
     if dir
 ]
 dconv_libs = shlex.split(environ.get("UJSON_BUILD_DC_LIBS", ""))
 dconv_source_files = []
 if not dconv_libs:
-    dconv_source_files.extend(glob("./deps/double-conversion/double-conversion/*.cc"))
-dconv_source_files.append("./lib/dconv_wrapper.cc")
+    dconv_source_files.extend(
+        glob("./src/ujson/deps/double-conversion/double-conversion/*.cc")
+    )
+dconv_source_files.append("./src/ujson/lib/dconv_wrapper.cc")
 
 if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not in (
     "1",
@@ -31,18 +33,18 @@ module1 = Extension(
     "ujson",
     sources=dconv_source_files
     + [
-        "./python/ujson.c",
-        "./python/objToJSON.c",
-        "./python/JSONtoObj.c",
-        "./lib/ultrajsonenc.c",
-        "./lib/ultrajsondec.c",
+        "./src/ujson/python/ujson.c",
+        "./src/ujson/python/objToJSON.c",
+        "./src/ujson/python/JSONtoObj.c",
+        "./src/ujson/lib/ultrajsonenc.c",
+        "./src/ujson/lib/ultrajsondec.c",
     ],
-    include_dirs=["./python", "./lib"] + dconv_includes,
+    include_dirs=["./src/ujson/python", "./src/ujson/lib"] + dconv_includes,
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"] + dconv_libs + strip_flags,
 )
 
-with open("python/version_template.h") as f:
+with open("src/ujson/python/version_template.h") as f:
     version_template = f.read()
 
 
@@ -56,7 +58,7 @@ setup(
     ext_modules=[module1],
     use_scm_version={
         "local_scheme": local_scheme,
-        "write_to": "python/version.h",
+        "write_to": "src/ujson/python/version.h",
         "write_to_template": version_template,
     },
 )

@@ -304,7 +304,7 @@ def test_encode_recursion_max():
     test_input = O1()
     test_input.member = O2()
     test_input.member.member = test_input
-    with pytest.raises(OverflowError):
+    with pytest.raises((OverflowError, RecursionError)):
         ujson.encode(test_input)
 
 

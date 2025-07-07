@@ -7,3 +7,7 @@ rules:
       - labels.yml
       - lint.yml
       - test.yml
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

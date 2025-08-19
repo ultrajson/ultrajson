@@ -57,7 +57,7 @@ jobs:
           # Include latest Python beta.
           CIBW_ENABLE: cpython-prerelease pypy
           # Skip EOL Python versions.
-          CIBW_SKIP: "pp39*"
+          CIBW_SKIP: "pp310*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests

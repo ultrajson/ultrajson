@@ -29,7 +29,7 @@ repos:
       - id: rst-backticks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-json
       - id: check-merge-conflict
@@ -40,7 +40,7 @@ repos:
         exclude: "^.github/.*_TEMPLATE.md"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.11.0
+    rev: v1.12.1
     hooks:
       - id: zizmor
 
@@ -48,10 +48,10 @@ repos:
     rev: v2.8.0
     hooks:
       - id: setup-cfg-fmt
-        args: [--include-version-classifiers, --max-py-version=3.13]
+        args: [--include-version-classifiers, --max-py-version=3.14]
 
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.5.0
+    rev: 1.6.0
     hooks:
       - id: tox-ini-fmt
 

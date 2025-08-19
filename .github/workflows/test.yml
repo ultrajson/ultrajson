@@ -13,14 +13,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["pypy-3.11", "pypy-3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version:
+          - "pypy3.11"
+          - "3.14t"
+          - "3.14"
+          - "3.13t"
+          - "3.13"
+          - "3.12"
+          - "3.11"
+          - "3.10"
+          - "3.9"
         os: [ubuntu-latest]
         include:
           - { python-version: "pypy-3.11", os: windows-latest }
           - { python-version: "pypy-3.11", os: macos-latest }
           - { python-version: "3.13", os: windows-latest }
           - { python-version: "3.13", os: macos-latest }
-          # - { python-version: "3.14", os: windows-latest } pending https://github.com/python/cpython/issues/133779
+          - { python-version: "3.14", os: windows-latest }
           - { python-version: "3.14", os: macos-latest }
 
     steps:
@@ -33,6 +42,11 @@ jobs:
           allow-prereleases: true
           cache: pip
           cache-dependency-path: "setup.py"
+
+      - name: Set PYTHON_GIL
+        if: endsWith(matrix.python-version, 't')
+        run: |
+          echo "PYTHON_GIL=0" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: |

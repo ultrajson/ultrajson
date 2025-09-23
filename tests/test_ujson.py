@@ -227,7 +227,8 @@ def test_encode_dict_conversion():
 
 
 @pytest.mark.skipif(
-    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy use incompatible GC",
 )
 def test_encode_dict_values_ref_counting():
     import gc
@@ -241,7 +242,8 @@ def test_encode_dict_values_ref_counting():
 
 
 @pytest.mark.skipif(
-    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy use incompatible GC",
 )
 @pytest.mark.parametrize("key", ["key", b"key", 1, True, False, None])
 @pytest.mark.parametrize("sort_keys", [False, True])
@@ -540,6 +542,10 @@ def test_encode_surrogate_characters():
     assert ujson.dumps({"\ud800": "\udfff"}, ensure_ascii=False, sort_keys=True) == out2
 
 
+@pytest.mark.xfail(
+    sys.implementation.name == "graalpy",
+    reason="GraalPy bug, it fails the last example.",
+)
 @pytest.mark.parametrize(
     "test_input, expected",
     [
@@ -1078,7 +1084,8 @@ def test_issue_334(indent):
 
 
 @pytest.mark.skipif(
-    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy use incompatible GC",
 )
 def test_default_ref_counting():
     class DefaultRefCountingClass:
@@ -1099,6 +1106,10 @@ def test_default_ref_counting():
     )
 
 
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy",
+    reason="GraalPy has an incompatible stub implementation of getrefcount",
+)
 @pytest.mark.parametrize("sort_keys", [False, True])
 def test_obj_str_exception(sort_keys):
     class Obj:
@@ -1113,6 +1124,9 @@ def test_obj_str_exception(sort_keys):
     assert getrefcount(key) == old
 
 
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy", reason="GraalPy does not support tracemalloc"
+)
 def no_memory_leak(func_code, n=None):
     code = f"import functools, ujson; func = {func_code}"
     path = os.path.join(os.path.dirname(__file__), "memory.py")
@@ -1122,7 +1136,8 @@ def no_memory_leak(func_code, n=None):
 
 
 @pytest.mark.skipif(
-    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy use incompatible GC",
 )
 @pytest.mark.parametrize("input", ['["a" * 11000, b""]'])
 def test_no_memory_leak_encoding_errors(input):
@@ -1177,7 +1192,8 @@ def test_loads_bytes_like():
 
 
 @pytest.mark.skipif(
-    hasattr(sys, "pypy_version_info"), reason="PyPy uses incompatible GC"
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy use incompatible GC",
 )
 def test_loads_bytes_like_refcounting():
     import gc
@@ -1195,6 +1211,10 @@ def test_loads_bytes_like_refcounting():
     assert sys.getrefcount(buffer) == old
 
 
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy",
+    reason="GraalPy does not support buffer protocol for non C-contiguous buffers",
+)
 def test_loads_non_c_contiguous():
     buffer = memoryview(b"".join(bytes([i]) + b"_" for i in b"[1, 2, 3]"))[::2]
     assert not buffer.c_contiguous

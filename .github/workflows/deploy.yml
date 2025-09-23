@@ -47,7 +47,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v3.2.0
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -55,12 +55,14 @@ jobs:
           # Build wheels for the currently selected architecture.
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
           # Include latest Python beta.
-          CIBW_ENABLE: cpython-prerelease pypy
-          # Skip EOL Python versions.
-          CIBW_SKIP: "pp310*"
+          CIBW_ENABLE: cpython-prerelease pypy graalpy
+          # Skip EOL Python versions
+          CIBW_SKIP: "pp310* gp311*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests
+          # GraalPy has a bug with progress bar rendering in pip
+          PIP_PROGRESS_BAR: "off"
 
       - name: Upload as build artifacts
         uses: actions/upload-artifact@v4

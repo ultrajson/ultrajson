@@ -57,7 +57,7 @@ jobs:
           # Include latest Python beta.
           CIBW_ENABLE: cpython-prerelease pypy graalpy
           # Skip EOL Python versions
-          CIBW_SKIP: "pp310* gp311*"
+          CIBW_SKIP: "gp311*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: pytest {package}/tests

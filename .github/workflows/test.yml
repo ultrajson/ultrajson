@@ -22,7 +22,6 @@ jobs:
           - "3.12"
           - "3.11"
           - "3.10"
-          - "3.9"
         os: [ubuntu-latest]
         include:
           - { python-version: "pypy-3.11", os: windows-latest }

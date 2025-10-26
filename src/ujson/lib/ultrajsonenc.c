@@ -60,6 +60,11 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #define snprintf sprintf_s
 #endif
 
+#if PY_VERSION_HEX < 0x030D00B3
+#  define Py_BEGIN_CRITICAL_SECTION(op) {
+#  define Py_END_CRITICAL_SECTION() }
+#endif
+
 /*
 Worst cases being:
 

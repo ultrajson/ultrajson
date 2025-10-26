@@ -40,6 +40,42 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <stdio.h>
 #include <ultrajson.h>
 
+
+#if PY_VERSION_HEX < 0x030D00A1
+static inline int
+PyDict_GetItemRef(PyObject *mp, PyObject *key, PyObject **result)
+{
+#if PY_VERSION_HEX >= 0x03000000
+    PyObject *item = PyDict_GetItemWithError(mp, key);
+#else
+    PyObject *item = _PyDict_GetItemWithError(mp, key);
+#endif
+    if (item != NULL) {
+        *result = Py_NewRef(item);
+        return 1;  // found
+    }
+    if (!PyErr_Occurred()) {
+        *result = NULL;
+        return 0;  // not found
+    }
+    *result = NULL;
+    return -1;
+}
+
+
+#endif
+
+#if PY_VERSION_HEX < 0x030D00A4
+static inline PyObject *
+PyList_GetItemRef(PyObject *op, Py_ssize_t index)
+{
+    PyObject *item = PyList_GetItem(op, index);
+    Py_XINCREF(item);
+    return item;
+}
+#endif
+
+
 #define EPOCH_ORD 719163
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);

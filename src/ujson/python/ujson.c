@@ -200,6 +200,6 @@ PyMODINIT_FUNC PyInit_ujson(void)
     Py_DECREF(module);
     return NULL;
   }
-
+  PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
   return module;
 }

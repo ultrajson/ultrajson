@@ -47,6 +47,8 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #include <float.h>
 
+#include <Python.h>
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -662,7 +664,11 @@ Handle integration functions returning NULL here */
 FIXME:
 Perhaps implement recursion detection */
 
-static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
+
+// forward declaration
+static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName);
+
+static void encode_locked(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 {
   const char *value;
   char *objName;
@@ -740,7 +746,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       count = 0;
 
       Buffer_AppendCharUnchecked (enc, '[');
-
       while (enc->iterNext(obj, &tc))
       {
         // The extra 1 byte covers the optional newline.
@@ -950,6 +955,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
   enc->level--;
 }
 
+static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
+{
+  Py_BEGIN_CRITICAL_SECTION(obj);
+  encode_locked(obj, enc, name, cbName);
+  Py_END_CRITICAL_SECTION();
+}
+
 char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
 {
   enc->malloc = enc->malloc ? enc->malloc : malloc;
@@ -984,7 +996,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
   enc->end = enc->start + _cbBuffer;
   enc->offset = enc->start;
 
-  encode (obj, enc, NULL, 0);
+  encode(obj, enc, NULL, 0);
 
   if (enc->errorMsg)
   {

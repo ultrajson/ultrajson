@@ -167,13 +167,16 @@ static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(obj, GET_TC(tc)->index);
+  PyObject *value = PyTuple_GET_ITEM(obj, GET_TC(tc)->index);
+  Py_INCREF(value);
+  Py_XSETREF(GET_TC(tc)->itemValue, value);
   GET_TC(tc)->index ++;
   return 1;
 }
 
 static void Tuple_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemValue);
 }
 
 static JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
@@ -189,13 +192,20 @@ static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyList_GET_ITEM(obj, GET_TC(tc)->index);
+  PyObject *value = PyList_GetItemRef(obj, GET_TC(tc)->index);
+  if (!value)
+  {
+    PRINTMARK();
+    return -1;
+  }
+  Py_XSETREF(GET_TC(tc)->itemValue, value);
   GET_TC(tc)->index ++;
   return 1;
 }
 
 static void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemValue);
 }
 
 static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
@@ -241,18 +251,20 @@ static PyObject* Dict_convertKey(PyObject* key)
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemName);
+  Py_CLEAR(GET_TC(tc)->itemValue);
   PyObject* key;
   if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &key, &GET_TC(tc)->itemValue))
   {
     PRINTMARK();
     return 0;
   }
-  Py_XDECREF(GET_TC(tc)->itemName);
   GET_TC(tc)->itemName = Dict_convertKey(key);
   if (!GET_TC(tc)->itemName)
   {
     return -1;
   }
+  Py_INCREF(GET_TC(tc)->itemValue);
   PRINTMARK();
   return 1;
 }
@@ -311,8 +323,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   {
     return -1;
   }
-  GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
-  if (!GET_TC(tc)->itemValue)
+  if (!PyDict_GetItemRef(GET_TC(tc)->dictObj, key, &GET_TC(tc)->itemValue) < 0)
   {
     return -1;
   }

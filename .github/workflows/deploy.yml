@@ -65,7 +65,7 @@ jobs:
           PIP_PROGRESS_BAR: "off"
 
       - name: Upload as build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-${{ matrix.os }}
           path: dist/*.whl
@@ -93,7 +93,7 @@ jobs:
           python -m pip install -U build twine
 
       - name: Download wheels from build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: wheels-*
           merge-multiple: true

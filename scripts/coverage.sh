@@ -2,7 +2,7 @@
 
 # Coverage for ultrajson's C code.
 # Usage:
-#   CFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
+#   CFLAGS="--coverage -O0" CXXFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
 #   pytest
 #   ./scripts/coverage.sh
 # Then inspect the files in the `cov` folder.

@@ -72,7 +72,7 @@ jobs:
         run: |
           pip install -e .
           pip install coverage
-          CFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
+          CFLAGS="--coverage -O0" CXXFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
           coverage run -m pytest
           ./scripts/coverage.sh
           bash <(curl -s https://codecov.io/bash) -X gcov

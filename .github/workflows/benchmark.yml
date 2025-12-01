@@ -22,7 +22,7 @@ jobs:
         os: [ubuntu-22.04]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: git fetch --prune --unshallow
 
       - name: Set up Python ${{ matrix.python-version }}

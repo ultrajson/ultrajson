@@ -37,7 +37,7 @@ jobs:
           - os: ubuntu-24.04-arm
             cibw_arch: aarch64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
@@ -47,7 +47,7 @@ jobs:
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2
+        uses: pypa/cibuildwheel@v3.3
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -78,7 +78,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: |
             git fetch --prune --unshallow
 

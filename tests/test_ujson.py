@@ -656,6 +656,20 @@ def test_encode_decode_big_int(i, mode):
             assert ujson.decode(json_string) == python_object
 
 
+@pytest.mark.xfail(
+    sys.implementation.name == "pypy",
+    reason="PyPy's PyNumber_ToBase ignores sys.get_int_max_str_digits()",
+)
+def test_encode_too_big_int_error():
+    with pytest.raises(ValueError, match="integer string conversion"):
+        ujson.dumps(pow(10, 10_000))
+
+
+def test_decode_too_big_int_error():
+    with pytest.raises(ValueError, match="integer string conversion"):
+        ujson.loads("9" * 10_000)
+
+
 @pytest.mark.parametrize(
     "test_input, expected",
     [

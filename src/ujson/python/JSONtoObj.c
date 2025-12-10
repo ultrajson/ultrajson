@@ -145,7 +145,9 @@ static JSOBJ Object_newIntegerFromString(void *prv, char *value, size_t length)
   char *buf = PyObject_Malloc(length + 1);
   memcpy(buf, value, length);
   buf[length] = '\0';
-  return PyLong_FromString(buf, NULL, 10);
+  PyObject *ret = PyLong_FromString(buf, NULL, 10);
+  PyObject_Free(buf);
+  return ret;
 }
 
 static JSOBJ Object_newDouble(void *prv, double value)

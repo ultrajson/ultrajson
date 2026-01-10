@@ -77,6 +77,10 @@ jobs:
           ./scripts/coverage.sh
           bash <(curl -s https://codecov.io/bash) -X gcov
 
+      - name: Test with leak detection
+        if: "!startsWith(matrix.python-version, 'pypy') && !endsWith(matrix.python-version, 't')"
+        run: python -m pytest --leak-max-loops=5000 -v
+
   cross-arch:
     runs-on: ubuntu-latest
     strategy:

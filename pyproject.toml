@@ -10,3 +10,8 @@ target_version = ["py310"]
 [tool.isort]
 profile = "black"
 known_first_party = ["ujson"]
+
+[tool.pytest]
+markers = [
+    "skip_leak_test: Don't rerun this test in search for memory leaks"
+]

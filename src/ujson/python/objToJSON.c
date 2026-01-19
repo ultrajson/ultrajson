@@ -40,6 +40,42 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <stdio.h>
 #include <ultrajson.h>
 
+
+#if PY_VERSION_HEX < 0x030D00A1
+static inline int
+PyDict_GetItemRef(PyObject *mp, PyObject *key, PyObject **result)
+{
+#if PY_VERSION_HEX >= 0x03000000
+    PyObject *item = PyDict_GetItemWithError(mp, key);
+#else
+    PyObject *item = _PyDict_GetItemWithError(mp, key);
+#endif
+    if (item != NULL) {
+        *result = Py_NewRef(item);
+        return 1;  // found
+    }
+    if (!PyErr_Occurred()) {
+        *result = NULL;
+        return 0;  // not found
+    }
+    *result = NULL;
+    return -1;
+}
+
+
+#endif
+
+#if PY_VERSION_HEX < 0x030D00A4
+static inline PyObject *
+PyList_GetItemRef(PyObject *op, Py_ssize_t index)
+{
+    PyObject *item = PyList_GetItem(op, index);
+    Py_XINCREF(item);
+    return item;
+}
+#endif
+
+
 #define EPOCH_ORD 719163
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
@@ -167,13 +203,16 @@ static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyTuple_GET_ITEM(obj, GET_TC(tc)->index);
+  PyObject *value = PyTuple_GET_ITEM(obj, GET_TC(tc)->index);
+  Py_INCREF(value);
+  Py_XSETREF(GET_TC(tc)->itemValue, value);
   GET_TC(tc)->index ++;
   return 1;
 }
 
 static void Tuple_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemValue);
 }
 
 static JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
@@ -189,13 +228,20 @@ static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
     return 0;
   }
 
-  GET_TC(tc)->itemValue = PyList_GET_ITEM(obj, GET_TC(tc)->index);
+  PyObject *value = PyList_GetItemRef(obj, GET_TC(tc)->index);
+  if (!value)
+  {
+    PRINTMARK();
+    return -1;
+  }
+  Py_XSETREF(GET_TC(tc)->itemValue, value);
   GET_TC(tc)->index ++;
   return 1;
 }
 
 static void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemValue);
 }
 
 static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
@@ -241,18 +287,20 @@ static PyObject* Dict_convertKey(PyObject* key)
 
 static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
+  Py_CLEAR(GET_TC(tc)->itemName);
+  Py_CLEAR(GET_TC(tc)->itemValue);
   PyObject* key;
   if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &key, &GET_TC(tc)->itemValue))
   {
     PRINTMARK();
     return 0;
   }
-  Py_XDECREF(GET_TC(tc)->itemName);
   GET_TC(tc)->itemName = Dict_convertKey(key);
   if (!GET_TC(tc)->itemName)
   {
     return -1;
   }
+  Py_INCREF(GET_TC(tc)->itemValue);
   PRINTMARK();
   return 1;
 }
@@ -311,8 +359,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   {
     return -1;
   }
-  GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
-  if (!GET_TC(tc)->itemValue)
+  if (!PyDict_GetItemRef(GET_TC(tc)->dictObj, key, &GET_TC(tc)->itemValue) < 0)
   {
     return -1;
   }

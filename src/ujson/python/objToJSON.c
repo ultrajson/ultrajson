@@ -678,6 +678,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   PyObject *separatorsKeyBytes = NULL;
   int allowNan = -1;
   int orejectBytes = -1;
+  int indent = 0;
   size_t retLen;
 
   JSONObjectEncoder encoder =
@@ -714,7 +715,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &encoder.indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators))
   {
     return NULL;
   }
@@ -759,6 +760,19 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   if (orejectBytes != -1)
   {
     encoder.rejectBytes = orejectBytes;
+  }
+
+  if (indent < -1)
+  {
+    encoder.indent = -1;
+  }
+  else if (indent > 1000)
+  {
+    PyErr_SetString(PyExc_ValueError, "Maximum allowed indentation is 1000");
+    return NULL;
+  }
+  else {
+    encoder.indent = indent;
   }
 
   if (oseparators != NULL && oseparators != Py_None)

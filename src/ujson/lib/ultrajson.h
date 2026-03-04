@@ -54,6 +54,7 @@ tree doesn't have cyclic references.
 #define __ULTRAJSON_H__
 
 #include <stdio.h>
+#include <stddef.h>
 
 // Max decimals to encode double floating point numbers with
 #ifndef JSON_DOUBLE_MAX_DECIMALS
@@ -257,7 +258,7 @@ typedef struct __JSONObjectEncoder
 
   /*
   Configuration for spaces of indent */
-  int indent;
+  ptrdiff_t indent;
 
   /*
   If true, NaN will be encoded as a string matching the Python standard library's JSON behavior.

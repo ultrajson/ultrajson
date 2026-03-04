@@ -1059,9 +1059,25 @@ class TestDefaultFunction:
             ujson.dumps(unjsonable_obj, default=self.default)
 
 
-@pytest.mark.parametrize("indent", list(range(65537, 65542)))
+@pytest.mark.parametrize("indent", [999, 1000, 1001, 1 << 30, 1 << 63, 1 << 128])
 def test_dump_huge_indent(indent):
-    ujson.encode({"a": True}, indent=indent)
+    obj = {"list": [1, [2, 3], 4], "nested": {"key": "value", "a": True}}
+    if indent <= 1000:
+        assert ujson.loads(ujson.encode(obj, indent=indent)) == obj
+    else:
+        with pytest.raises((ValueError, OverflowError)):
+            ujson.encode(obj, indent=indent)
+
+
+def test_negative_indent():
+    obj = {"a": [1, 2], "b": "c"}
+    assert ujson.dumps(obj) == '{"a":[1,2],"b":"c"}'
+    assert ujson.dumps(obj, 0) == '{"a":[1,2],"b":"c"}'
+    assert ujson.dumps(obj, indent=-1) == '{"a": [1,2],"b": "c"}'
+    assert ujson.dumps(obj, indent=-1000000) == '{"a": [1,2],"b": "c"}'
+    assert (
+        ujson.dumps(obj, indent=2) == '{\n  "a": [\n    1,\n    2\n  ],\n  "b": "c"\n}'
+    )
 
 
 @pytest.mark.parametrize("first_length", list(range(2, 7)))

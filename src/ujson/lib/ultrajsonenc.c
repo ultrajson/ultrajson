@@ -575,7 +575,7 @@ static void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
 
 static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
 {
-  int i;
+  ptrdiff_t i;
   if (enc->indent > 0)
     while (value-- > 0)
       for (i = 0; i < enc->indent; i++)
@@ -741,10 +741,11 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       Buffer_AppendCharUnchecked (enc, '[');
 
+      // The extra 1 byte covers the optional newline.
+      size_t per_item_reserve = (enc->indent > 0 ? enc->indent : 0) * (enc->level + 1) + enc->itemSeparatorLength + 1;
       while (enc->iterNext(obj, &tc))
       {
-        // The extra 1 byte covers the optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
+        Buffer_Reserve (enc, per_item_reserve);
 
         if (count > 0)
         {
@@ -769,7 +770,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       enc->iterEnd(obj, &tc);
 
-      if (count > 0) {
+      if (count > 0 && enc->indent > 0) {
         // Reserve space for the indentation plus the newline.
         Buffer_Reserve (enc, enc->indent * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
@@ -786,10 +787,11 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       Buffer_AppendCharUnchecked (enc, '{');
 
+      // The extra 1 byte covers the optional newline.
+      size_t reserve_size = (enc->indent > 0 ? enc->indent : 0) * (enc->level + 1) + enc->itemSeparatorLength + 1;
       while ((res = enc->iterNext(obj, &tc)))
       {
-        // The extra 1 byte covers the optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
+        Buffer_Reserve (enc, reserve_size);
 
         if(res < 0)
         {
@@ -823,7 +825,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       enc->iterEnd(obj, &tc);
 
-      if (count > 0) {
+      if (count > 0 && enc->indent > 0) {
         Buffer_Reserve (enc, enc->indent * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);

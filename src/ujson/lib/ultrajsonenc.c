@@ -743,8 +743,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       while (enc->iterNext(obj, &tc))
       {
-        // The extra 1 byte covers the optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
+        // cast to size_t to prevent integer overflow on large indent values
+        Buffer_Reserve (enc, (size_t)enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
 
         if (count > 0)
         {
@@ -771,7 +771,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       if (count > 0) {
         // Reserve space for the indentation plus the newline.
-        Buffer_Reserve (enc, enc->indent * enc->level + 1);
+        Buffer_Reserve (enc, (size_t)enc->indent * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }
@@ -788,8 +788,8 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       while ((res = enc->iterNext(obj, &tc)))
       {
-        // The extra 1 byte covers the optional newline.
-        Buffer_Reserve (enc, enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
+        // cast to size_t to prevent integer overflow on large indent values
+        Buffer_Reserve (enc, (size_t)enc->indent * (enc->level + 1) + enc->itemSeparatorLength + 1);
 
         if(res < 0)
         {
@@ -824,7 +824,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       enc->iterEnd(obj, &tc);
 
       if (count > 0) {
-        Buffer_Reserve (enc, enc->indent * enc->level + 1);
+        Buffer_Reserve (enc, (size_t)enc->indent * enc->level + 1);
         Buffer_AppendIndentNewlineUnchecked (enc);
         Buffer_AppendIndentUnchecked (enc, enc->level);
       }

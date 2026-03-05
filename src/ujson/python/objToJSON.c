@@ -739,6 +739,17 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     encoder.sortKeys = 1;
   }
 
+  // clamp indent to a safe range - large values cause integer overflow
+  // in Buffer_Reserve arithmetic (see #700)
+  if (encoder.indent > 128)
+  {
+    encoder.indent = 128;
+  }
+  else if (encoder.indent < 0)
+  {
+    encoder.indent = 0;
+  }
+
   if (allowNan != -1)
   {
     encoder.allowNan = allowNan;

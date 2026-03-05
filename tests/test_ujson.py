@@ -1064,6 +1064,20 @@ def test_dump_huge_indent(indent):
     ujson.encode({"a": True}, indent=indent)
 
 
+def test_large_indent_no_crash():
+    # regression test for #700 - integer overflow in Buffer_Reserve when
+    # indent * (level + 1) overflows int, causing heap buffer overflow
+    ujson.encode([[1]], indent=2**31 - 1)
+    ujson.encode({"a": {"b": 1}}, indent=2**31 - 1)
+
+
+def test_negative_indent_no_hang():
+    # negative indent values previously caused an infinite loop in the
+    # buffer resize path due to size_t underflow
+    ujson.encode([[1]], indent=-2000000000)
+    ujson.encode({"a": {"b": 1}}, indent=-2000000000)
+
+
 @pytest.mark.parametrize("first_length", list(range(2, 7)))
 @pytest.mark.parametrize("second_length", list(range(10919, 10924)))
 def test_dump_long_string(first_length, second_length):

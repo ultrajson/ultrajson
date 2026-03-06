@@ -1,4 +1,3 @@
----
 name: Deploy
 
 on:
@@ -20,12 +19,13 @@ env:
 
 jobs:
   build-wheels:
-    name: "${{ matrix.os }}: ${{ matrix.cibw_arch }}"
+    name: "${{ matrix.os }}: ${{ matrix.cibw_platform || 'auto' }}-${{ matrix.cibw_arch }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # 现有平台配置
           - os: windows-latest
             cibw_arch: "auto"
           - os: windows-11-arm
@@ -36,6 +36,11 @@ jobs:
             cibw_arch: "x86_64 i686"
           - os: ubuntu-24.04-arm
             cibw_arch: aarch64
+          # 新增 Android 平台配置
+          - os: ubuntu-latest
+            cibw_arch: "aarch64 arm"
+            cibw_platform: "android"
+
     steps:
       - uses: actions/checkout@v6
       - run: git fetch --prune --unshallow
@@ -54,8 +59,10 @@ jobs:
         env:
           # Build wheels for the currently selected architecture.
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
-          # Include latest Python beta.
-          CIBW_ENABLE: cpython-prerelease pypy graalpy
+          # 指定构建平台（Android 或自动检测）
+          CIBW_PLATFORM: ${{ matrix.cibw_platform || 'auto' }}
+          # Include latest Python beta and Android builds.
+          CIBW_ENABLE: cpython-prerelease pypy graalpy android
           # Skip EOL Python versions
           CIBW_SKIP: "gp311*"
           # Run the test suite after each build.
@@ -67,7 +74,7 @@ jobs:
       - name: Upload as build artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}-${{ matrix.cibw_platform || 'auto' }}
           path: dist/*.whl
 
   build-sdist-and-upload:

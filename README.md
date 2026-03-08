@@ -138,6 +138,14 @@ Linux 5.15.0-1037-azure x86_64 #44-Ubuntu SMP Thu Apr 20 13:19:31 UTC 2023
 
 Above metrics are in call/sec, larger is better.
 
+## Multi-threading/Free-threading support
+
+UltraJSON has no global state so using `ujson` functions between threads is
+organically thread safe and will produce consistent results with or without
+Python's global interpreter lock. What is is not supported nor safe is mutating
+an object in one thread whilst it's simultaneously being serialised by `ujson`
+in another. In such usage, all bugs are features.
+
 ## Build options
 
 For those with particular needs, such as Linux distribution packagers, several

@@ -20,7 +20,7 @@ env:
 
 jobs:
   build-wheels:
-    name: "${{ matrix.os }}: ${{ matrix.cibw_arch }}"
+    name: "${{ matrix.os }}: ${{ matrix.cibw_platform || 'auto' }}-${{ matrix.cibw_arch }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,6 +36,10 @@ jobs:
             cibw_arch: "x86_64 i686"
           - os: ubuntu-24.04-arm
             cibw_arch: aarch64
+          - os: macos-latest
+            cibw_arch: arm64_v8a
+            cibw_platform: "android"
+
     steps:
       - uses: actions/checkout@v6
       - run: git fetch --prune --unshallow
@@ -54,20 +58,24 @@ jobs:
         env:
           # Build wheels for the currently selected architecture.
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
+          CIBW_PLATFORM: ${{ matrix.cibw_platform || 'auto' }}
           # Include latest Python beta.
           CIBW_ENABLE: cpython-prerelease pypy graalpy
           # Skip EOL Python versions
           CIBW_SKIP: "gp311*"
           # Run the test suite after each build.
           CIBW_TEST_REQUIRES: "pytest"
-          CIBW_TEST_COMMAND: pytest {package}/tests
+          CIBW_TEST_COMMAND: pytest tests
+          CIBW_TEST_SOURCES: tests pyproject.toml
           # GraalPy has a bug with progress bar rendering in pip
           PIP_PROGRESS_BAR: "off"
+          # Minumum required for c++
+          ANDROID_API_LEVEL: 24
 
       - name: Upload as build artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}-${{ matrix.cibw_platform || 'auto' }}
           path: dist/*.whl
 
   build-sdist-and-upload:

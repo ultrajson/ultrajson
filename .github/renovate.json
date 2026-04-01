@@ -3,6 +3,7 @@
   "extends": [
     "config:base"
   ],
+  "semanticCommits": "disabled",
   "labels": [
     "changelog: skip",
     "dependencies"

@@ -73,7 +73,12 @@ jobs:
           CFLAGS="--coverage -O0" CXXFLAGS="--coverage -O0" python setup.py -q build_ext --inplace -f
           coverage run -m pytest
           ./scripts/coverage.sh
-          bash <(curl -s https://codecov.io/bash) -X gcov
+
+      - name: Upload coverage
+        if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.python-version == '3.10' }}
+        uses: codecov/codecov-action@v5
+        with:
+          plugins: pycoverage
 
       - name: Test with leak detection
         if: "!startsWith(matrix.python-version, 'pypy') && !endsWith(matrix.python-version, 't')"

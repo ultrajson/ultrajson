@@ -39,7 +39,7 @@ repos:
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
 
-  - repo: https://github.com/woodruffw/zizmor-pre-commit
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.23.1
     hooks:
       - id: zizmor

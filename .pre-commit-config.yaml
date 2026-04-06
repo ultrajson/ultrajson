@@ -6,13 +6,13 @@ repos:
         args: [--py310-plus]
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.12.0
+    rev: 26.3.1
     hooks:
       - id: black
         args: [--target-version=py310]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 7.0.0
+    rev: 8.0.1
     hooks:
       - id: isort
 
@@ -39,8 +39,8 @@ repos:
       - id: trailing-whitespace
         exclude: "^.github/.*_TEMPLATE.md"
 
-  - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.19.0
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
     hooks:
       - id: zizmor
 

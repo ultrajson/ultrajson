@@ -531,7 +531,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
           return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
         }
         ucs |= (*inputOffset++) & 0x3f;
-        if (ucs < 0x80) return SetError (ds, -1, "Overlong 2 byte UTF-8 sequence detected when decoding 'string'");
+        if (ucs < 0x80) return SetError (ds, -1, "Overlong 2-byte UTF-8 sequence detected when decoding 'string'");
         *(escOffset++) = (JSUINT32) ucs;
         break;
       }
@@ -554,7 +554,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
           ucs |= oct & 0x3f;
         }
 
-        if (ucs < 0x800) return SetError (ds, -1, "Overlong 3 byte UTF-8 sequence detected when encoding string");
+        if (ucs < 0x800) return SetError (ds, -1, "Overlong 3-byte UTF-8 sequence detected when encoding string");
         *(escOffset++) = (JSUINT32) ucs;
         break;
       }
@@ -577,7 +577,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
           ucs |= oct & 0x3f;
         }
 
-        if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4 byte UTF-8 sequence detected when decoding 'string'");
+        if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4-byte UTF-8 sequence detected when decoding 'string'");
 
         *(escOffset++) = (JSUINT32) ucs;
         break;

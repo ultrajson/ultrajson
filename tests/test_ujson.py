@@ -1229,6 +1229,81 @@ def test_reject_bytes_nested(value):
         ujson.dumps(value)
 
 
+@pytest.mark.parametrize(
+    "codepoint",
+    [0x0, 0x7F, 0x80, 0x7FF, 0x800, 0xFFFF, 0x10000, 0x10FFFF],
+)
+def test_reject_bytes_false_codepoint_boundaries(codepoint):
+    char = chr(codepoint)
+    assert ujson.loads(ujson.dumps(char.encode(), reject_bytes=False)) == char
+
+
+@pytest.mark.parametrize(
+    "value, error",
+    [
+        # Bad start bytes
+        (b"\xfd", "Unsupported UTF-8 sequence length when encoding string"),
+        (b"\xfc:", "Unsupported UTF-8 sequence length when encoding string"),
+        (b"U>\xfb", "Unsupported UTF-8 sequence length when encoding string"),
+        (b"\\\xf8\x98\t", "Unsupported UTF-8 sequence length when encoding string"),
+        (b"\x9b", "'utf-8' codec can't decode byte 0x9b in position 1:"),
+        (b"B\x8a", "'utf-8' codec can't decode byte 0x8a in position 2:"),
+        # Bad continuation bytes (any non-start byte not matching 0b10xx_xxxx)
+        (b"\xcf\x13", "Invalid continuation byte in 2-byte UTF-8 sequence"),
+        (b"\xcfa", "Invalid continuation byte in 2-byte UTF-8 sequence"),
+        (b"\xd8\xcf\xd3", "Invalid continuation byte in 2-byte UTF-8 sequence"),
+        (b"\xd2\t\x8b\x84", "Invalid continuation byte in 2-byte UTF-8 sequence"),
+        (b"\xe2\x17\xce", "Invalid continuation byte in 3-byte UTF-8 sequence"),
+        (b"\xe2a\x17\xce", "Invalid continuation byte in 3-byte UTF-8 sequence"),
+        (b"\xe2\x17a", "Invalid continuation byte in 3-byte UTF-8 sequence"),
+        (b"\xe0\x9c\xc6\xde", "Invalid continuation byte in 3-byte UTF-8 sequence"),
+        (b"\xf0H\xce\x9b", "Invalid continuation byte in 4-byte UTF-8 sequence"),
+        (b"\xf0\xce4\x9b", "Invalid continuation byte in 4-byte UTF-8 sequence"),
+        # Truncated UTF-8 sequences
+        (b"\xc3", "Unterminated UTF-8 sequence when encoding string"),
+        (b"\x8c$\xe3", "Unterminated UTF-8 sequence when encoding string"),
+        (b"\x8c\xe3$", "Unterminated UTF-8 sequence when encoding string"),
+        (b"=\x8c\xe36", "Unterminated UTF-8 sequence when encoding string"),
+        (b"\x08\x11\xe3", "Unterminated UTF-8 sequence when encoding string"),
+        (b"\xf0\x90\x94", "Unterminated UTF-8 sequence when encoding string"),
+        # Small codepoints using longer byte sequences than they need
+        (b"\xc0\xa2", "Overlong 2-byte UTF-8 sequence"),
+        (b"A\xc1\x9c", "Overlong 2-byte UTF-8 sequence"),
+        (b"\xc1\xbf", "Overlong 2-byte UTF-8 sequence"),
+        (b"N\xc0\xb4\xb4", "Overlong 2-byte UTF-8 sequence"),
+        (b"\xe0\x9d\xb3", "Overlong 3-byte UTF-8 sequence"),
+        (b"E\xe0\x9e\x8b", "Overlong 3-byte UTF-8 sequence"),
+        (b"\xe0\x9f\xbf", "Overlong 3-byte UTF-8 sequence"),
+        (b"\xf0\x80\x80\x80", "Overlong 4-byte UTF-8 sequence"),
+        (b"\xf0\x8f\xbf\xbf", "Overlong 4-byte UTF-8 sequence"),
+        (b"\xf0\x85\xa7\xbd", "Overlong 4-byte UTF-8 sequence"),
+        # Codepoints above unicode max
+        (b"\xf4\x90\x80\x80", r">U\+10FFFF in 4-byte UTF-8 sequence"),
+        (b"\xf7\x8f\x99\x90", r">U\+10FFFF in 4-byte UTF-8 sequence"),
+        (b"\xf7\xbf\xbf\xbf", r">U\+10FFFF in 4-byte UTF-8 sequence"),
+    ],
+)
+def test_dump_bytes_invalid_utf8(value, error):
+    with pytest.raises((OverflowError, UnicodeDecodeError), match=error):
+        ujson.dumps(bytes(value), reject_bytes=False)
+
+
+def test_dump_bytes_fuzz():
+    # ujson.dumps(..., reject_bytes=False) should accept or reject the same byte
+    # sequences as b"...".decode() when unpaired surrogates are allowed
+    for seed in range(10000):
+        r = random.Random(seed)
+        a = r.randbytes(r.randrange(8))
+        try:
+            expected = a.decode(errors="surrogatepass")
+        except UnicodeDecodeError:
+            with pytest.raises((UnicodeDecodeError, OverflowError)):
+                ujson.dumps(a, reject_bytes=False)
+        else:
+            actual = ujson.loads(ujson.dumps(a, reject_bytes=False))
+            assert actual == expected, (a, [bin(i) for i in a], actual, expected)
+
+
 def test_encode_special_keys():
     data = {None: 0, True: 1, False: 2}
     assert ujson.dumps(data) == '{"null":0,"true":1,"false":2}'

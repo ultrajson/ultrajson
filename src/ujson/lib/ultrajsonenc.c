@@ -347,15 +347,22 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         continue;
       }
 
+      // https://en.wikipedia.org/wiki/UTF-8#Description
       case 2:
       {
         JSUTF32 in;
         JSUTF16 in16;
 
-        if (end - io < 1)
+        if (end - io < 2)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
+          return FALSE;
+        }
+        if ((io[1] & 0xc0) != 0x80)
+        {
+          enc->offset += (of - enc->offset);
+          SetError (obj, enc, "Invalid continuation byte in 2-byte UTF-8 sequence detected when encoding string");
           return FALSE;
         }
 
@@ -371,7 +378,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         if (ucs < 0x80)
         {
           enc->offset += (of - enc->offset);
-          SetError (obj, enc, "Overlong 2 byte UTF-8 sequence detected when encoding string");
+          SetError (obj, enc, "Overlong 2-byte UTF-8 sequence detected when encoding string");
           return FALSE;
         }
 
@@ -385,13 +392,26 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         JSUTF16 in16;
         JSUINT8 in8;
 
-        if (end - io < 2)
+        if (end - io < 3)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
           return FALSE;
         }
-
+        if ((io[1] & 0xc0) != 0x80 || (io[2] & 0xc0) != 0x80)
+        {
+          enc->offset += (of - enc->offset);
+          SetError (obj, enc, "Invalid continuation byte in 3-byte UTF-8 sequence detected when encoding string");
+          return FALSE;
+        }
+        // Under normal UTF-8 decoding rules, UTF-16 surrogates should also be disallowed
+        // but in JSON, they're special cased and rewritten later as \udc7f.
+        // if ((JSUINT8) io[0] == 0xed && (JSUINT8) io[1] >= 0xa0)
+        // {
+        //   enc->offset += (of - enc->offset);
+        //   SetError (obj, enc, "Illegal UTF-16 surrogate in 3-byte UTF-8 sequence detected when encoding string");
+        //   return FALSE;
+        // }
         memcpy(&in16, io, sizeof(JSUTF16));
         memcpy(&in8, io + 2, sizeof(JSUINT8));
 #ifdef __LITTLE_ENDIAN__
@@ -407,7 +427,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         if (ucs < 0x800)
         {
           enc->offset += (of - enc->offset);
-          SetError (obj, enc, "Overlong 3 byte UTF-8 sequence detected when encoding string");
+          SetError (obj, enc, "Overlong 3-byte UTF-8 sequence detected when encoding string");
           return FALSE;
         }
 
@@ -418,10 +438,22 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
       {
         JSUTF32 in;
 
-        if (end - io < 3)
+        if (end - io < 4)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
+          return FALSE;
+        }
+        if ((io[1] & 0xc0) != 0x80 || (io[2] & 0xc0) != 0x80 || (io[3] & 0xc0) != 0x80)
+        {
+          enc->offset += (of - enc->offset);
+          SetError (obj, enc, "Invalid continuation byte in 4-byte UTF-8 sequence detected when encoding string");
+          return FALSE;
+        }
+        if (((JSUINT8) io[0] >= 0xf4 && (JSUINT8) io[1] >= 0x90) || (JSUINT8) io[0] >= 0xf5)
+        {
+          enc->offset += (of - enc->offset);
+          SetError (obj, enc, ">U+10FFFF in 4-byte UTF-8 sequence detected when encoding string");
           return FALSE;
         }
 
@@ -434,7 +466,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         if (ucs < 0x10000)
         {
           enc->offset += (of - enc->offset);
-          SetError (obj, enc, "Overlong 4 byte UTF-8 sequence detected when encoding string");
+          SetError (obj, enc, "Overlong 4-byte UTF-8 sequence detected when encoding string");
           return FALSE;
         }
 

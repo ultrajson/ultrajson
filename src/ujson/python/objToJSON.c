@@ -54,6 +54,7 @@ typedef struct __TypeContext
   JSPFN_ITERGETVALUE iterGetValue;
   PFN_PyTypeToJSON PyTypeToJSON;
   PyObject *newObj;
+  PyObject *utf8BytesObj;
   PyObject *dictObj;
   Py_ssize_t index;
   Py_ssize_t size;
@@ -132,6 +133,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   }
 #endif
 
+  Py_XDECREF(*pBytesObj);
   PyObject *bytesObj = *pBytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
   if (!bytesObj)
   {
@@ -144,7 +146,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
 
 static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  return PyUnicodeToUTF8Raw(_obj, _outLen, &(GET_TC(tc)->newObj));
+  return PyUnicodeToUTF8Raw(_obj, _outLen, &(GET_TC(tc)->utf8BytesObj));
 }
 
 static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
@@ -361,6 +363,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
     return;
   }
   pc->newObj = NULL;
+  pc->utf8BytesObj = NULL;
   pc->dictObj = NULL;
   pc->itemValue = NULL;
   pc->itemName = NULL;
@@ -589,6 +592,7 @@ INVALID:
 static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
+  Py_XDECREF(GET_TC(tc)->utf8BytesObj);
 
   if (tc->type == JT_RAW)
   {

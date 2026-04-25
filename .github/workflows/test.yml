@@ -32,10 +32,10 @@ jobs:
           - { python-version: "3.14", os: macos-latest }
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload coverage
         if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.python-version == '3.10' }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           plugins: pycoverage
 
@@ -91,12 +91,12 @@ jobs:
       matrix:
         architecture: [ppc64le, s390x, aarch64, arm/v6, 386]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: git fetch --prune --unshallow
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
 
       - name: Test
         run: |

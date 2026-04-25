@@ -6,7 +6,9 @@ import io
 import json
 import math
 import os.path
+import random
 import re
+import string
 import subprocess
 import sys
 import uuid
@@ -1168,6 +1170,27 @@ def no_memory_leak(func_code, n=None):
     p = subprocess.run([sys.executable, path, code] + n)
     assert p.returncode == 0
 
+
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy", reason="GraalPy does not support tracemalloc"
+)
+def test_no_memory_leak_default_ascii():
+    rng = random.Random(631)
+    value = "ascii: " + "".join(rng.choice(string.ascii_letters) for _ in range(32))
+    data = {"x": object()}
+
+    ujson.dumps(data, ensure_ascii=True, default=lambda o: value)
+
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy", reason="GraalPy does not support tracemalloc"
+)
+def test_no_memory_leak_default_non_ascii():
+    rng = random.Random(631)
+    non_ascii_chars = "生日快乐中文测试汉字"
+    non_ascii_value = "non_ascii: " + "".join(rng.choice(non_ascii_chars) for _ in range(8))
+    data = {"x": object()}
+
+    ujson.dumps(data, ensure_ascii=True, default=lambda o: non_ascii_value)
 
 @pytest.mark.skipif(
     sys.implementation.name in ("pypy", "graalpy"),

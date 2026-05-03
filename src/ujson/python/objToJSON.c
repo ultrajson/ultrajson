@@ -724,24 +724,28 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
-  {
-    encoder.forceASCII = 0;
+  if (oensureAscii != NULL) {
+    int b = PyObject_IsTrue(oensureAscii);
+    if (b < 0) goto ERROR;
+    if (!b) encoder.forceASCII = 0;
   }
 
-  if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
-  {
-    encoder.encodeHTMLChars = 1;
+  if (oencodeHTMLChars != NULL) {
+    int b = PyObject_IsTrue(oencodeHTMLChars);
+    if (b < 0) goto ERROR;
+    if (b) encoder.encodeHTMLChars = 1;
   }
 
-  if (oescapeForwardSlashes != NULL && !PyObject_IsTrue(oescapeForwardSlashes))
-  {
-    encoder.escapeForwardSlashes = 0;
+  if (oescapeForwardSlashes != NULL) {
+    int b = PyObject_IsTrue(oescapeForwardSlashes);
+    if (b < 0) goto ERROR;
+    if (!b) encoder.escapeForwardSlashes = 0;
   }
 
-  if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
-  {
-    encoder.sortKeys = 1;
+  if (osortKeys != NULL) {
+    int b = PyObject_IsTrue(osortKeys);
+    if (b < 0) goto ERROR;
+    if (b) encoder.sortKeys = 1;
   }
 
   if (allowNan != -1)

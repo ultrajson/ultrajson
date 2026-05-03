@@ -510,7 +510,10 @@ class _PlainObject:
 
 def test_default_function_fallthrough():
     # Objects with neither toDict nor __json__ fall through to default=.
-    assert ujson.loads(ujson.dumps(_PlainObject(), default=lambda o: "fallback")) == "fallback"
+    assert (
+        ujson.loads(ujson.dumps(_PlainObject(), default=lambda o: "fallback"))
+        == "fallback"
+    )
 
 
 class JSONTest:

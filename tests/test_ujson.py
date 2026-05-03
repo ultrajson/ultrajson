@@ -1,8 +1,8 @@
 import copy
 import datetime as dt
 import decimal
-import gc
 import enum
+import gc
 import io
 import json
 import math
@@ -423,9 +423,9 @@ def test_no_ref_leak_from_default_recursion_cap():
     gc.collect()
     after = sum(1 for o in gc.get_objects() if isinstance(o, _DefaultLeaker))
 
-    assert after - before < 5, (
-        f"Leaked {after - before} _DefaultLeaker instances after 200 iterations"
-    )
+    assert (
+        after - before < 5
+    ), f"Leaked {after - before} _DefaultLeaker instances after 200 iterations"
 
 
 @pytest.mark.skipif(
@@ -453,9 +453,9 @@ def test_no_memory_leak_dump_write_failure():
     total_growth = sum(
         s.size_diff for s in snap2.compare_to(snap1, "lineno") if s.size_diff > 0
     )
-    assert total_growth < 500 * 1024, (
-        f"Leaked {total_growth} bytes across 500 failing writes"
-    )
+    assert (
+        total_growth < 500 * 1024
+    ), f"Leaked {total_growth} bytes across 500 failing writes"
 
 
 def test_decode_dict():

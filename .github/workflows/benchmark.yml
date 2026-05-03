@@ -10,7 +10,8 @@ on:
       - "tests/benchmark.py"
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   build:

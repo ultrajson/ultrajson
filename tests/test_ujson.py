@@ -1497,10 +1497,10 @@ def test_comprehensive_json_fixture():
     Loads comprehensive.json — a fixture that exercises every JSON value type
     at multiple nesting levels
 
-      1. ujson agrees with stdlib json on the decoded Python objects.
-      2. A ujson roundtrip (loads → dumps → loads) is lossless.
-      3. Each JSON type decodes to the correct Python type.
-      4. Specific deeply-nested values are reachable and correct.
+      * ujson agrees with stdlib json on the decoded Python objects.
+      * A ujson roundtrip (loads → dumps → loads) is lossless.
+      * Each JSON type decodes to the correct Python type.
+      * Specific deeply-nested values are reachable and correct.
 
     The test also exercises ujson's documented tolerances for non-standard
     JSON that stdlib json rejects:
@@ -1512,15 +1512,15 @@ def test_comprehensive_json_fixture():
     fixture = Path(__file__).with_name("comprehensive.json")
     raw = fixture.read_bytes()
 
-    # ── 1. Agreement with stdlib json ──────────────────────────────────────
+    # Agreement with stdlib json
     data = ujson.loads(raw)
     stdlib_data = json.loads(raw)
     assert data == stdlib_data
 
-    # ── 2. Roundtrip stability ─────────────────────────────────────────────
+    # Roundtrip stability
     assert ujson.loads(ujson.dumps(data)) == data
 
-    # ── 3. Type correctness for every JSON primitive type ──────────────────
+    # Type correctness for every JSON primitive type
     nums = data["numbers"]
     assert isinstance(nums["zero"], int)       and nums["zero"] == 0
     assert isinstance(nums["forty_two"], int)  and nums["forty_two"] == 42
@@ -1538,7 +1538,7 @@ def test_comprehensive_json_fixture():
     assert isinstance(data["strings"]["plain"], str)
     assert data["strings"]["empty"] == ""
 
-    # ── 4. String escape sequences survived the roundtrip ──────────────────
+    # String escape sequences survived the roundtrip
     escapes = data["strings"]["standard_escapes"]
     assert "\t" in escapes   # \t
     assert "\n" in escapes   # \n
@@ -1549,12 +1549,12 @@ def test_comprehensive_json_fixture():
     assert '"' in escapes    # \"
     assert "/" in escapes    # \/ (solidus — optional escape, still valid)
 
-    # ── 5. Unicode strings ─────────────────────────────────────────────────
+    # Unicode strings
     assert "é" in data["strings"]["unicode_latin"]
     assert "中" in data["strings"]["unicode_cjk"]
     assert "😀" in data["strings"]["unicode_emoji"]
 
-    # ── 6. All array variants ──────────────────────────────────────────────
+    # All array variants
     arrs = data["arrays"]
     assert arrs["empty"] == []
     assert arrs["single"] == [42]
@@ -1568,7 +1568,7 @@ def test_comprehensive_json_fixture():
     assert arrs["nested_4"][0][0][0] == [1, 2]      # 4 levels deep
     assert arrs["of_objects"][1]["val"] == "b"
 
-    # ── 7. All object variants ─────────────────────────────────────────────
+    # All object variants
     objs = data["objects"]
     assert objs["empty"] == {}
     assert objs["single_key"] == {"only": "value"}
@@ -1579,7 +1579,7 @@ def test_comprehensive_json_fixture():
     assert objs["nested_6"]["l1"]["l2"]["l3"]["l4"]["l5"]["l6_int"] == 6
     assert objs["nested_6"]["l1"]["l2"]["l3"]["l4"]["l5"]["l6_arr"] == [6, 6, 6]
 
-    # ── 8. Heavily-nested records (objects inside arrays inside objects) ───
+    # Heavily-nested records (objects inside arrays inside objects)
     alice = data["records"][0]
     assert alice["name"] == "Alice"
     assert alice["active"] is True
@@ -1595,26 +1595,23 @@ def test_comprehensive_json_fixture():
     assert bob["tags"] == []
     assert bob["metadata"]["flags"] == [1, 2, 4]
 
-    # ── 9. Matrix (array of arrays of ints) ───────────────────────────────
+    # Matrix (array of arrays of ints)
     assert data["matrix"][3][4] == 20       # bottom-right corner
     assert sum(data["matrix"][0]) == 15     # first row
 
-    # ── 10. Config subtree ────────────────────────────────────────────────
+    # Config subtree
     cfg = data["config"]
     assert cfg["features"]["beta"]["suboptions"]["backoff"] == [1.0, 2.0, 4.0, 8.0]
     assert cfg["limits"]["burst"] is None
     assert "example.com" in cfg["allowed_origins"][0]
 
-    # ── 11. ujson-specific tolerances (non-standard JSON that ujson accepts) ──
-    # Bare NaN / Infinity tokens: ujson always decodes them, and so does
-    # stdlib json across all supported Python versions (the C scanner in the
-    # json module has recognised these tokens since Python 2.6).
+    # ujson-specific tolerances (non-standard JSON that ujson accepts)
     nan_doc = '{"values": [NaN, Infinity, -Infinity]}'
     tol = ujson.loads(nan_doc)
     assert math.isnan(tol["values"][0])
     assert math.isinf(tol["values"][1]) and tol["values"][1] > 0
     assert math.isinf(tol["values"][2]) and tol["values"][2] < 0
-    # Both libraries agree.
+    # Both ujson and stdlib json agree.
     stdlib_tol = json.loads(nan_doc)
     assert math.isnan(stdlib_tol["values"][0])
     assert tol["values"][1] == stdlib_tol["values"][1]

@@ -20,6 +20,28 @@ import pytest
 import ujson
 
 
+class _FailingWriteFile:
+    def write(self, data):
+        raise OSError("simulated write failure")
+
+
+class _PoisonedAttrFile:
+    def __getattr__(self, name):
+        raise OSError(f"file access forbidden: {name!r}")
+
+
+class _PoisonedGetattr:
+    def __getattr__(self, name):
+        raise ValueError(f"attribute lookup poisoned: {name!r}")
+
+
+class _NotoDict:
+    def __getattr__(self, name):
+        if name == "toDict":
+            raise AttributeError(name)
+        raise ValueError(f"unexpected lookup: {name!r}")
+
+
 def assert_almost_equal(a, b):
     assert round(abs(a - b), 7) == 0
 
@@ -433,12 +455,8 @@ def test_dump_file_args_error():
 
 
 def test_dump_write_failure_raises():
-    class FailingFile:
-        def write(self, data):
-            raise OSError("simulated write failure")
-
     with pytest.raises(OSError, match="simulated write failure"):
-        ujson.dump({"key": "value"}, FailingFile())
+        ujson.dump({"key": "value"}, _FailingWriteFile())
 
 
 @pytest.mark.parametrize("fn,extra_args", [
@@ -448,12 +466,8 @@ def test_dump_write_failure_raises():
 def test_file_poisoned_getattr_raises(fn, extra_args):
     # PyObject_GetAttrString (replacing the old HasAttrString) must propagate
     # non-AttributeError exceptions from __getattr__ instead of swallowing them.
-    class PoisonedFile:
-        def __getattr__(self, name):
-            raise OSError(f"file access forbidden: {name!r}")
-
     with pytest.raises(OSError, match="file access forbidden"):
-        fn(*extra_args, PoisonedFile())
+        fn(*extra_args, _PoisonedAttrFile())
 
 
 def test_load_file():
@@ -632,25 +646,15 @@ def test_object_with_to_dict_attribute_error():
 def test_todict_probe_non_attribute_error_propagates():
     # A non-AttributeError raised during the toDict attribute lookup must
     # propagate rather than be swallowed by the old PyObject_HasAttrString.
-    class PoisonedGetattr:
-        def __getattr__(self, name):
-            raise ValueError(f"attribute lookup poisoned: {name!r}")
-
     with pytest.raises(ValueError, match="attribute lookup poisoned"):
-        ujson.dumps(PoisonedGetattr())
+        ujson.dumps(_PoisonedGetattr())
 
 
 def test_json_dunder_probe_non_attribute_error_propagates():
     # After the toDict probe clears AttributeError, the __json__ probe runs.
     # A non-AttributeError from that lookup must also propagate.
-    class NotoDict:
-        def __getattr__(self, name):
-            if name == "toDict":
-                raise AttributeError(name)
-            raise ValueError(f"unexpected lookup: {name!r}")
-
     with pytest.raises(ValueError, match="unexpected lookup"):
-        ujson.dumps(NotoDict())
+        ujson.dumps(_NotoDict())
 
 
 def test_decode_array_empty():

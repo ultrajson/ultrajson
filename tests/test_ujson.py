@@ -441,10 +441,13 @@ def test_dump_write_failure_raises():
         ujson.dump({"key": "value"}, FailingFile())
 
 
-@pytest.mark.parametrize("fn,extra_args", [
-    pytest.param(ujson.dump, ({"k": "v"},), id="dump"),
-    pytest.param(ujson.load, (), id="load"),
-])
+@pytest.mark.parametrize(
+    "fn,extra_args",
+    [
+        pytest.param(ujson.dump, ({"k": "v"},), id="dump"),
+        pytest.param(ujson.load, (), id="load"),
+    ],
+)
 def test_file_poisoned_getattr_raises(fn, extra_args):
     # PyObject_GetAttrString (replacing the old HasAttrString) must propagate
     # non-AttributeError exceptions from __getattr__ instead of swallowing them.

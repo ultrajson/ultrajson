@@ -376,6 +376,40 @@ def test_encode_unicode_4_bytes_utf8_fail():
         ujson.encode(test_input, reject_bytes=False)
 
 
+@pytest.mark.parametrize("encoded,slice_len", [
+    (b'"\xC2\x80EXTRA"', 2),         # 2-byte lead, 0 continuations in slice
+    (b'"\xE2\x82\xACEXTRA"', 2),     # 3-byte lead, 0 continuations
+    (b'"\xE2\x82\xACEXTRA"', 3),     # 3-byte lead, 1 continuation
+    (b'"\xF0\x9F\x98\x80EXTRA"', 2), # 4-byte lead, 0 continuations
+    (b'"\xF0\x9F\x98\x80EXTRA"', 3), # 4-byte lead, 1 continuation
+    (b'"\xF0\x9F\x98\x80EXTRA"', 4), # 4-byte lead, 2 continuations
+])
+def test_truncated_multibyte_utf8_raises(encoded, slice_len):
+    # Continuation bytes past the memoryview boundary previously caused
+    # out-of-bounds reads; now raise JSONDecodeError at each truncation point.
+    ba = bytearray(encoded)
+    with pytest.raises(ujson.JSONDecodeError):
+        ujson.loads(memoryview(ba)[:slice_len])
+
+
+def test_utf8_oob_byte_not_incorporated():
+    # Two slices differing only in bytes past the boundary must both raise,
+    # proving out-of-bounds content is not incorporated into the decoded value.
+    ba1 = bytearray(b'"\xC2\xA1_CANARY_A"')
+    ba2 = bytearray(b'"\xC2\xA1_CANARY_B"')
+    for mv in (memoryview(ba1)[:2], memoryview(ba2)[:2]):
+        with pytest.raises(ujson.JSONDecodeError):
+            ujson.loads(mv)
+
+
+@pytest.mark.parametrize("slice_len", [3, 4, 5, 6])
+def test_unicode_escape_truncated_in_slice_raises(slice_len):
+    # \uXXXX with 0-3 hex digits present in a length-bounded buffer raises.
+    ba = bytearray(b'"\\u0041EXTRA"')
+    with pytest.raises(ujson.JSONDecodeError):
+        ujson.loads(memoryview(ba)[:slice_len])
+
+
 def test_encode_null_character():
     test_input = "31337 \x00 1337"
     output = ujson.encode(test_input)

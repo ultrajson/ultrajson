@@ -494,7 +494,6 @@ def test_failed_dump_closed_file():
     file.close()
     with pytest.raises(ValueError, match="closed file"):
         ujson.dump([0] * 100, file)
->>>>>>> 46f75969b18e1d37da3ad0fbb1954d146e072c5d
 
 
 def test_load_file():

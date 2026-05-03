@@ -671,6 +671,7 @@ def test_sort_keys_unordered():
 
 def _make_poisoned_sort_dict(poison_after):
     """Return a dict whose keys raise ValueError from __hash__ after N calls."""
+
     class TrickyKey:
         _counter = 0
         _poison_after = 10**9

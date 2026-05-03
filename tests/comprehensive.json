@@ -1,0 +1,153 @@
+{
+  "strings": {
+    "plain": "hello world",
+    "empty": "",
+    "whitespace_only": "   \t  ",
+    "standard_escapes": "tab\there\nnewline\rreturn\bbackspace\fformfeed\\backslash\"quote\/slash",
+    "unicode_latin": "café naïve résumé",
+    "unicode_cjk": "中文测试",
+    "unicode_emoji": "😀🐍🎉",
+    "long": "the quick brown fox jumps over the lazy dog and then does it again for good measure"
+  },
+  "numbers": {
+    "zero": 0,
+    "one": 1,
+    "negative_one": -1,
+    "forty_two": 42,
+    "large_integer": 9007199254740991,
+    "negative_large": -9007199254740991,
+    "pi": 3.141592653589793,
+    "negative_e": -2.718281828,
+    "small_float": 1.5e-10,
+    "large_float": 1.5e100,
+    "half": 0.5,
+    "negative_fraction": -0.125
+  },
+  "booleans": {
+    "yes": true,
+    "no": false
+  },
+  "null_value": null,
+  "arrays": {
+    "empty": [],
+    "single": [42],
+    "integers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "floats": [0.25, 0.5, 0.75, 1.0, 1.25],
+    "strings": ["alpha", "beta", "gamma", "delta"],
+    "booleans": [true, false, true],
+    "nulls": [null, null, null],
+    "mixed": [1, "two", 3.14, true, false, null, [], {}],
+    "nested_2": [[1, 2], [3, 4], [5, 6]],
+    "nested_4": [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]]],
+    "of_objects": [{"id": 1, "val": "a"}, {"id": 2, "val": "b"}, {"id": 3, "val": "c"}]
+  },
+  "objects": {
+    "empty": {},
+    "single_key": {"only": "value"},
+    "flat": {"a": 1, "b": "two", "c": true, "d": null, "e": 3.14},
+    "nested_6": {
+      "l1": {
+        "l2": {
+          "l3": {
+            "l4": {
+              "l5": {
+                "l6": "six levels deep",
+                "l6_int": 6,
+                "l6_arr": [6, 6, 6]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "records": [
+    {
+      "id": 1,
+      "name": "Alice",
+      "active": true,
+      "score": 98.5,
+      "rank": 1,
+      "tags": ["admin", "superuser", "reviewer"],
+      "address": {
+        "street": "123 Main St",
+        "city": "Springfield",
+        "state": "IL",
+        "zip": "62701",
+        "country": "US",
+        "coords": {"lat": 39.7817, "lng": -89.6501}
+      },
+      "prefs": {
+        "theme": "dark",
+        "notifications": true,
+        "language": "en-US",
+        "limits": {"daily": 100, "monthly": 3000, "rate": 10.5}
+      },
+      "history": [
+        {"date": "2024-01-01", "action": "login",  "count": 5},
+        {"date": "2024-01-02", "action": "upload", "count": 12}
+      ],
+      "metadata": null
+    },
+    {
+      "id": 2,
+      "name": "Bob",
+      "active": false,
+      "score": 72.25,
+      "rank": 2,
+      "tags": [],
+      "address": {
+        "street": "456 Oak Ave",
+        "city": "Shelbyville",
+        "state": "IL",
+        "zip": "62565",
+        "country": "US",
+        "coords": {"lat": 39.4064, "lng": -88.7959}
+      },
+      "prefs": {
+        "theme": "light",
+        "notifications": false,
+        "language": "en-GB",
+        "limits": {"daily": 50, "monthly": 1500, "rate": 5.0}
+      },
+      "history": [],
+      "metadata": {"suspended_reason": "inactivity", "flags": [1, 2, 4]}
+    }
+  ],
+  "matrix": [
+    [ 1,  2,  3,  4,  5],
+    [ 6,  7,  8,  9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20]
+  ],
+  "config": {
+    "version": "3.1.4",
+    "debug": false,
+    "features": {
+      "alpha": {
+        "enabled": true,
+        "weight": 0.25,
+        "description": "Alpha feature group"
+      },
+      "beta": {
+        "enabled": false,
+        "weight": 0.75,
+        "description": "Beta feature group",
+        "suboptions": {
+          "mode": "auto",
+          "retries": 3,
+          "backoff": [1.0, 2.0, 4.0, 8.0]
+        }
+      }
+    },
+    "limits": {
+      "max_connections": 100,
+      "timeout_ms": 5000,
+      "rate_limit": 50.5,
+      "burst": null
+    },
+    "allowed_origins": ["https:\/\/example.com", "https:\/\/api.example.com"],
+    "tags": ["production", "v3", "stable"],
+    "metadata": null
+  }
+}

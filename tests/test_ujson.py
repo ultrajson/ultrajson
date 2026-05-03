@@ -376,6 +376,10 @@ def test_encode_unicode_4_bytes_utf8_fail():
         ujson.encode(test_input, reject_bytes=False)
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="PyPy does not support memoryview of bytearray in ujson",
+)
 @pytest.mark.parametrize("encoded,slice_len", [
     (b'"\xC2\x80EXTRA"', 2),         # 2-byte lead, 0 continuations in slice
     (b'"\xE2\x82\xACEXTRA"', 2),     # 3-byte lead, 0 continuations
@@ -392,6 +396,10 @@ def test_truncated_multibyte_utf8_raises(encoded, slice_len):
         ujson.loads(memoryview(ba)[:slice_len])
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="PyPy does not support memoryview of bytearray in ujson",
+)
 def test_utf8_oob_byte_not_incorporated():
     # Two slices differing only in bytes past the boundary must both raise,
     # proving out-of-bounds content is not incorporated into the decoded value.
@@ -402,6 +410,10 @@ def test_utf8_oob_byte_not_incorporated():
             ujson.loads(mv)
 
 
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="PyPy does not support memoryview of bytearray in ujson",
+)
 @pytest.mark.parametrize("slice_len", [3, 4, 5, 6])
 def test_unicode_escape_truncated_in_slice_raises(slice_len):
     # \uXXXX with 0-3 hex digits present in a length-bounded buffer raises.

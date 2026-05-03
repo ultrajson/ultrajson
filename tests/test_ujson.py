@@ -762,10 +762,6 @@ def test_encode_too_big_int_error():
     not hasattr(sys, "set_int_max_str_digits"),
     reason="sys.set_int_max_str_digits backported to 3.11, 3.10.7+, 3.9.14+",
 )
-@pytest.mark.xfail(
-    sys.implementation.name == "pypy",
-    reason="PyPy's PyLong_FromString ignores sys.get_int_max_str_digits()",
-)
 def test_decode_too_big_int_error():
     with pytest.raises(ValueError, match="integer string conversion"):
         ujson.loads("9" * 10_000)
@@ -786,11 +782,11 @@ def test_decode_integer_near_str_digit_limit():
 
     assert ujson.loads(at_limit) == int(at_limit)
 
-    if not hasattr(sys, "set_int_max_str_digits") or sys.implementation.name == "pypy":
-        assert ujson.loads(over_limit) == int(over_limit)
-    else:
+    if hasattr(sys, "set_int_max_str_digits"):
         with pytest.raises(ValueError, match="[Ll]imit|digits"):
             ujson.loads(over_limit)
+    else:
+        assert ujson.loads(over_limit) == int(over_limit)
 
 
 @pytest.mark.parametrize(

@@ -147,3 +147,7 @@ cov
 *.gcov
 *.gcda
 *.gcno
+
+# OS stuff
+.fuse_hidden*
+.DS_Store

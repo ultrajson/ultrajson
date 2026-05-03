@@ -68,11 +68,14 @@ def test_write_escaped_string():
     )
 
 
-@pytest.mark.parametrize("char, escape", [
-    ("<", "\\u003c"),
-    (">", "\\u003e"),
-    ("&", "\\u0026"),
-])
+@pytest.mark.parametrize(
+    "char, escape",
+    [
+        ("<", "\\u003c"),
+        (">", "\\u003e"),
+        ("&", "\\u0026"),
+    ],
+)
 def test_html_chars_encoded_individually(char, escape):
     encoded = ujson.dumps(char, encode_html_chars=True)
     assert escape in encoded.lower()
@@ -133,13 +136,16 @@ def test_encode_double_neg_conversion():
     assert round(test_input, 5) == round(ujson.decode(output), 5)
 
 
-@pytest.mark.parametrize("val", [
-    sys.float_info.max,
-    -sys.float_info.max,
-    sys.float_info.min,
-    sys.float_info.epsilon,
-    0.0,
-])
+@pytest.mark.parametrize(
+    "val",
+    [
+        sys.float_info.max,
+        -sys.float_info.max,
+        sys.float_info.min,
+        sys.float_info.epsilon,
+        0.0,
+    ],
+)
 def test_encode_float_boundary_values(val):
     encoded = ujson.dumps(val)
     decoded = ujson.loads(encoded)
@@ -678,7 +684,7 @@ def test_decode_no_assert(test_input):
         ("31337", 31337),
         ("-31337", -31337),
         ("100000000000000000000.0", 1e20),
-        ("-0", 0),       # negative zero integer → plain 0
+        ("-0", 0),  # negative zero integer → plain 0
         ("-0.0", -0.0),  # negative zero float preserves sign bit
     ],
 )
@@ -710,12 +716,12 @@ def test_decode_numeric_int_exp(test_input):
 @pytest.mark.parametrize(
     "i",
     [
-        -(10**25),   # very negative
-        -(2**64),    # too large in magnitude for a uint64
+        -(10**25),  # very negative
+        -(2**64),  # too large in magnitude for a uint64
         -(2**63) - 1,  # too small for a int64
-        2**64,       # too large for a uint64
-        10**25,      # very positive
-        2**100,      # well beyond 64-bit range
+        2**64,  # too large for a uint64
+        10**25,  # very positive
+        2**100,  # well beyond 64-bit range
         -(2**100),
         2**200,
     ],
@@ -819,10 +825,10 @@ def test_decode_range_raises(test_input, expected):
         ("[]]", ujson.JSONDecodeError),  # array unmatched bracket fail
         ("{}\n\t a", ujson.JSONDecodeError),  # with trailing non whitespaces
         ('{"age", 44}', ujson.JSONDecodeError),  # read bad object syntax
-        ('"\\q"', ujson.JSONDecodeError),   # unrecognised escape letter
-        ('"\\x41"', ujson.JSONDecodeError), # hex escape (Python syntax, not JSON)
-        ('"\\0"', ujson.JSONDecodeError),   # octal-style escape (not JSON)
-        ('"\\a"', ujson.JSONDecodeError),   # Python bell escape (not JSON)
+        ('"\\q"', ujson.JSONDecodeError),  # unrecognised escape letter
+        ('"\\x41"', ujson.JSONDecodeError),  # hex escape (Python syntax, not JSON)
+        ('"\\0"', ujson.JSONDecodeError),  # octal-style escape (not JSON)
+        ('"\\a"', ujson.JSONDecodeError),  # Python bell escape (not JSON)
     ],
 )
 def test_decode_raises(test_input, expected):
@@ -912,9 +918,9 @@ def test_dumps_raises(test_input, expected_exception, expected_message):
         float("nan"),
         float("inf"),
         -float("inf"),
-        [float("nan")],            # nested in list
-        {"k": float("inf")},       # nested in dict value
-        [[float("nan")]],          # doubly nested
+        [float("nan")],  # nested in list
+        {"k": float("inf")},  # nested in dict value
+        [[float("nan")]],  # doubly nested
         {"a": {"b": float("inf")}},
     ],
 )
@@ -1111,11 +1117,14 @@ def test_encode_unicode(test_input):
     assert dec == json.loads(enc)
 
 
-@pytest.mark.parametrize("codepoint, expected_ord", [
-    ("\\uFFFF", 0xFFFF),   # highest BMP non-surrogate
-    ("\\u0080", 0x0080),   # first codepoint needing a 2-byte UTF-8 sequence
-    ("\\u0800", 0x0800),   # first codepoint needing a 3-byte UTF-8 sequence
-])
+@pytest.mark.parametrize(
+    "codepoint, expected_ord",
+    [
+        ("\\uFFFF", 0xFFFF),  # highest BMP non-surrogate
+        ("\\u0080", 0x0080),  # first codepoint needing a 2-byte UTF-8 sequence
+        ("\\u0800", 0x0800),  # first codepoint needing a 3-byte UTF-8 sequence
+    ],
+)
 def test_unicode_boundary_codepoints(codepoint, expected_ord):
     decoded = ujson.loads(f'"{codepoint}"')
     assert ord(decoded) == expected_ord
@@ -1169,10 +1178,13 @@ def test_reject_bytes_false():
     assert ujson.dumps(data, reject_bytes=False) == '{"a":"b"}'
 
 
-@pytest.mark.parametrize("value", [
-    [b"hello"],                    # bytes inside a list
-    {"a": {"b": [b"deep"]}},       # bytes deeply nested
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        [b"hello"],  # bytes inside a list
+        {"a": {"b": [b"deep"]}},  # bytes deeply nested
+    ],
+)
 def test_reject_bytes_nested(value):
     # reject_bytes=True (default) applies at any nesting depth.
     with pytest.raises(TypeError):
@@ -1426,6 +1438,7 @@ def test_loads_bytes_like():
     assert ujson.loads('"🦄🐳"'.encode()) == "🦄🐳"
     # array.array exports the C-contiguous buffer protocol and must be accepted.
     import array as _array
+
     assert ujson.loads(_array.array("B", b'{"a":1}')) == {"a": 1}
 
 
@@ -1522,11 +1535,13 @@ def test_comprehensive_json_fixture():
 
     # ── 3. Type correctness for every JSON primitive type ──────────────────
     nums = data["numbers"]
-    assert isinstance(nums["zero"], int)       and nums["zero"] == 0
-    assert isinstance(nums["forty_two"], int)  and nums["forty_two"] == 42
+    assert isinstance(nums["zero"], int) and nums["zero"] == 0
+    assert isinstance(nums["forty_two"], int) and nums["forty_two"] == 42
     assert isinstance(nums["negative_one"], int) and nums["negative_one"] == -1
-    assert isinstance(nums["pi"], float)       and math.isclose(nums["pi"], math.pi, rel_tol=1e-12)
-    assert isinstance(nums["half"], float)     and nums["half"] == 0.5
+    assert isinstance(nums["pi"], float) and math.isclose(
+        nums["pi"], math.pi, rel_tol=1e-12
+    )
+    assert isinstance(nums["half"], float) and nums["half"] == 0.5
     assert isinstance(nums["small_float"], float)
 
     bools = data["booleans"]
@@ -1540,14 +1555,14 @@ def test_comprehensive_json_fixture():
 
     # ── 4. String escape sequences survived the roundtrip ──────────────────
     escapes = data["strings"]["standard_escapes"]
-    assert "\t" in escapes   # \t
-    assert "\n" in escapes   # \n
-    assert "\r" in escapes   # \r
-    assert "\b" in escapes   # \b
-    assert "\f" in escapes   # \f
-    assert "\\" in escapes   # \\
-    assert '"' in escapes    # \"
-    assert "/" in escapes    # \/ (solidus — optional escape, still valid)
+    assert "\t" in escapes  # \t
+    assert "\n" in escapes  # \n
+    assert "\r" in escapes  # \r
+    assert "\b" in escapes  # \b
+    assert "\f" in escapes  # \f
+    assert "\\" in escapes  # \\
+    assert '"' in escapes  # \"
+    assert "/" in escapes  # \/ (solidus — optional escape, still valid)
 
     # ── 5. Unicode strings ─────────────────────────────────────────────────
     assert "é" in data["strings"]["unicode_latin"]
@@ -1565,7 +1580,7 @@ def test_comprehensive_json_fixture():
     assert arrs["mixed"][5] is None
     assert arrs["mixed"][6] == []
     assert arrs["mixed"][7] == {}
-    assert arrs["nested_4"][0][0][0] == [1, 2]      # 4 levels deep
+    assert arrs["nested_4"][0][0][0] == [1, 2]  # 4 levels deep
     assert arrs["of_objects"][1]["val"] == "b"
 
     # ── 7. All object variants ─────────────────────────────────────────────
@@ -1596,8 +1611,8 @@ def test_comprehensive_json_fixture():
     assert bob["metadata"]["flags"] == [1, 2, 4]
 
     # ── 9. Matrix (array of arrays of ints) ───────────────────────────────
-    assert data["matrix"][3][4] == 20       # bottom-right corner
-    assert sum(data["matrix"][0]) == 15     # first row
+    assert data["matrix"][3][4] == 20  # bottom-right corner
+    assert sum(data["matrix"][0]) == 15  # first row
 
     # ── 10. Config subtree ────────────────────────────────────────────────
     cfg = data["config"]

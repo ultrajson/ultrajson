@@ -183,9 +183,15 @@ PyMODINIT_FUNC PyInit_ujson(void)
   if (mod_decimal)
   {
     PyObject* type_decimal = PyObject_GetAttrString(mod_decimal, "Decimal");
-    assert(type_decimal != NULL);
-    modulestate(module)->type_decimal = type_decimal;
     Py_DECREF(mod_decimal);
+    if (type_decimal != NULL)
+    {
+      modulestate(module)->type_decimal = type_decimal;
+    }
+    else
+    {
+      PyErr_Clear();
+    }
   }
   else
     PyErr_Clear();

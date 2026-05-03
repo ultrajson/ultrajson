@@ -1618,8 +1618,8 @@ def test_comprehensive_json_fixture():
     assert bob["metadata"]["flags"] == [1, 2, 4]
 
     # Matrix (array of arrays of ints)
-    assert data["matrix"][3][4] == 20       # bottom-right corner
-    assert sum(data["matrix"][0]) == 15     # first row
+    assert data["matrix"][3][4] == 20  # bottom-right corner
+    assert sum(data["matrix"][0]) == 15  # first row
 
     # Config subtree
     cfg = data["config"]

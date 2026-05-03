@@ -504,12 +504,13 @@ def test_to_dict():
     assert dec == {"key": 31337}
 
 
+class _PlainObject:
+    pass
+
+
 def test_default_function_fallthrough():
     # Objects with neither toDict nor __json__ fall through to default=.
-    class Plain:
-        pass
-
-    assert ujson.loads(ujson.dumps(Plain(), default=lambda o: "fallback")) == "fallback"
+    assert ujson.loads(ujson.dumps(_PlainObject(), default=lambda o: "fallback")) == "fallback"
 
 
 class JSONTest:
@@ -539,13 +540,14 @@ def test_object_with_complex_json():
     assert dec == {"key": obj}
 
 
+class _BytesJSON:
+    def __json__(self):
+        return b'{"source": "bytes"}'
+
+
 def test_object_with_json_bytes():
     # __json__ may return bytes; they are treated as raw JSON just like str.
-    class BytesJSON:
-        def __json__(self):
-            return b'{"source": "bytes"}'
-
-    assert ujson.loads(ujson.dumps(BytesJSON())) == {"source": "bytes"}
+    assert ujson.loads(ujson.dumps(_BytesJSON())) == {"source": "bytes"}
 
 
 def test_object_with_json_type_error():
@@ -744,8 +746,8 @@ def test_encode_decode_big_int(i, mode):
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="sys.set_int_max_str_digits was added in Python 3.11",
+    not hasattr(sys, "set_int_max_str_digits"),
+    reason="sys.set_int_max_str_digits backported to 3.11, 3.10.7+, 3.9.14+",
 )
 @pytest.mark.xfail(
     sys.implementation.name == "pypy",
@@ -757,8 +759,12 @@ def test_encode_too_big_int_error():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="sys.set_int_max_str_digits was added in Python 3.11",
+    not hasattr(sys, "set_int_max_str_digits"),
+    reason="sys.set_int_max_str_digits backported to 3.11, 3.10.7+, 3.9.14+",
+)
+@pytest.mark.xfail(
+    sys.implementation.name == "pypy",
+    reason="PyPy's PyLong_FromString ignores sys.get_int_max_str_digits()",
 )
 def test_decode_too_big_int_error():
     with pytest.raises(ValueError, match="integer string conversion"):
@@ -767,24 +773,24 @@ def test_decode_too_big_int_error():
 
 def test_decode_integer_near_str_digit_limit():
     """
-    Python 3.11+ enforces a default int_max_str_digits limit of 4300 digits
-    (introduced to mitigate CVE-2020-10735).  ujson's PyLong_FromString path
-    inherits this limit.
+    sys.set_int_max_str_digits (default 4300) was introduced in Python 3.11
+    and backported as a security fix to 3.10.7, 3.9.14, and 3.8.14
+    (CVE-2020-10735).  ujson's PyLong_FromString path inherits this limit.
 
-    - On Python <3.11 there is no limit: any digit count decodes.
-    - On Python 3.11+: exactly 4300 digits succeeds; 4301 raises ValueError.
+    When the limit is present: exactly 4300 digits succeeds; 4301 raises.
+    When absent (e.g. 3.10.0–3.10.6): both digit counts decode successfully.
+    PyPy does not enforce the limit even when the attribute exists.
     """
     at_limit = "9" * 4300
     over_limit = "9" * 4301
 
-    if sys.version_info >= (3, 11):
-        assert ujson.loads(at_limit) == int(at_limit)
+    assert ujson.loads(at_limit) == int(at_limit)
+
+    if not hasattr(sys, "set_int_max_str_digits") or sys.implementation.name == "pypy":
+        assert ujson.loads(over_limit) == int(over_limit)
+    else:
         with pytest.raises(ValueError, match="[Ll]imit|digits"):
             ujson.loads(over_limit)
-    else:
-        # Python 3.10: no limit; both decode successfully.
-        assert ujson.loads(at_limit) == int(at_limit)
-        assert ujson.loads(over_limit) == int(over_limit)
 
 
 @pytest.mark.parametrize(
@@ -1187,7 +1193,7 @@ def test_reject_bytes_false():
 )
 def test_reject_bytes_nested(value):
     # reject_bytes=True (default) applies at any nesting depth.
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="reject_bytes is on and"):
         ujson.dumps(value)
 
 
@@ -1439,7 +1445,8 @@ def test_loads_bytes_like():
     # array.array exports the C-contiguous buffer protocol and must be accepted.
     import array as _array
 
-    assert ujson.loads(_array.array("B", b'{"a":1}')) == {"a": 1}
+    if not hasattr(sys, "pypy_version_info"):
+        assert ujson.loads(_array.array("B", b'{"a":1}')) == {"a": 1}
 
 
 @pytest.mark.skipif(

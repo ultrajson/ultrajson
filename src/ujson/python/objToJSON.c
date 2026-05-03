@@ -313,9 +313,13 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   {
     return -1;
   }
-  GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
+  GET_TC(tc)->itemValue = PyDict_GetItemWithError(GET_TC(tc)->dictObj, key);
   if (!GET_TC(tc)->itemValue)
   {
+    if (!PyErr_Occurred())
+    {
+      PyErr_SetString(PyExc_RuntimeError, "dict mutated during sort_keys=True iteration");
+    }
     return -1;
   }
   GET_TC(tc)->index++;

@@ -669,6 +669,66 @@ def test_sort_keys_unordered():
         ujson.dumps(data, sort_keys=True)
 
 
+def _make_poisoned_sort_dict(poison_after):
+    """Return a dict whose keys raise ValueError from __hash__ after `poison_after` calls."""
+    class TrickyKey:
+        _counter = 0
+        _poison_after = 10**9
+
+        def __init__(self, n):
+            self.n = n
+
+        def __hash__(self):
+            TrickyKey._counter += 1
+            if TrickyKey._counter > TrickyKey._poison_after:
+                raise ValueError(f"poisoned __hash__ at call #{TrickyKey._counter}")
+            return self.n
+
+        def __lt__(self, other):
+            return self.n < other.n
+
+    TrickyKey._counter = 0
+    d = {TrickyKey(1): "a", TrickyKey(2): "b", TrickyKey(3): "c"}
+    TrickyKey._counter = 0
+    TrickyKey._poison_after = poison_after
+    return d
+
+
+@pytest.mark.parametrize("poison_after", [1, 2])
+def test_sort_keys_poisoned_hash_raises(poison_after):
+    # Previously PyDict_GetItem silently swallowed __hash__ exceptions,
+    # causing dumps() to return truncated JSON without raising.
+    # PyDict_GetItemWithError now propagates them correctly.
+    # poison_after=1: fails on 2nd key; poison_after=2: fails on 3rd key.
+    with pytest.raises(Exception):
+        ujson.dumps(_make_poisoned_sort_dict(poison_after), sort_keys=True)
+
+
+def test_sort_keys_dict_mutated_during_iteration_raises():
+    # If a key deletes itself from the dict during lookup (via __hash__),
+    # PyDict_GetItemWithError returns NULL with no exception set; the defensive
+    # RuntimeError branch should fire rather than returning truncated JSON.
+    victim = {}
+
+    class MutatingKey:
+        def __init__(self, n):
+            self.n = n
+
+        def __hash__(self):
+            victim.clear()
+            return self.n
+
+        def __eq__(self, other):
+            return self.n == other.n
+
+        def __lt__(self, other):
+            return self.n < other.n
+
+    victim[MutatingKey(1)] = "val"
+    with pytest.raises(RuntimeError, match="dict mutated"):
+        ujson.dumps(victim, sort_keys=True)
+
+
 @pytest.mark.parametrize(
     "test_input",
     [

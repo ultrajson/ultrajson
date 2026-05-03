@@ -11,6 +11,7 @@ import re
 import string
 import subprocess
 import sys
+import types
 import uuid
 from collections import OrderedDict
 from pathlib import Path
@@ -477,6 +478,38 @@ def test_dump_to_file_like_object():
 def test_dump_file_args_error():
     with pytest.raises(TypeError):
         ujson.dump([], "")
+    with pytest.raises(TypeError):
+        ujson.dump([], "", "")
+
+
+def test_dump_non_callable_write():
+    file = types.SimpleNamespace(write="a")
+    with pytest.raises(TypeError):
+        ujson.dump([7] * 100, file)
+
+
+def test_failed_dump():
+    with pytest.raises(TypeError):
+        ujson.dump([[0] * 100, object()], io.StringIO())
+
+
+def test_failed_dump_bogus_file():
+    file = types.SimpleNamespace(write=lambda: None)
+    with pytest.raises(TypeError, match="0 positional arguments"):
+        ujson.dump([0] * 100, file)
+
+
+def test_failed_dump_failed_write():
+    file = types.SimpleNamespace(write=lambda x: 1 / 0)
+    with pytest.raises(ZeroDivisionError):
+        ujson.dump([0] * 100, file)
+
+
+def test_failed_dump_closed_file():
+    file = io.StringIO()
+    file.close()
+    with pytest.raises(ValueError, match="closed file"):
+        ujson.dump([0] * 100, file)
 
 
 def test_load_file():

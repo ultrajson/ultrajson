@@ -935,6 +935,11 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   argtuple = PyTuple_Pack(1, data);
+  if (argtuple == NULL)
+  {
+    Py_XDECREF(write);
+    return NULL;
+  }
 
   string = objToJSON (self, argtuple, kwargs);
 
@@ -951,6 +956,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   if (argtuple == NULL)
   {
     Py_XDECREF(write);
+    Py_DECREF(string);
     return NULL;
   }
 
@@ -958,6 +964,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   if (write_result == NULL)
   {
     Py_XDECREF(write);
+    Py_DECREF(string);
     Py_XDECREF(argtuple);
     return NULL;
   }

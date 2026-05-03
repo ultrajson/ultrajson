@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import decimal
 import enum
+import importlib
 import io
 import json
 import math
@@ -29,6 +30,25 @@ def test_encode_decimal():
     encoded = ujson.encode(sut)
     decoded = ujson.decode(encoded)
     assert decoded == 1337.1337
+
+
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython",
+    reason="importlib.reload of C extensions only reliable on CPython",
+)
+def test_pyinit_defensive_clear_without_decimal_class():
+    # Covers the PyErr_Clear() branch in PyInit_ujson where
+    # PyObject_GetAttrString(mod_decimal, "Decimal") returns NULL.
+    # Temporarily remove Decimal from the module then reload ujson so the
+    # defensive else-branch executes rather than the assert that was there before.
+    orig = decimal.Decimal
+    try:
+        del decimal.Decimal
+        importlib.reload(ujson)
+        assert ujson.dumps(42) == "42"
+    finally:
+        decimal.Decimal = orig
+        importlib.reload(ujson)
 
 
 def test_encode_string_conversion():

@@ -495,49 +495,69 @@ ISITERABLE:
     return;
   }
 
-  if (UNLIKELY(PyObject_HasAttrString(obj, "toDict")))
   {
-    PyObject* toDictResult = PyObject_CallMethod(obj, "toDict", NULL);
-    if (toDictResult == NULL)
+    PyObject *todict_fn = PyObject_GetAttrString(obj, "toDict");
+    if (todict_fn == NULL)
     {
-      goto INVALID;
+      if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      {
+        goto INVALID;
+      }
+      PyErr_Clear();
     }
-
-    if (!PyDict_Check(toDictResult))
+    else
     {
-      PyErr_Format(PyExc_TypeError, "toDict() should return a dict, got %s",
-                   Py_TYPE(toDictResult)->tp_name);
-      Py_DECREF(toDictResult);
-      goto INVALID;
+      PyObject* toDictResult = PyObject_CallNoArgs(todict_fn);
+      Py_DECREF(todict_fn);
+      if (toDictResult == NULL)
+      {
+        goto INVALID;
+      }
+      if (!PyDict_Check(toDictResult))
+      {
+        PyErr_Format(PyExc_TypeError, "toDict() should return a dict, got %s",
+                     Py_TYPE(toDictResult)->tp_name);
+        Py_DECREF(toDictResult);
+        goto INVALID;
+      }
+      PRINTMARK();
+      tc->type = JT_OBJECT;
+      SetupDictIter(toDictResult, pc, enc);
+      return;
     }
-
-    PRINTMARK();
-    tc->type = JT_OBJECT;
-    SetupDictIter(toDictResult, pc, enc);
-    return;
   }
-  else
-  if (UNLIKELY(PyObject_HasAttrString(obj, "__json__")))
+
   {
-    PyObject* toJSONResult = PyObject_CallMethod(obj, "__json__", NULL);
-    if (toJSONResult == NULL)
+    PyObject *json_fn = PyObject_GetAttrString(obj, "__json__");
+    if (json_fn == NULL)
     {
-      goto INVALID;
+      if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+      {
+        goto INVALID;
+      }
+      PyErr_Clear();
     }
-
-    if (!PyBytes_Check(toJSONResult) && !PyUnicode_Check(toJSONResult))
+    else
     {
-      PyErr_Format(PyExc_TypeError, "__json__() should return str or bytes, got %s",
-                   Py_TYPE(toJSONResult)->tp_name);
-      Py_DECREF(toJSONResult);
-      goto INVALID;
+      PyObject* toJSONResult = PyObject_CallNoArgs(json_fn);
+      Py_DECREF(json_fn);
+      if (toJSONResult == NULL)
+      {
+        goto INVALID;
+      }
+      if (!PyBytes_Check(toJSONResult) && !PyUnicode_Check(toJSONResult))
+      {
+        PyErr_Format(PyExc_TypeError, "__json__() should return str or bytes, got %s",
+                     Py_TYPE(toJSONResult)->tp_name);
+        Py_DECREF(toJSONResult);
+        goto INVALID;
+      }
+      PRINTMARK();
+      pc->PyTypeToJSON = PyRawJSONToUTF8;
+      tc->type = JT_RAW;
+      GET_TC(tc)->rawJSONValue = toJSONResult;
+      return;
     }
-
-    PRINTMARK();
-    pc->PyTypeToJSON = PyRawJSONToUTF8;
-    tc->type = JT_RAW;
-    GET_TC(tc)->rawJSONValue = toJSONResult;
-    return;
   }
 
   if (defaultFn)
@@ -897,13 +917,15 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  if (!PyObject_HasAttrString (file, "write"))
+  write = PyObject_GetAttrString (file, "write");
+  if (write == NULL)
   {
-    PyErr_Format (PyExc_TypeError, "expected file");
+    if (PyErr_ExceptionMatches(PyExc_AttributeError))
+    {
+      PyErr_Format (PyExc_TypeError, "expected file");
+    }
     return NULL;
   }
-
-  write = PyObject_GetAttrString (file, "write");
 
   if (!PyCallable_Check (write))
   {

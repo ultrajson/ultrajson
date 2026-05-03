@@ -361,18 +361,22 @@ def test_encoder_nesting_just_under_limit():
     assert ujson.loads(ujson.dumps(nested)) is not None
 
 
-@pytest.mark.parametrize("kwarg", [
-    "ensure_ascii",
-    "encode_html_chars",
-    "escape_forward_slashes",
-    "sort_keys",
-])
+@pytest.mark.parametrize(
+    "kwarg",
+    [
+        "ensure_ascii",
+        "encode_html_chars",
+        "escape_forward_slashes",
+        "sort_keys",
+    ],
+)
 def test_bool_kwarg_dunder_bool_exception_propagates(kwarg):
     # PyObject_IsTrue returning -1 must propagate the exception immediately
     # rather than treating -1 as a truthy value and deferring it.
     class BadBool:
         def __bool__(self):
             raise RuntimeError("__bool__ raised")
+
     with pytest.raises(RuntimeError, match="__bool__ raised"):
         ujson.dumps("hello", **{kwarg: BadBool()})
 
@@ -383,8 +387,10 @@ def test_bool_kwarg_exception_not_swallowed_by_default_path():
     class BadBool:
         def __bool__(self):
             raise RuntimeError("__bool__ raised")
+
     class NotSerializable:
         pass
+
     with pytest.raises(RuntimeError):
         ujson.dumps(NotSerializable(), ensure_ascii=BadBool(), default=lambda o: "<ok>")
 

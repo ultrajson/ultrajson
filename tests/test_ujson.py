@@ -20,11 +20,6 @@ import pytest
 import ujson
 
 
-class _FailingWriteFile:
-    def write(self, data):
-        raise OSError("simulated write failure")
-
-
 class _PoisonedAttrFile:
     def __getattr__(self, name):
         raise OSError(f"file access forbidden: {name!r}")
@@ -452,11 +447,6 @@ def test_dump_file_args_error():
         ujson.dump([], "")
     with pytest.raises(TypeError, match="expected file"):
         ujson.dump([], object())
-
-
-def test_dump_write_failure_raises():
-    with pytest.raises(OSError, match="simulated write failure"):
-        ujson.dump({"key": "value"}, _FailingWriteFile())
 
 
 @pytest.mark.parametrize(

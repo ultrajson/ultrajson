@@ -56,7 +56,8 @@ jobs:
           # Build wheels for the currently selected architecture.
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
           # Include latest Python beta.
-          CIBW_ENABLE: cpython-prerelease pypy graalpy
+          # macOS graalpy builds fail creating a virtualenv inside cibuildwheel
+          CIBW_ENABLE: cpython-prerelease pypy ${{ runner.os != 'macOS' && 'graalpy' || '' }}
           # Skip EOL Python versions
           CIBW_SKIP: "gp311*"
           # Run the test suite after each build.

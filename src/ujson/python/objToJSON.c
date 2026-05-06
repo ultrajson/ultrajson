@@ -584,6 +584,9 @@ ISITERABLE:
 INVALID:
   PRINTMARK();
   tc->type = JT_INVALID;
+  Py_XDECREF(pc->newObj);
+  Py_XDECREF(pc->utf8BytesObj);
+  Py_XDECREF(pc->rawJSONValue);
   PyObject_Free(tc->prv);
   tc->prv = NULL;
   return;
@@ -934,7 +937,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   if (argtuple == NULL)
   {
     Py_XDECREF(write);
-    Py_DECREF(string);
+    Py_XDECREF(string);
     return NULL;
   }
 
@@ -942,8 +945,8 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   if (write_result == NULL)
   {
     Py_XDECREF(write);
-    Py_DECREF(string);
     Py_XDECREF(argtuple);
+    Py_XDECREF(string);
     return NULL;
   }
 

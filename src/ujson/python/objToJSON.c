@@ -550,7 +550,7 @@ ISITERABLE:
       goto INVALID;
     }
 
-    newObj = PyObject_CallFunctionObjArgs(defaultFn, obj, NULL);
+    newObj = PyObject_CallFunctionObjArgs(defaultFn, obj, (PyObject *)NULL);
     if (newObj)
     {
       PRINTMARK();

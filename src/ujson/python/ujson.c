@@ -37,7 +37,6 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 */
 
 #include <Python.h>
-#include "version.h"
 #include "ujson.h"
 
 /* objToJSON */

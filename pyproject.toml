@@ -1,17 +1,48 @@
 [build-system]
 requires = [
-  "setuptools>=42",
-  "setuptools_scm[toml]>=3.4",
+  "setuptools>=77",
+  "setuptools-scm[toml]>=3.4",
 ]
 
+[project]
+name = "ujson"
+description = "Ultra fast JSON encoder and decoder for Python"
+readme = "README.md"
+license = "BSD-3-Clause AND TCL"
+license-files = [ "LICENSE.txt" ]
+authors = [
+  { name = "Jonas Tarnstrom" },
+]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Programming Language :: C",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: GraalPy",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Typing :: Typed",
+]
+dynamic = [ "version" ]
+urls.Download = "https://github.com/ultrajson/ultrajson"
+urls.Homepage = "https://github.com/ultrajson/ultrajson"
+urls.Source = "https://github.com/ultrajson/ultrajson"
+
+[tool.setuptools]
+packages = [ "ujson-stubs" ]
+
 [tool.black]
-target_version = ["py310"]
+target_version = [ "py310" ]
 
 [tool.isort]
 profile = "black"
-known_first_party = ["ujson"]
+known_first_party = [ "ujson" ]
 
 [tool.pytest]
-markers = [
-    "skip_leak_test: Don't rerun this test in search for memory leaks"
-]
+markers = [ "skip_leak_test: Don't rerun this test in search for memory leaks" ]

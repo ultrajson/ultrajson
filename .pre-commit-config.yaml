@@ -9,7 +9,6 @@ repos:
     rev: 26.3.1
     hooks:
       - id: black
-        args: [--target-version=py310]
 
   - repo: https://github.com/PyCQA/isort
     rev: 8.0.1
@@ -44,11 +43,15 @@ repos:
     hooks:
       - id: zizmor
 
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v3.2.0
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.21.2
     hooks:
-      - id: setup-cfg-fmt
-        args: [--include-version-classifiers, --max-py-version=3.14]
+      - id: pyproject-fmt
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.25
+    hooks:
+      - id: validate-pyproject
 
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: 1.7.1

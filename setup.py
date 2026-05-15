@@ -4,6 +4,7 @@ from glob import glob
 from os import environ, pathsep
 
 from setuptools import Extension, setup
+from setuptools_scm import get_version
 
 dconv_includes = [
     dir
@@ -29,6 +30,15 @@ if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not
 else:
     strip_flags = []
 
+
+def local_scheme(version):
+    """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2)
+    to be able to upload to Test PyPI"""
+    return ""
+
+
+version = get_version(local_scheme=local_scheme)
+
 module1 = Extension(
     "ujson",
     sources=dconv_source_files
@@ -40,25 +50,13 @@ module1 = Extension(
         "./src/ujson/lib/ultrajsondec.c",
     ],
     include_dirs=["./src/ujson/python", "./src/ujson/lib"] + dconv_includes,
+    define_macros=[("UJSON_VERSION", f'"{version}"')],
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"] + dconv_libs + strip_flags,
 )
 
-with open("src/ujson/python/version_template.h") as f:
-    version_template = f.read()
-
-
-def local_scheme(version):
-    """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2)
-    to be able to upload to Test PyPI"""
-    return ""
-
 
 setup(
     ext_modules=[module1],
-    use_scm_version={
-        "local_scheme": local_scheme,
-        "write_to": "src/ujson/python/version.h",
-        "write_to_template": version_template,
-    },
+    use_scm_version={"local_scheme": local_scheme},
 )

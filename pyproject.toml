@@ -37,12 +37,11 @@ urls.Source = "https://github.com/ultrajson/ultrajson"
 [tool.setuptools]
 packages = [ "ujson-stubs" ]
 
-[tool.black]
-target_version = [ "py310" ]
-
 [tool.isort]
 profile = "black"
 known_first_party = [ "ujson" ]
 
 [tool.pytest]
+minversion = "9.0"
 markers = [ "skip_leak_test: Don't rerun this test in search for memory leaks" ]
+testpaths = [ "tests" ]

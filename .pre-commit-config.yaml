@@ -11,7 +11,7 @@ repos:
       - id: black
 
   - repo: https://github.com/PyCQA/isort
-    rev: 8.0.1
+    rev: 9.0.0a3
     hooks:
       - id: isort
 
@@ -49,7 +49,7 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.0
+    rev: v1.25.2
     hooks:
       - id: zizmor
 

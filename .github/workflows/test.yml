@@ -43,11 +43,6 @@ jobs:
           cache: pip
           cache-dependency-path: "setup.py"
 
-      - name: Set PYTHON_GIL
-        if: endsWith(matrix.python-version, 't')
-        run: |
-          echo "PYTHON_GIL=0" >> "$GITHUB_ENV"
-
       - name: Install dependencies
         run: |
           python -m pip install -U pip

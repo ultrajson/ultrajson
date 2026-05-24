@@ -1683,6 +1683,15 @@ def test_comprehensive_json_fixture():
     assert ujson.loads("1.") == 1.0
 
 
+def test_gil_not_reenabled():
+    try:
+        gil_enabled = sys._is_gil_enabled()
+        gil_expected = bool(sys.flags.gil)
+    except AttributeError:
+        pytest.skip(reason="Free threading properties unavailable")
+    assert gil_enabled is gil_expected
+
+
 """
 The following checks are not part of the standard test suite.
 They can be run manually as follows:

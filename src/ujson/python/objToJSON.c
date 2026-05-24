@@ -373,12 +373,6 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   pc->rawJSONValue = NULL;
 
 BEGIN:
-  if (PyIter_Check(obj))
-  {
-    PRINTMARK();
-    goto ISITERABLE;
-  }
-
   if (PyBool_Check(obj))
   {
     PRINTMARK();
@@ -458,8 +452,7 @@ BEGIN:
     pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
     return;
   }
-
-ISITERABLE:
+  else
   if (PyDict_Check(obj))
   {
     PRINTMARK();

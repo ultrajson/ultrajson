@@ -625,11 +625,6 @@ static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static void Object_releaseObject(JSOBJ _obj)
-{
-  Py_DECREF( (PyObject *) _obj);
-}
-
 static int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   obj = GET_OBJ(obj, tc);
@@ -690,7 +685,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_iterEnd,
     Object_iterGetValue,
     Object_iterGetName,
-    Object_releaseObject,
     PyObject_Malloc,
     PyObject_Realloc,
     PyObject_Free,

@@ -453,6 +453,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 
             for (index = 0; index < 4; index ++)
             {
+              if (inputOffset >= (JSUINT8 *) ds->end)
+              {
+                return SetError (ds, -1, "Unterminated unicode escape sequence when decoding 'string'");
+              }
               switch (*inputOffset)
               {
                 case '\0': return SetError (ds, -1, "Unterminated unicode escape sequence when decoding 'string'");
@@ -526,6 +530,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
       {
         ucs = (*inputOffset++) & 0x1f;
         ucs <<= 6;
+        if (inputOffset >= (JSUINT8 *) ds->end)
+        {
+          return SetError(ds, -1, "Unterminated UTF-8 sequence when decoding 'string'");
+        }
         if (((*inputOffset) & 0x80) != 0x80)
         {
           return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
@@ -544,6 +552,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         for (index = 0; index < 2; index ++)
         {
           ucs <<= 6;
+          if (inputOffset >= (JSUINT8 *) ds->end)
+          {
+            return SetError(ds, -1, "Unterminated UTF-8 sequence when decoding 'string'");
+          }
           oct = (*inputOffset++);
 
           if ((oct & 0x80) != 0x80)
@@ -567,6 +579,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         for (index = 0; index < 3; index ++)
         {
           ucs <<= 6;
+          if (inputOffset >= (JSUINT8 *) ds->end)
+          {
+            return SetError(ds, -1, "Unterminated UTF-8 sequence when decoding 'string'");
+          }
           oct = (*inputOffset++);
 
           if ((oct & 0x80) != 0x80)

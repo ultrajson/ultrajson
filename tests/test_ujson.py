@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import decimal
 import enum
+import gc
 import io
 import json
 import math
@@ -21,6 +22,18 @@ import pytest
 import ujson
 
 
+class _DefaultLeaker:
+    __slots__ = ("payload",)
+
+    def __init__(self):
+        self.payload = b"x" * 1024
+
+
+class _FailingWriteFile:
+    def write(self, data):
+        raise OSError("fail")
+
+
 def assert_almost_equal(a, b):
     assert round(abs(a - b), 7) == 0
 
@@ -30,6 +43,19 @@ def test_encode_decimal():
     encoded = ujson.encode(sut)
     decoded = ujson.decode(encoded)
     assert decoded == 1337.1337
+
+
+@pytest.mark.skipif(
+    sys.implementation.name != "pypy",
+    reason="this branch only executes on PyPy (CPython uses module state)",
+)
+def test_decimal_type_ref_not_leaked_on_pypy():
+    # On PyPy, object_is_decimal_type() imports the decimal module on every
+    # call. Smoke-test that repeated Decimal encoding doesn't crash or raise,
+    # which would indicate that the per-call import is still leaking badly
+    # enough to exhaust memory.
+    for _ in range(1000):
+        ujson.dumps(decimal.Decimal("3.14"))
 
 
 def test_encode_string_conversion():
@@ -362,6 +388,68 @@ def test_encoder_nesting_just_under_limit():
     assert ujson.loads(ujson.dumps(nested)) is not None
 
 
+@pytest.mark.skipif(
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="gc.get_objects not reliable on alternative runtimes",
+)
+def test_no_ref_leak_from_default_recursion_cap():
+    # When default= hits DEFAULT_FN_MAX_DEPTH the INVALID label in
+    # Object_beginTypeContext must release pc->newObj; without the fix
+    # each call leaks one object.
+    def chained(obj):
+        return _DefaultLeaker()
+
+    for _ in range(10):  # warm-up
+        try:
+            ujson.dumps(_DefaultLeaker(), default=chained)
+        except TypeError:
+            pass
+    gc.collect()
+    before = sum(1 for o in gc.get_objects() if isinstance(o, _DefaultLeaker))
+
+    for _ in range(200):
+        try:
+            ujson.dumps(_DefaultLeaker(), default=chained)
+        except TypeError:
+            pass
+    gc.collect()
+    after = sum(1 for o in gc.get_objects() if isinstance(o, _DefaultLeaker))
+
+    assert (
+        after - before < 5
+    ), f"Leaked {after - before} _DefaultLeaker instances after 200 iterations"
+
+
+@pytest.mark.skipif(
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy and GraalPy do not support tracemalloc",
+)
+def test_no_memory_leak_dump_write_failure():
+    # The encoded JSON string must be released on the write-failure path
+    # in objToJSONFile; without the fix, each call leaks the encoded string.
+    import tracemalloc
+
+    data = {"key": "v" * 2000}
+    tracemalloc.start()
+    snap1 = tracemalloc.take_snapshot()
+
+    for _ in range(500):
+        try:
+            ujson.dump(data, _FailingWriteFile())
+        except OSError:
+            pass
+
+    snap2 = tracemalloc.take_snapshot()
+    tracemalloc.stop()
+
+    total_growth = sum(
+        s.size_diff for s in snap2.compare_to(snap1, "lineno") if s.size_diff > 0
+    )
+    assert (
+        total_growth < 500 * 1024
+    ), f"Leaked {total_growth} bytes across 500 failing writes"
+
+
 def test_decode_dict():
     test_input = "{}"
     obj = ujson.decode(test_input)
@@ -461,6 +549,13 @@ def test_failed_dump_closed_file():
     file.close()
     with pytest.raises(ValueError, match="closed file"):
         ujson.dump([0] * 100, file)
+
+
+def test_dump_write_failure_raises():
+    # OSError from file.write() must propagate; the encoded string must be
+    # released on this error path (companion to test_no_memory_leak_dump_write_failure).
+    with pytest.raises(OSError):
+        ujson.dump({"key": "value"}, _FailingWriteFile())
 
 
 def test_load_file():

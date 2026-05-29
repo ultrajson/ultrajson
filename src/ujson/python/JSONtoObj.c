@@ -300,13 +300,15 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  if (!PyObject_HasAttrString (file, "read"))
+  read = PyObject_GetAttrString (file, "read");
+  if (read == NULL)
   {
-    PyErr_Format (PyExc_TypeError, "expected file");
+    if (PyErr_ExceptionMatches(PyExc_AttributeError))
+    {
+      PyErr_Format (PyExc_TypeError, "expected file");
+    }
     return NULL;
   }
-
-  read = PyObject_GetAttrString (file, "read");
 
   if (!PyCallable_Check (read)) {
     Py_XDECREF(read);

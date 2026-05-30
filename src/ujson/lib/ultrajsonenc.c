@@ -923,8 +923,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       value = enc->getStringValue(obj, &tc, &szlen);
       if(!value)
       {
-        SetError(obj, enc, "utf-8 encoding error");
-        return;
+        return;  // Out of memory
       }
 
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
@@ -963,7 +962,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       value = enc->getStringValue(obj, &tc, &szlen);
       if(!value)
       {
-        SetError(obj, enc, "utf-8 encoding error");
         return;
       }
 

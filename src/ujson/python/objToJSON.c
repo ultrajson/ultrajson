@@ -137,7 +137,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   PyObject *bytesObj = *pBytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
   if (!bytesObj)
   {
-    return NULL;
+    return NULL;  // Out of memory
   }
 
   *_outLen = PyBytes_GET_SIZE(bytesObj);
@@ -793,14 +793,12 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     encoder.itemSeparatorChars = PyUnicodeToUTF8Raw(oseparatorsItem, &encoder.itemSeparatorLength, &separatorsItemBytes);
     if (encoder.itemSeparatorChars == NULL)
     {
-      PyErr_SetString(PyExc_ValueError, "item separator malformed");
-      goto ERROR;
+      goto ERROR;  // Out of memory
     }
     encoder.keySeparatorChars = PyUnicodeToUTF8Raw(oseparatorsKey, &encoder.keySeparatorLength, &separatorsKeyBytes);
     if (encoder.keySeparatorChars == NULL)
     {
-      PyErr_SetString(PyExc_ValueError, "key separator malformed");
-      goto ERROR;
+      goto ERROR;  // Out of memory
     }
   }
   else

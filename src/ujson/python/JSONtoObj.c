@@ -223,7 +223,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
       sarg = PyUnicode_AsEncodedString(arg, NULL, "surrogatepass");
       if (sarg == NULL)
       {
-        //Exception raised above us by codec according to docs
+        // Exception raisable above us by codec only through out of memory error
         return NULL;
       }
       sarg_length = PyBytes_Size(sarg);

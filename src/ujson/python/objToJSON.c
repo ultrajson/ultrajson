@@ -287,7 +287,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     PyObject *keys = PyDict_Keys(GET_TC(tc)->dictObj);
     if (keys == NULL)
     {
-      return -1;
+      return -1;  // Out of memory
     }
     // Sort the list.
     if (PyList_Sort(keys) < 0)
@@ -316,7 +316,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
   if (!GET_TC(tc)->itemValue)
   {
-    return -1;
+    return -1;  // Reachable only by concurrently deleting keys whilst serialising
   }
   GET_TC(tc)->index++;
   return 1;
@@ -345,7 +345,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   int level = 0;
   TypeContext *pc;
   PRINTMARK();
-  if (!_obj)
+  if (!_obj)  // Reachable only by making iterGetValue() fail (e.g. truncating a list mid-serialisation)
   {
     tc->type = JT_INVALID;
     return;
@@ -392,7 +392,7 @@ BEGIN:
     }
     if (!PyErr_ExceptionMatches(PyExc_OverflowError))
     {
-      goto INVALID;
+      goto INVALID;  // Probably out of memory
     }
     PyErr_Clear();
     pc->PyTypeToJSON = PyLongToUINT64;
@@ -404,7 +404,7 @@ BEGIN:
     }
     if (!PyErr_ExceptionMatches(PyExc_OverflowError))
     {
-      goto INVALID;
+      goto INVALID;  // Probably out of memory
     }
     PyErr_Clear();
     GET_TC(tc)->rawJSONValue = PyNumber_ToBase(obj, 10);
@@ -860,7 +860,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   return newobj;
 
-ERROR:
+ERROR:  // Out of memory
   Py_XDECREF(separatorsItemBytes);
   Py_XDECREF(separatorsKeyBytes);
   return NULL;
@@ -898,7 +898,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   argtuple = PyTuple_Pack(1, data);
-  if (argtuple == NULL)
+  if (argtuple == NULL)  // Out of memory
   {
     Py_XDECREF(write);
     return NULL;
@@ -916,7 +916,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   Py_XDECREF(argtuple);
 
   argtuple = PyTuple_Pack (1, string);
-  if (argtuple == NULL)
+  if (argtuple == NULL)  // Out of memory
   {
     Py_XDECREF(write);
     Py_DECREF(string);

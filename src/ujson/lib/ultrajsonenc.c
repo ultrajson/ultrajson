@@ -709,7 +709,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     return;
   }
 
-  if (enc->errorMsg)
+  if (enc->errorMsg)  // Out of memory
   {
     return;
   }
@@ -918,13 +918,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_UTF8:
     {
       value = enc->getStringValue(obj, &tc, &szlen);
-      if(!value)
+      if (!value)
       {
         return;  // Out of memory
       }
 
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
-      if (enc->errorMsg)
+      if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
         enc->endTypeContext(obj, &tc);
         return;
@@ -952,13 +952,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_RAW:
     {
       value = enc->getStringValue(obj, &tc, &szlen);
-      if(!value)
+      if (!value)  // Out of memory
       {
         return;
       }
 
       Buffer_Reserve(enc, szlen);
-      if (enc->errorMsg)
+      if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
         enc->endTypeContext(obj, &tc);
         return;

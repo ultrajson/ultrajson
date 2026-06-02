@@ -182,6 +182,25 @@ def test_encode_string_conversion2():
     assert test_input == ujson.decode(output)
 
 
+@pytest.mark.parametrize("ensure_ascii", [True, False])
+def test_encode_special_strings(ensure_ascii):
+    assert (
+        ujson.encode("/", ensure_ascii=ensure_ascii, escape_forward_slashes=False)
+        == '"/"'
+    )
+    assert (
+        ujson.encode("/", ensure_ascii=ensure_ascii, escape_forward_slashes=True)
+        == '"\\/"'
+    )
+    assert ujson.encode('"', ensure_ascii=ensure_ascii) == '"\\""'
+
+
+@pytest.mark.parametrize("ensure_ascii", [True, False])
+def test_encode_invalid_keys(ensure_ascii):
+    with pytest.raises(Exception, match="Unterminated UTF-8"):
+        ujson.dumps({b"\xee": "hello"})
+
+
 @pytest.mark.parametrize("codepoint", range(0x00, 0x20))
 def test_encode_control_escaping(codepoint):
     # All 32 control characters must roundtrip and agree with stdlib json.
@@ -377,15 +396,16 @@ def test_encode_unicode_4_bytes_utf8_fail():
         ujson.encode(test_input, reject_bytes=False)
 
 
-def test_encode_null_character():
+@pytest.mark.parametrize("ensure_ascii", [True, False])
+def test_encode_null_character(ensure_ascii):
     test_input = "31337 \x00 1337"
-    output = ujson.encode(test_input)
+    output = ujson.encode(test_input, ensure_ascii=ensure_ascii)
     assert test_input == json.loads(output)
     assert output == json.dumps(test_input)
     assert test_input == ujson.decode(output)
 
     test_input = "\x00"
-    output = ujson.encode(test_input)
+    output = ujson.encode(test_input, ensure_ascii=ensure_ascii)
     assert test_input == json.loads(output)
     assert output == json.dumps(test_input)
     assert test_input == ujson.decode(output)
@@ -700,6 +720,8 @@ def test_sort_keys_unordered():
     assert ujson.dumps(data) == '{"a":1,"1":2,"null":3}'
     with pytest.raises(TypeError):
         ujson.dumps(data, sort_keys=True)
+    with pytest.raises(TypeError):
+        ujson.dumps([[0] * 100000, data], sort_keys=True)
 
 
 @pytest.mark.parametrize(
@@ -911,6 +933,22 @@ def test_decode_exception_is_value_error():
 @pytest.mark.parametrize(
     "x, error",
     [
+        ('"a\x00b"', "Unmatched '\\\""),
+        ('"\\"', "Unmatched '\\\""),
+        (b'"\xc3\x00"', "Invalid UTF-8 continuation"),
+        ('"\\u00e\x00"', "Unterminated unicode escape sequence"),
+        ('"\\u123z"', "Unexpected character in unicode escape"),
+        ('"\\\x00"', "Unterminated escape sequence"),
+    ],
+)
+def test_decode_invalid_string(x, error):
+    with pytest.raises(Exception, match=error):
+        ujson.loads(x)
+
+
+@pytest.mark.parametrize(
+    "x, error",
+    [
         # Bad start bytes
         (b"\xfd", "Invalid UTF-8 sequence length"),
         (b"\xfc:", "Invalid UTF-8 sequence length"),
@@ -1072,6 +1110,16 @@ def test_special_singletons():
 def test_incomplete_special_inputs(test_input, expected_message):
     with pytest.raises(ujson.JSONDecodeError, match=expected_message):
         ujson.loads(test_input)
+
+
+@pytest.mark.parametrize("word", ["Infinity", "NaN", "null", "true", "false"])
+def test_incomplete_special_inputs_2(word):
+    for length in range(1, len(word)):
+        test_input = word[:length]
+        with pytest.raises(ujson.JSONDecodeError):
+            ujson.loads(test_input)
+        with pytest.raises(ujson.JSONDecodeError):
+            ujson.loads(test_input + "z")
 
 
 @pytest.mark.parametrize(
@@ -1668,6 +1716,88 @@ def test_nested_json_decode_error():
 
     # Test that JSONDecodeError is a subclass of ValueError
     assert issubclass(ujson.JSONDecodeError, ValueError)
+
+
+def test_bad_arguments():
+    with pytest.raises(TypeError):
+        ujson.loads(object(), object())
+
+    with pytest.raises(TypeError):
+        ujson.load(object())
+
+    with pytest.raises(TypeError):
+        ujson.load(object(), object())
+
+    file = types.SimpleNamespace()
+    file.read = object()
+    with pytest.raises(TypeError, match="expected file"):
+        ujson.load(file)
+
+    file.read = lambda x: None
+    with pytest.raises(TypeError, match="missing 1 required positional"):
+        ujson.load(file)
+
+    file.read = lambda: 1 / 0
+    with pytest.raises(ZeroDivisionError):
+        ujson.load(file)
+
+    file.read = lambda: 3
+    with pytest.raises(TypeError):
+        ujson.load(file)
+
+
+_bad_key_counter = 0
+
+
+class BadKey(str):
+    def __hash__(self):
+        global _bad_key_counter
+        _bad_key_counter += 1
+        if _bad_key_counter % 11 == 0:
+            raise ValueError("hash error")
+        return super().__hash__()
+
+    def __eq__(self, x):
+        global _bad_key_counter
+        _bad_key_counter += 1
+        if _bad_key_counter % 13 == 0:
+            raise ValueError("eq error")
+        return super().__hash__(x)
+
+
+@pytest.mark.xfail(
+    reason="Bug: Failed PyDict_GetItem leads to silently truncated output"
+)
+@pytest.mark.skipif(
+    sys.implementation.name in ("pypy", "graalpy"),
+    reason="PyPy & GraalPy crash if .__hash__() fails",
+)
+def test_failed_dict_get():
+    a = {}
+    for i in range(100):
+        try:
+            a[BadKey(chr(i))] = i
+        except ValueError:
+            pass
+    with pytest.raises(ValueError, match="hash error"):
+        ujson.dumps(a)
+
+
+class BadToDict:
+    def __init__(self, callback):
+        self.callback = callback
+
+    def toDict(self):
+        return self.callback()
+
+
+def test_bad_todict():
+    with pytest.raises(ZeroDivisionError):
+        ujson.dumps(BadToDict(lambda: 1 / 0))
+    with pytest.raises(TypeError, match=r"toDict\(\) should return a dict, got int"):
+        ujson.dumps(BadToDict(lambda: 3))
+    with pytest.raises(TypeError, match="object object .* not JSON serializable"):
+        ujson.dumps(BadToDict(lambda: {"a": object()}))
 
 
 def test_comprehensive_json_fixture():

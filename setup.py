@@ -1,77 +1,62 @@
-try:
-  from setuptools import setup, Extension
-except ImportError:
-  from distutils.core import setup, Extension
-import distutils.sysconfig
-import shutil
-import os.path
-import re
-import sys
+import platform
+import shlex
+from glob import glob
+from os import environ, pathsep
 
-CLASSIFIERS = filter(None, map(str.strip,
-"""
-Development Status :: 5 - Production/Stable
-Intended Audience :: Developers
-License :: OSI Approved :: BSD License
-Programming Language :: C
-Programming Language :: Python :: 2.4
-Programming Language :: Python :: 2.5
-Programming Language :: Python :: 2.6
-Programming Language :: Python :: 2.7
-Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-""".splitlines()))
+from setuptools import Extension, setup
+from setuptools_scm import get_version
 
-try:
-    shutil.rmtree("./build")
-except(OSError):
-    pass
+dconv_includes = [
+    dir
+    for dir in environ.get(
+        "UJSON_BUILD_DC_INCLUDES",
+        "./src/ujson/deps/double-conversion/double-conversion",
+    ).split(pathsep)
+    if dir
+]
+dconv_libs = shlex.split(environ.get("UJSON_BUILD_DC_LIBS", ""))
+dconv_source_files = []
+if not dconv_libs:
+    dconv_source_files.extend(
+        glob("./src/ujson/deps/double-conversion/double-conversion/*.cc")
+    )
+dconv_source_files.append("./src/ujson/lib/dconv_wrapper.cc")
 
-module1 = Extension('ujson',
-                    sources = ['./python/ujson.c', 
-                               './python/objToJSON.c', 
-                               './python/JSONtoObj.c', 
-                               './lib/ultrajsonenc.c', 
-                               './lib/ultrajsondec.c'],
-                    include_dirs = ['./python', './lib'],
-                    extra_compile_args=['-D_GNU_SOURCE'])
+if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not in (
+    "1",
+    "True",
+):
+    strip_flags = ["-Wl,--strip-all"]
+else:
+    strip_flags = []
 
-def get_version():
-    filename = os.path.join(os.path.dirname(__file__), './python/version.h')
-    file = None
-    try:
-        file = open(filename)
-        header = file.read()
-    finally:
-        if file:
-            file.close()
-    m = re.search(r'#define\s+UJSON_VERSION\s+"(\d+\.\d+(?:\.\d+)?)"', header)
-    assert m, "version.h must contain UJSON_VERSION macro"
-    return m.group(1)
 
-f = open('README.rst')
-try:
-    README = f.read()
-finally:
-    f.close()    
-    
-setup (name = 'ujson',
-       version = get_version(),
-       description = "Ultra fast JSON encoder and decoder for Python",
-       long_description = README,
-       ext_modules = [module1],
-       author="Jonas Tarnstrom",
-       author_email="jonas.tarnstrom@esn.me",
-       download_url="http://github.com/esnme/ultrajson",
-       license="BSD License",
-       platforms=['any'],      
-       url="http://www.esn.me",
-       classifiers=CLASSIFIERS,
-       )
+def local_scheme(version):
+    """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2)
+    to be able to upload to Test PyPI"""
+    return ""
 
-if sys.version_info[0] >= 3:
-    print( "*" * 100)
-    print("If you want to run the tests be sure to run 2to3 on them first, "
-          "e.g. `2to3 -w tests/tests.py`.")
-    print("*" * 100)
 
+version = get_version(local_scheme=local_scheme)
+
+module1 = Extension(
+    "ujson",
+    sources=dconv_source_files
+    + [
+        "./src/ujson/python/ujson.c",
+        "./src/ujson/python/objToJSON.c",
+        "./src/ujson/python/JSONtoObj.c",
+        "./src/ujson/lib/ultrajsonenc.c",
+        "./src/ujson/lib/ultrajsondec.c",
+    ],
+    include_dirs=["./src/ujson/python", "./src/ujson/lib"] + dconv_includes,
+    define_macros=[("UJSON_VERSION", f'"{version}"')],
+    extra_compile_args=["-D_GNU_SOURCE"],
+    extra_link_args=["-lstdc++", "-lm"] + dconv_libs + strip_flags,
+)
+
+
+setup(
+    ext_modules=[module1],
+    use_scm_version={"local_scheme": local_scheme},
+)

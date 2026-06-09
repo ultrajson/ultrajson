@@ -909,6 +909,57 @@ def test_decode_exception_is_value_error():
 
 
 @pytest.mark.parametrize(
+    "x, error",
+    [
+        # Bad start bytes
+        (b"\xfd", "Invalid UTF-8 sequence length"),
+        (b"\xfc:", "Invalid UTF-8 sequence length"),
+        (b"U>\xfb", "Invalid UTF-8 sequence length"),
+        (b"\\\xf8\x98\t", "Unrecognized escape sequence"),
+        (b"\x9b", "continuation byte"),
+        (b"B\x8a", "continuation byte"),
+        # Bad continuation bytes (any non-start byte not matching 0b10xx_xxxx)
+        (b"\xcf\x13", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xcfa", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xd8\xcf\xd3", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xd2\t\x8b\x84", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xe2\x17\xce", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xe2a\x17\xce", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xe2\x17a", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xe0\x9c\xc6\xde", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xf0H\xce\x9b", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xf0\xce4\x9b", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        # Truncated UTF-8 sequences
+        (b"\xc3", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"a\xe3", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"=\xe3\x8c", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\x08\x11\xe3", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        (b"\xf0\x90\x94", "Invalid UTF-8 continuation byte when decoding 'string'"),
+        # Small codepoints using longer byte sequences than they need
+        (b"\xc0\xa2", "Overlong 2-byte UTF-8 sequence"),
+        (b"A\xc1\x9c", "Overlong 2-byte UTF-8 sequence"),
+        (b"\xc1\xbf", "Overlong 2-byte UTF-8 sequence"),
+        (b"N\xc0\xb4\xb4", "Overlong 2-byte UTF-8 sequence"),
+        (b"\xe0\x9d\xb3", "Overlong 3-byte UTF-8 sequence"),
+        (b"E\xe0\x9e\x8b", "Overlong 3-byte UTF-8 sequence"),
+        (b"\xe0\x9f\xbf", "Overlong 3-byte UTF-8 sequence"),
+        (b"\xf0\x80\x80\x80", "Overlong 4-byte UTF-8 sequence"),
+        (b"\xf0\x8f\xbf\xbf", "Overlong 4-byte UTF-8 sequence"),
+        (b"\xf0\x85\xa7\xbd", "Overlong 4-byte UTF-8 sequence"),
+        # Codepoints above unicode max
+        (b"\xf4\x90\x80\x80", r"Code point > U\+10FFFF encountered"),
+        (b"\xf7\x8f\x99\x90", r"Code point > U\+10FFFF encountered"),
+        (b"\xf7\xbf\xbf\xbf", r"Code point > U\+10FFFF encountered"),
+    ],
+)
+def test_decode_bad_utf8_string(x, error):
+    with pytest.raises(Exception, match=error) as capture:
+        ujson.loads(b'"' + x + b'"')
+    with pytest.raises(capture.type, match=error):
+        ujson.loads(b'"' + x)
+
+
+@pytest.mark.parametrize(
     "test_input, expected",
     [
         (True, "true"),

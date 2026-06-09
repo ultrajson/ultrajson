@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
+          - "graalpy-25"
           - "pypy3.11"
           - "3.15t"
           - "3.15"
@@ -79,7 +80,7 @@ jobs:
           plugins: pycoverage
 
       - name: Test with leak detection
-        if: "!startsWith(matrix.python-version, 'pypy') && !endsWith(matrix.python-version, 't')"
+        if: "!startsWith(matrix.python-version, 'pypy') && !startsWith(matrix.python-version, 'graalpy') && !endsWith(matrix.python-version, 't')"
         run: python -m pytest --leak-max-loops=5000 -v
 
   cross-arch:

@@ -1246,8 +1246,8 @@ def test_reject_bytes_false_codepoint_boundaries(codepoint):
         (b"\xfc:", "Unsupported UTF-8 sequence length when encoding string"),
         (b"U>\xfb", "Unsupported UTF-8 sequence length when encoding string"),
         (b"\\\xf8\x98\t", "Unsupported UTF-8 sequence length when encoding string"),
-        (b"\x9b", "'utf-8' codec can't decode byte 0x9b in position 1:"),
-        (b"B\x8a", "'utf-8' codec can't decode byte 0x8a in position 2:"),
+        (b"\x9b", "'utf.8' codec can't decode byte 0x9b in position 1:"),
+        (b"B\x8a", "'utf.8' codec can't decode byte 0x8a in position 2:"),
         # Bad continuation bytes (any non-start byte not matching 0b10xx_xxxx)
         (b"\xcf\x13", "Invalid continuation byte in 2-byte UTF-8 sequence"),
         (b"\xcfa", "Invalid continuation byte in 2-byte UTF-8 sequence"),

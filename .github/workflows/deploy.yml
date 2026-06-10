@@ -17,6 +17,7 @@ permissions:
   contents: read
 
 env:
+  EXPECTED_DISTS: 77
   FORCE_COLOR: 1
 
 jobs:
@@ -107,6 +108,14 @@ jobs:
           python -m build --sdist
           twine check --strict dist/*
           twine check --strict dist-wheels/*
+
+      - name: "What did we get?"
+        run: |
+          ls -alR dist dist-wheels
+          echo "Number of dists, should be $EXPECTED_DISTS:"
+          files=$(find dist dist-wheels -type f | wc -l)
+          echo "$files"
+          [ "$files" -eq "$EXPECTED_DISTS" ] || exit 1
 
       - name: Publish wheels to PyPI
         if: github.event.action == 'published'

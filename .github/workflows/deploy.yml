@@ -18,7 +18,7 @@ permissions:
 
 env:
   EXPECTED_DISTS: 77
-  EXPECTED_WHEELS_SHA: 7b3b245a99cfa71a7e84c11bf5cf7ac28306d4b9
+  EXPECTED_WHEELS_SHA: a1d17198c4e17fa0ada39ac0d3949c5dc1b5eade
   FORCE_COLOR: 1
 
 jobs:
@@ -57,6 +57,13 @@ jobs:
         env:
           # Build wheels for the currently selected architecture.
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
+          # Explicitly pin the manylinux image for manylinux2014 wheels.
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PYPY_I686_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # Include latest Python beta.
           CIBW_ENABLE: cpython-prerelease pypy graalpy
           # Skip EOL Python versions and macOS x86_64 GraalPy, which times out

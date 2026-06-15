@@ -38,6 +38,8 @@ urls.Source = "https://github.com/ultrajson/ultrajson"
 [tool.setuptools]
 packages = [ "ujson-stubs" ]
 
+[tool.setuptools_scm]
+
 [tool.isort]
 profile = "black"
 known_first_party = [ "ujson" ]

@@ -188,7 +188,7 @@ static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnche
   *(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
 }
 
-static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
+static void Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
 {
   char *of = (char *) enc->offset;
 
@@ -218,7 +218,7 @@ static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *i
         else
         {
           enc->offset += (of - enc->offset);
-          return TRUE;
+          return;
         }
       }
       case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
@@ -728,10 +728,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     }
     else
     {
-      if (!Buffer_EscapeStringUnvalidated(enc, name, name + cbName))
-      {
-        return;
-      }
+      Buffer_EscapeStringUnvalidated(enc, name, name + cbName);
     }
 
     Buffer_AppendCharUnchecked(enc, '\"');
@@ -945,12 +942,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       }
       else
       {
-        if (!Buffer_EscapeStringUnvalidated(enc, value, value + szlen))
-        {
-          enc->endTypeContext(obj, &tc);
-          enc->level--;
-          return;
-        }
+        Buffer_EscapeStringUnvalidated(enc, value, value + szlen);
       }
 
       Buffer_AppendCharUnchecked (enc, '\"');

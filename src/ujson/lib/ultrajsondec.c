@@ -364,7 +364,6 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 {
   int index;
   JSUINT32 *escOffset;
-  JSUINT32 *escStart;
   size_t escLen = (ds->escEnd - ds->escStart);
   JSUINT8 *inputOffset;
   JSUTF16 ch = 0;

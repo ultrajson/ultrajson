@@ -987,23 +987,8 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
   {
     enc->recursionMax = JSON_MAX_RECURSION_DEPTH;
   }
-
-  if (_buffer == NULL)
-  {
-    _cbBuffer = 32768;
-    enc->start = (char *) enc->malloc (_cbBuffer);
-    if (!enc->start)
-    {
-      SetError(obj, enc, "Could not reserve memory block");
-      return NULL;
-    }
-    enc->heap = 1;
-  }
-  else
-  {
-    enc->start = _buffer;
-    enc->heap = 0;
-  }
+  enc->start = _buffer;
+  enc->heap = 0;
 
   enc->end = enc->start + _cbBuffer;
   enc->offset = enc->start;

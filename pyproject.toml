@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-  "setuptools>=77",
-  "setuptools-scm[toml]>=3.4",
+  "setuptools>=80",
+  "setuptools-scm[simple]>=9.2",
 ]
 
 [project]

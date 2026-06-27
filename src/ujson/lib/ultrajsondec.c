@@ -336,7 +336,8 @@ enum DECODESTRINGSTATE
   DS_ISQUOTE,
   DS_ISESCAPE,
   DS_UTFLENERROR,
-
+  DS_CONT,
+  DS_EXCEEDSMAX,
 };
 
 static const JSUINT8 g_decoderLookup[256] =
@@ -349,14 +350,14 @@ static const JSUINT8 g_decoderLookup[256] =
   /* 0x50 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, DS_ISESCAPE, 1, 1, 1,
   /* 0x60 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   /* 0x70 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0x80 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0x90 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0xa0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0xb0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  /* 0x80 */ DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT,
+  /* 0x90 */ DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT,
+  /* 0xa0 */ DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT,
+  /* 0xb0 */ DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT, DS_CONT,
   /* 0xc0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   /* 0xd0 */ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   /* 0xe0 */ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-  /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
+  /* 0xf0 */ 4, 4, 4, 4, 4, DS_EXCEEDSMAX, DS_EXCEEDSMAX, DS_EXCEEDSMAX, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
 };
 
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
@@ -431,6 +432,14 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
       case DS_UTFLENERROR:
       {
         return SetError (ds, -1, "Invalid UTF-8 sequence length when decoding 'string'");
+      }
+      case DS_CONT:
+      {
+        return SetError (ds, -1, "Found UTF-8 continuation byte without corresponding start byte when decoding 'string'");
+      }
+      case DS_EXCEEDSMAX:
+      {
+        return SetError(ds, -1, "Code point > U+10FFFF encountered whilst decoding 'string'");
       }
       case DS_ISESCAPE:
       {
@@ -526,9 +535,9 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
       {
         ucs = (*inputOffset++) & 0x1f;
         ucs <<= 6;
-        if (((*inputOffset) & 0x80) != 0x80)
+        if (((*inputOffset) & 0xc0) != 0x80)
         {
-          return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+          return SetError(ds, -1, "Invalid UTF-8 continuation byte when decoding 'string'");
         }
         ucs |= (*inputOffset++) & 0x3f;
         if (ucs < 0x80) return SetError (ds, -1, "Overlong 2-byte UTF-8 sequence detected when decoding 'string'");
@@ -546,9 +555,9 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
           ucs <<= 6;
           oct = (*inputOffset++);
 
-          if ((oct & 0x80) != 0x80)
+          if ((oct & 0xc0) != 0x80)
           {
-            return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+            return SetError(ds, -1, "Invalid UTF-8 continuation byte when decoding 'string'");
           }
 
           ucs |= oct & 0x3f;
@@ -569,15 +578,16 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
           ucs <<= 6;
           oct = (*inputOffset++);
 
-          if ((oct & 0x80) != 0x80)
+          if ((oct & 0xc0) != 0x80)
           {
-            return SetError(ds, -1, "Invalid octet in UTF-8 sequence when decoding 'string'");
+            return SetError(ds, -1, "Invalid UTF-8 continuation byte when decoding 'string'");
           }
 
           ucs |= oct & 0x3f;
         }
 
         if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4-byte UTF-8 sequence detected when decoding 'string'");
+        if (ucs > 0x10FFFF) return SetError(ds, -1, "Code point > U+10FFFF encountered whilst decoding 'string'");
 
         *(escOffset++) = (JSUINT32) ucs;
         break;

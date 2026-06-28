@@ -188,7 +188,7 @@ static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnche
   *(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
 }
 
-static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
+static void Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
 {
   char *of = (char *) enc->offset;
 
@@ -218,7 +218,7 @@ static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *i
         else
         {
           enc->offset += (of - enc->offset);
-          return TRUE;
+          return;
         }
       }
       case '\"': (*of++) = '\\'; (*of++) = '\"'; break;
@@ -709,7 +709,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     return;
   }
 
-  if (enc->errorMsg)
+  if (enc->errorMsg)  // Out of memory
   {
     return;
   }
@@ -728,10 +728,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     }
     else
     {
-      if (!Buffer_EscapeStringUnvalidated(enc, name, name + cbName))
-      {
-        return;
-      }
+      Buffer_EscapeStringUnvalidated(enc, name, name + cbName);
     }
 
     Buffer_AppendCharUnchecked(enc, '\"');
@@ -921,14 +918,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_UTF8:
     {
       value = enc->getStringValue(obj, &tc, &szlen);
-      if(!value)
+      if (!value)
       {
-        SetError(obj, enc, "utf-8 encoding error");
-        return;
+        return;  // Out of memory
       }
 
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
-      if (enc->errorMsg)
+      if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
         enc->endTypeContext(obj, &tc);
         return;
@@ -946,12 +942,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       }
       else
       {
-        if (!Buffer_EscapeStringUnvalidated(enc, value, value + szlen))
-        {
-          enc->endTypeContext(obj, &tc);
-          enc->level--;
-          return;
-        }
+        Buffer_EscapeStringUnvalidated(enc, value, value + szlen);
       }
 
       Buffer_AppendCharUnchecked (enc, '\"');
@@ -961,14 +952,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     case JT_RAW:
     {
       value = enc->getStringValue(obj, &tc, &szlen);
-      if(!value)
+      if (!value)  // Out of memory
       {
-        SetError(obj, enc, "utf-8 encoding error");
         return;
       }
 
       Buffer_Reserve(enc, szlen);
-      if (enc->errorMsg)
+      if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
         enc->endTypeContext(obj, &tc);
         return;
@@ -997,23 +987,8 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
   {
     enc->recursionMax = JSON_MAX_RECURSION_DEPTH;
   }
-
-  if (_buffer == NULL)
-  {
-    _cbBuffer = 32768;
-    enc->start = (char *) enc->malloc (_cbBuffer);
-    if (!enc->start)
-    {
-      SetError(obj, enc, "Could not reserve memory block");
-      return NULL;
-    }
-    enc->heap = 1;
-  }
-  else
-  {
-    enc->start = _buffer;
-    enc->heap = 0;
-  }
+  enc->start = _buffer;
+  enc->heap = 0;
 
   enc->end = enc->start + _cbBuffer;
   enc->offset = enc->start;

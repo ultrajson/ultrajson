@@ -224,12 +224,6 @@ typedef struct __JSONObjectEncoder
   */
   JSPFN_ITERGETNAME iterGetName;
 
-  /*
-  Release a value as indicated by setting ti->release = 1 in the previous getValue call.
-  The ti->prv array should contain the necessary context to release the value
-  */
-  void (*releaseObject)(JSOBJ obj);
-
   /* Library functions
   Set to NULL to use STDLIB malloc,realloc,free */
   JSPFN_MALLOC malloc;

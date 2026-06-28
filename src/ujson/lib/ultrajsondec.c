@@ -364,7 +364,6 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
 {
   int index;
   JSUINT32 *escOffset;
-  JSUINT32 *escStart;
   size_t escLen = (ds->escEnd - ds->escStart);
   JSUINT8 *inputOffset;
   JSUTF16 ch = 0;
@@ -378,35 +377,18 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
   {
     size_t newSize = (ds->end - ds->start);
 
-    if (ds->escHeap)
+    JSUINT32 *oldStart = ds->escStart;
+    if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
     {
-      if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
-      {
-        return SetError(ds, -1, "Could not reserve memory block");
-      }
-      escStart = (JSUINT32 *)ds->dec->realloc(ds->escStart, newSize * sizeof(JSUINT32));
-      if (!escStart)
-      {
-        // Don't free ds->escStart here; it gets handled in JSON_DecodeObject.
-        return SetError(ds, -1, "Could not reserve memory block");
-      }
-      ds->escStart = escStart;
+      return SetError(ds, -1, "Could not reserve memory block");
     }
-    else
+    ds->escStart = (JSUINT32 *) ds->dec->malloc(newSize * sizeof(JSUINT32));
+    if (!ds->escStart)
     {
-      JSUINT32 *oldStart = ds->escStart;
-      if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
-      {
-        return SetError(ds, -1, "Could not reserve memory block");
-      }
-      ds->escStart = (JSUINT32 *) ds->dec->malloc(newSize * sizeof(JSUINT32));
-      if (!ds->escStart)
-      {
-        return SetError(ds, -1, "Could not reserve memory block");
-      }
-      ds->escHeap = 1;
-      memcpy(ds->escStart, oldStart, escLen * sizeof(JSUINT32));
+      return SetError(ds, -1, "Could not reserve memory block");
     }
+    ds->escHeap = 1;
+    memcpy(ds->escStart, oldStart, escLen * sizeof(JSUINT32));
 
     ds->escEnd = ds->escStart + newSize;
   }

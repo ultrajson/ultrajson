@@ -137,7 +137,7 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   PyObject *bytesObj = *pBytesObj = PyUnicode_AsEncodedString (obj, NULL, "surrogatepass");
   if (!bytesObj)
   {
-    return NULL;
+    return NULL;  // Out of memory
   }
 
   *_outLen = PyBytes_GET_SIZE(bytesObj);
@@ -287,7 +287,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
     PyObject *keys = PyDict_Keys(GET_TC(tc)->dictObj);
     if (keys == NULL)
     {
-      return -1;
+      return -1;  // Out of memory
     }
     // Sort the list.
     if (PyList_Sort(keys) < 0)
@@ -316,7 +316,7 @@ static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   GET_TC(tc)->itemValue = PyDict_GetItem(GET_TC(tc)->dictObj, key);
   if (!GET_TC(tc)->itemValue)
   {
-    return -1;
+    return -1;  // Reachable only by concurrently deleting keys whilst serialising
   }
   GET_TC(tc)->index++;
   return 1;
@@ -345,7 +345,7 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   int level = 0;
   TypeContext *pc;
   PRINTMARK();
-  if (!_obj)
+  if (!_obj)  // Reachable only by making iterGetValue() fail (e.g. truncating a list mid-serialisation)
   {
     tc->type = JT_INVALID;
     return;
@@ -373,12 +373,6 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   pc->rawJSONValue = NULL;
 
 BEGIN:
-  if (PyIter_Check(obj))
-  {
-    PRINTMARK();
-    goto ISITERABLE;
-  }
-
   if (PyBool_Check(obj))
   {
     PRINTMARK();
@@ -398,7 +392,7 @@ BEGIN:
     }
     if (!PyErr_ExceptionMatches(PyExc_OverflowError))
     {
-      goto INVALID;
+      goto INVALID;  // Probably out of memory
     }
     PyErr_Clear();
     pc->PyTypeToJSON = PyLongToUINT64;
@@ -410,7 +404,7 @@ BEGIN:
     }
     if (!PyErr_ExceptionMatches(PyExc_OverflowError))
     {
-      goto INVALID;
+      goto INVALID;  // Probably out of memory
     }
     PyErr_Clear();
     GET_TC(tc)->rawJSONValue = PyNumber_ToBase(obj, 10);
@@ -458,8 +452,7 @@ BEGIN:
     pc->PyTypeToJSON = PyFloatToDOUBLE; tc->type = JT_DOUBLE;
     return;
   }
-
-ISITERABLE:
+  else
   if (PyDict_Check(obj))
   {
     PRINTMARK();
@@ -632,11 +625,6 @@ static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static void Object_releaseObject(JSOBJ _obj)
-{
-  Py_DECREF( (PyObject *) _obj);
-}
-
 static int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
 {
   obj = GET_OBJ(obj, tc);
@@ -697,7 +685,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     Object_iterEnd,
     Object_iterGetValue,
     Object_iterGetName,
-    Object_releaseObject,
     PyObject_Malloc,
     PyObject_Realloc,
     PyObject_Free,
@@ -806,14 +793,12 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     encoder.itemSeparatorChars = PyUnicodeToUTF8Raw(oseparatorsItem, &encoder.itemSeparatorLength, &separatorsItemBytes);
     if (encoder.itemSeparatorChars == NULL)
     {
-      PyErr_SetString(PyExc_ValueError, "item separator malformed");
-      goto ERROR;
+      goto ERROR;  // Out of memory
     }
     encoder.keySeparatorChars = PyUnicodeToUTF8Raw(oseparatorsKey, &encoder.keySeparatorLength, &separatorsKeyBytes);
     if (encoder.keySeparatorChars == NULL)
     {
-      PyErr_SetString(PyExc_ValueError, "key separator malformed");
-      goto ERROR;
+      goto ERROR;  // Out of memory
     }
   }
   else
@@ -875,7 +860,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   return newobj;
 
-ERROR:
+ERROR:  // Out of memory
   Py_XDECREF(separatorsItemBytes);
   Py_XDECREF(separatorsKeyBytes);
   return NULL;
@@ -913,7 +898,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   }
 
   argtuple = PyTuple_Pack(1, data);
-  if (argtuple == NULL)
+  if (argtuple == NULL)  // Out of memory
   {
     Py_XDECREF(write);
     return NULL;
@@ -931,7 +916,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
   Py_XDECREF(argtuple);
 
   argtuple = PyTuple_Pack (1, string);
-  if (argtuple == NULL)
+  if (argtuple == NULL)  // Out of memory
   {
     Py_XDECREF(write);
     Py_DECREF(string);

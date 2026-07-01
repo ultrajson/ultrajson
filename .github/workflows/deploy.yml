@@ -144,10 +144,10 @@ jobs:
           echo "Number of dists, should be $EXPECTED_DISTS:"
           files=$(find dist dist-wheels -type f | wc -l)
           echo "$files"
-          [ "$files" -eq "$EXPECTED_DISTS" ] || exit 1
           echo "Wheel fingerprint, should be $EXPECTED_WHEELS_SHA:"
           fingerprint=$(find dist-wheels -maxdepth 1 -type f -printf '%f\n' | sed -E 's/^ujson-[^-]+-//' | LC_ALL=C sort | sha1sum | cut -d' ' -f1)
           echo "$fingerprint"
+          [ "$files" -eq "$EXPECTED_DISTS" ] || exit 1
           [ "$fingerprint" = "$EXPECTED_WHEELS_SHA" ] || exit 1
 
       - name: Publish wheels to PyPI

@@ -20,7 +20,7 @@ if not dconv_libs:
     dconv_source_files.extend(
         glob("./src/ujson/deps/double-conversion/double-conversion/*.cc")
     )
-dconv_source_files.append("./src/ujson/lib/dconv_wrapper.cc")
+dconv_source_files.append("./src/ujson/dconv_wrapper.cc")
 
 if platform.system() == "Linux" and environ.get("UJSON_BUILD_NO_STRIP", "0") not in (
     "1",
@@ -43,13 +43,11 @@ module1 = Extension(
     "ujson",
     sources=dconv_source_files
     + [
-        "./src/ujson/python/ujson.c",
-        "./src/ujson/python/objToJSON.c",
-        "./src/ujson/python/JSONtoObj.c",
-        "./src/ujson/lib/ultrajsonenc.c",
-        "./src/ujson/lib/ultrajsondec.c",
+        "./src/ujson/ujson.c",
+        "./src/ujson/encode.c",
+        "./src/ujson/decode.c",
     ],
-    include_dirs=["./src/ujson/python", "./src/ujson/lib"] + dconv_includes,
+    include_dirs=["./src/ujson"] + dconv_includes,
     define_macros=[("UJSON_VERSION", f'"{version}"')],
     extra_compile_args=["-D_GNU_SOURCE"],
     extra_link_args=["-lstdc++", "-lm"] + dconv_libs + strip_flags,

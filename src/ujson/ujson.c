@@ -36,6 +36,7 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 * Copyright (c) 1994 Sun Microsystems, Inc.
 */
 
+#include <stdbool.h>
 #include <Python.h>
 #include "ujson.h"
 
@@ -94,48 +95,48 @@ static struct PyModuleDef moduledef = {
 #define modulestate_global modulestate(PyState_FindModule(&moduledef))
 
 #ifndef PYPY_VERSION
-/* Used in objToJSON.c */
-int object_is_decimal_type(PyObject *obj)
+/* Used in encode.c */
+bool object_is_decimal_type(PyObject *obj)
 {
   PyObject *module = PyState_FindModule(&moduledef);
-  if (module == NULL) return 0;
+  if (module == NULL) return false;
   modulestate *state = modulestate(module);
-  if (state == NULL) return 0;
+  if (state == NULL) return false;
   PyObject *type_decimal = state->type_decimal;
   if (type_decimal == NULL) {
     PyErr_Clear();
-    return 0;
+    return false;
   }
   int result = PyObject_IsInstance(obj, type_decimal);
   if (result == -1) {
     PyErr_Clear();
-    return 0;
+    return false;
   }
-  return result;
+  return (bool) result;
 }
 #else
-/* Used in objToJSON.c */
-int object_is_decimal_type(PyObject *obj)
+/* Used in encode.c */
+bool object_is_decimal_type(PyObject *obj)
 {
   PyObject *module = PyImport_ImportModule("decimal");
   if (module == NULL) {
     PyErr_Clear();
-    return 0;
+    return false;
   }
   PyObject *type_decimal = PyObject_GetAttrString(module, "Decimal");
   if (type_decimal == NULL) {
     Py_DECREF(module);
     PyErr_Clear();
-    return 0;
+    return false;
   }
   int result = PyObject_IsInstance(obj, type_decimal);
   if (result == -1) {
     Py_DECREF(module);
     Py_DECREF(type_decimal);
     PyErr_Clear();
-    return 0;
+    return false;
   }
-  return result;
+  return (bool) result;
 }
 #endif
 

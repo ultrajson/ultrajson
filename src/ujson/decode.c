@@ -48,10 +48,6 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <errno.h>
 #include <stdint.h>
 
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
 #ifndef NULL
 #define NULL 0
 #endif
@@ -69,7 +65,7 @@ struct DecoderState
   char *end;
   JSUINT32 *escStart;
   JSUINT32 *escEnd;
-  int escHeap;
+  bool escHeap;
   int lastType;
   JSUINT32 objDepth;
   void *prv;
@@ -101,7 +97,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
-  int hasError = 0;
+  bool hasError = false;
   JSUINT64 intValue;
   JSUINT64 addIntValue;
   int chr;
@@ -133,7 +129,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
   // Scan integer part
   intValue = 0;
 
-  while (1)
+  while (true)
   {
     chr = (int) (unsigned char) *(offset);
 
@@ -153,7 +149,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
         // check whether multiplication would be out of bounds
         if (intValue > overflowLimit)
         {
-          hasError = 1;
+          hasError = true;
         }
         intValue *= 10ULL;
         addIntValue = (JSUINT64) (chr - 48);
@@ -161,7 +157,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
         // check whether addition would be out of bounds
         if (maxIntValue - intValue < addIntValue)
         {
-          hasError = 1;
+          hasError = true;
         }
 
         intValue += addIntValue;
@@ -397,7 +393,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
     {
       return SetError(ds, -1, "Could not reserve memory block");
     }
-    ds->escHeap = 1;
+    ds->escHeap = true;
     memcpy(ds->escStart, oldStart, escLen * sizeof(JSUINT32));
 
     ds->escEnd = ds->escStart + newSize;
@@ -802,7 +798,7 @@ JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuf
 
   ds.escStart = escBuffer;
   ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32));
-  ds.escHeap = 0;
+  ds.escHeap = false;
   ds.prv = dec->prv;
   ds.dec = dec;
   ds.dec->errorStr = NULL;

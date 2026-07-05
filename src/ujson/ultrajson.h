@@ -55,6 +55,7 @@ tree doesn't have cyclic references.
 
 #include <stdio.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 // Max decimals to encode double floating point numbers with
 #ifndef JSON_DOUBLE_MAX_DECIMALS
@@ -201,8 +202,8 @@ typedef struct __JSONObjectEncoder
   double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
 
   /*
-  Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items.
-  Implementer is responsible for keeping state of the iteration. Use ti->prv fields for this
+  Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items
+  or -1 on error. Implementer is responsible for keeping state of the iteration. Use ti->prv fields for this
   */
   JSPFN_ITERNEXT iterNext;
 
@@ -236,19 +237,19 @@ typedef struct __JSONObjectEncoder
 
   /*
   If true output will be ASCII with all characters above 127 encoded as \uXXXX. If false output will be UTF-8 or what ever charset strings are brought as */
-  int forceASCII;
+  bool forceASCII;
 
   /*
   If true, '<', '>', and '&' characters will be encoded as \u003c, \u003e, and \u0026, respectively. If false, no special encoding will be used. */
-  int encodeHTMLChars;
+  bool encodeHTMLChars;
 
   /*
   If true, '/' will be encoded as \/. If false, no escaping. */
-  int escapeForwardSlashes;
+  bool escapeForwardSlashes;
 
   /*
   If true, dictionaries are iterated through in sorted key order. */
-  int sortKeys;
+  bool sortKeys;
 
   /*
   Configuration for spaces of indent */
@@ -257,11 +258,11 @@ typedef struct __JSONObjectEncoder
   /*
   If true, NaN will be encoded as a string matching the Python standard library's JSON behavior.
   This is not valid JSON. */
-  int allowNan;
+  bool allowNan;
 
   /*
   If true, bytes are rejected. */
-  int rejectBytes;
+  bool rejectBytes;
 
   /*
   Configuration for item and key separators, e.g. "," and ":" for a compact representation or ", " and ": " to match the Python standard library's defaults. */
@@ -287,7 +288,7 @@ typedef struct __JSONObjectEncoder
   char *start;
   char *offset;
   char *end;
-  int heap;
+  bool heap;
   int level;
 
 } JSONObjectEncoder;
@@ -378,7 +379,7 @@ void dconv_d2s_init(void **d2s,
                     int decimal_in_shortest_high,
                     int max_leading_padding_zeroes_in_precision_mode,
                     int max_trailing_padding_zeroes_in_precision_mode);
-int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength);
+bool dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength);
 void dconv_d2s_free(void **d2s);
 
 void dconv_s2d_init(void **s2d, int flags, double empty_string_value,

@@ -20,10 +20,10 @@ namespace double_conversion
                                         max_trailing_padding_zeroes_in_precision_mode);
     }
 
-    int dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength)
+    bool dconv_d2s(void *d2s, double value, char* buf, int buflen, int* strlength)
     {
         StringBuilder sb(buf, buflen);
-        int success =  static_cast<int>(static_cast<DoubleToStringConverter*>(d2s)->ToShortest(value, &sb));
+        bool success = static_cast<bool>(static_cast<DoubleToStringConverter*>(d2s)->ToShortest(value, &sb));
         *strlength = success ? sb.position() : -1;
         return success;
     }

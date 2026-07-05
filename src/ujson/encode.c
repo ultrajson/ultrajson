@@ -48,13 +48,6 @@ https://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #include "ultrajson.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #if ( (defined(_WIN32) || defined(WIN32) ) && ( defined(_MSC_VER) ) )
 #define snprintf sprintf_s
 #endif
@@ -84,7 +77,7 @@ static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 
 typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
-int object_is_decimal_type(PyObject *obj);
+bool object_is_decimal_type(PyObject *obj);
 
 typedef struct __TypeContext
 {
@@ -698,18 +691,18 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   const char *csNan = NULL, *csInf = NULL;
   PyObject *newobj;
   PyObject *oinput = NULL;
-  PyObject *oensureAscii = NULL;
-  PyObject *oencodeHTMLChars = NULL;
-  PyObject *oescapeForwardSlashes = NULL;
-  PyObject *osortKeys = NULL;
+  int ensureAscii = true;
+  int encodeHTMLChars = false;
+  int escapeForwardSlashes = true;
+  int sortKeys = false;
   PyObject *odefaultFn = NULL;
   PyObject *oseparators = NULL;
   PyObject *oseparatorsItem = NULL;
   PyObject *separatorsItemBytes = NULL;
   PyObject *oseparatorsKey = NULL;
   PyObject *separatorsKeyBytes = NULL;
-  int allowNan = -1;
-  int orejectBytes = -1;
+  int allowNan = true;
+  int rejectBytes = true;
   int indent = 0;
   size_t retLen;
 
@@ -729,13 +722,13 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Realloc,
     PyObject_Free,
     -1, //recursionMax
-    1, //forceAscii
-    0, //encodeHTMLChars
-    1, //escapeForwardSlashes
-    0, //sortKeys
+    true, //forceAscii
+    false, //encodeHTMLChars
+    true, //escapeForwardSlashes
+    false, //sortKeys
     0, //indent
-    1, //allowNan
-    1, //rejectBytes
+    true, //allowNan
+    true, //rejectBytes
     0, //itemSeparatorLength
     NULL, //itemSeparatorChars
     0, //keySeparatorLength
@@ -746,35 +739,17 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   PRINTMARK();
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOiiiOO", kwlist, &oinput, &oensureAscii, &oencodeHTMLChars, &oescapeForwardSlashes, &osortKeys, &indent, &allowNan, &orejectBytes, &odefaultFn, &oseparators))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|ppppippOO", kwlist, &oinput, &ensureAscii, &encodeHTMLChars, &escapeForwardSlashes, &sortKeys, &indent, &allowNan, &rejectBytes, &odefaultFn, &oseparators))
   {
     return NULL;
   }
 
-  if (oensureAscii != NULL && !PyObject_IsTrue(oensureAscii))
-  {
-    encoder.forceASCII = 0;
-  }
-
-  if (oencodeHTMLChars != NULL && PyObject_IsTrue(oencodeHTMLChars))
-  {
-    encoder.encodeHTMLChars = 1;
-  }
-
-  if (oescapeForwardSlashes != NULL && !PyObject_IsTrue(oescapeForwardSlashes))
-  {
-    encoder.escapeForwardSlashes = 0;
-  }
-
-  if (osortKeys != NULL && PyObject_IsTrue(osortKeys))
-  {
-    encoder.sortKeys = 1;
-  }
-
-  if (allowNan != -1)
-  {
-    encoder.allowNan = allowNan;
-  }
+  encoder.forceASCII = (bool) ensureAscii;
+  encoder.encodeHTMLChars = (bool) encodeHTMLChars;
+  encoder.escapeForwardSlashes = (bool) escapeForwardSlashes;
+  encoder.sortKeys = (bool) sortKeys;
+  encoder.allowNan = (bool) allowNan;
+  encoder.rejectBytes = (bool) rejectBytes;
 
   if (odefaultFn != NULL && odefaultFn != Py_None)
   {
@@ -786,11 +761,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     csInf = "Infinity";
     csNan = "NaN";
-  }
-
-  if (orejectBytes != -1)
-  {
-    encoder.rejectBytes = orejectBytes;
   }
 
   if (indent < -1)
@@ -1051,7 +1021,7 @@ static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
   else
   {
     char *oldStart = enc->start;
-    enc->heap = 1;
+    enc->heap = true;
     enc->start = (char *) enc->malloc (newSize);
     if (!enc->start)
     {
@@ -1203,7 +1173,7 @@ static void Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *
   }
 }
 
-static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
+static bool Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
   JSUTF32 ucs;
   char *of = (char *) enc->offset;
@@ -1241,7 +1211,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         else
         {
           enc->offset += (of - enc->offset);
-          return TRUE;
+          return true;
         }
       }
 
@@ -1261,13 +1231,13 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
-          return FALSE;
+          return false;
         }
         if ((io[1] & 0xc0) != 0x80)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Invalid continuation byte in 2-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
 
         memcpy(&in16, io, sizeof(JSUTF16));
@@ -1283,7 +1253,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Overlong 2-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
 
         io += 2;
@@ -1300,13 +1270,13 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
-          return FALSE;
+          return false;
         }
         if ((io[1] & 0xc0) != 0x80 || (io[2] & 0xc0) != 0x80)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Invalid continuation byte in 3-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
         // Under normal UTF-8 decoding rules, UTF-16 surrogates should also be disallowed
         // but in JSON, they're special cased and rewritten later as \udc7f.
@@ -1314,7 +1284,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         // {
         //   enc->offset += (of - enc->offset);
         //   SetError (obj, enc, "Illegal UTF-16 surrogate in 3-byte UTF-8 sequence detected when encoding string");
-        //   return FALSE;
+        //   return false;
         // }
         memcpy(&in16, io, sizeof(JSUTF16));
         memcpy(&in8, io + 2, sizeof(JSUINT8));
@@ -1332,7 +1302,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Overlong 3-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
 
         io += 3;
@@ -1346,19 +1316,19 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Unterminated UTF-8 sequence when encoding string");
-          return FALSE;
+          return false;
         }
         if ((io[1] & 0xc0) != 0x80 || (io[2] & 0xc0) != 0x80 || (io[3] & 0xc0) != 0x80)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Invalid continuation byte in 4-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
         if (((JSUINT8) io[0] >= 0xf4 && (JSUINT8) io[1] >= 0x90) || (JSUINT8) io[0] >= 0xf5)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, ">U+10FFFF in 4-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
 
         memcpy(&in, io, sizeof(JSUTF32));
@@ -1371,7 +1341,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, "Overlong 4-byte UTF-8 sequence detected when encoding string");
-          return FALSE;
+          return false;
         }
 
         io += 4;
@@ -1384,7 +1354,7 @@ static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, cons
       {
         enc->offset += (of - enc->offset);
         SetError (obj, enc, "Unsupported UTF-8 sequence length when encoding string");
-        return FALSE;
+        return false;
       }
 
       case 29:
@@ -1569,7 +1539,7 @@ static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 
   enc->offset += (wstr - (enc->offset));
 }
 
-static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double value)
+static bool Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double value)
 {
   char buf[128];
   int strlength;
@@ -1582,12 +1552,12 @@ static int Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double va
   if(!dconv_d2s(enc->d2s, value, buf, sizeof(buf), &strlength))
   {
     SetError (obj, enc, "Invalid value when encoding double");
-    return FALSE;
+    return false;
   }
 
   Buffer_memcpy(enc, buf, strlength);
 
-  return TRUE;
+  return true;
 }
 
 /*
@@ -1892,7 +1862,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
     enc->recursionMax = JSON_MAX_RECURSION_DEPTH;
   }
   enc->start = _buffer;
-  enc->heap = 0;
+  enc->heap = false;
 
   enc->end = enc->start + _cbBuffer;
   enc->offset = enc->start;
@@ -1901,7 +1871,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
 
   if (enc->errorMsg)
   {
-    if (enc->heap == 1)
+    if (enc->heap)
     {
       // Buffer was realloc'd at some point, or no initial buffer was provided.
       enc->free(enc->start);

@@ -318,36 +318,6 @@ If an error occurs during encoding, NULL is returned and no outLen is stored.
 */
 EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
 
-typedef struct __JSONObjectDecoder
-{
-  JSOBJ (*newString)(void *prv, JSUINT32 *start, JSUINT32 *end);
-  void (*objectAddKey)(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value);
-  void (*arrayAddItem)(void *prv, JSOBJ obj, JSOBJ value);
-  JSOBJ (*newTrue)(void *prv);
-  JSOBJ (*newFalse)(void *prv);
-  JSOBJ (*newNull)(void *prv);
-  JSOBJ (*newNaN)(void *prv);
-  JSOBJ (*newPosInf)(void *prv);
-  JSOBJ (*newNegInf)(void *prv);
-  JSOBJ (*newObject)(void *prv);
-  JSOBJ (*newArray)(void *prv);
-  JSOBJ (*newInt)(void *prv, JSINT32 value);
-  JSOBJ (*newLong)(void *prv, JSINT64 value);
-  JSOBJ (*newUnsignedLong)(void *prv, JSUINT64 value);
-  JSOBJ (*newIntegerFromString)(void *prv, char *value, size_t length);
-  JSOBJ (*newDouble)(void *prv, double value);
-  void (*releaseObject)(void *prv, JSOBJ obj);
-  JSPFN_MALLOC malloc;
-  JSPFN_FREE free;
-  JSPFN_REALLOC realloc;
-  char *errorStr;
-  char *errorOffset;
-  void *prv;
-  void *s2d;
-} JSONObjectDecoder;
-
-EXPORTFUNCTION JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer);
-
 #define DCONV_DECIMAL_IN_SHORTEST_LOW -4
 #define DCONV_DECIMAL_IN_SHORTEST_HIGH 16
 

@@ -68,17 +68,36 @@ struct DecoderState
   bool escHeap;
   int lastType;
   JSUINT32 objDepth;
-  void *prv;
-  JSONObjectDecoder *dec;
+  char *errorStr;
+  char *errorOffset;
+  void *s2d;
 };
 
 static JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
 
+static JSOBJ Object_newString(JSUINT32 *start, JSUINT32 *end);
+static void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value);
+static void Object_arrayAddItem(JSOBJ obj, JSOBJ value);
+static JSOBJ Object_newTrue();
+static JSOBJ Object_newFalse();
+static JSOBJ Object_newNull();
+static JSOBJ Object_newNaN();
+static JSOBJ Object_newPosInf();
+static JSOBJ Object_newNegInf();
+static JSOBJ Object_newObject();
+static JSOBJ Object_newArray();
+static JSOBJ Object_newInteger(JSINT32 value);
+static JSOBJ Object_newLong(JSINT64 value);
+static JSOBJ Object_newUnsignedLong(JSUINT64 value);
+static JSOBJ Object_newIntegerFromString(char *value, size_t length);
+static JSOBJ Object_newDouble(double value);
+static void Object_releaseObject(JSOBJ obj);
+
 static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
 {
-  ds->dec->errorOffset = ds->start + offset;
-  ds->dec->errorStr = (char *) message;
+  ds->errorOffset = ds->start + offset;
+  ds->errorStr = (char *) message;
   return NULL;
 }
 
@@ -88,10 +107,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
   /* Prevent int overflow if ds->end - ds->start is too large. See check_decode_decimal_no_int_overflow()
   inside tests/test_ujson.py for an example where this check is necessary. */
   int len = ((size_t) (ds->end - ds->start) < (size_t) INT_MAX) ? (int) (ds->end - ds->start) : INT_MAX;
-  double value = dconv_s2d(ds->dec->s2d, ds->start, len, &processed_characters_count);
+  double value = dconv_s2d(ds->s2d, ds->start, len, &processed_characters_count);
   ds->lastType = JT_DOUBLE;
   ds->start += processed_characters_count;
-  return ds->dec->newDouble(ds->prv, value);
+  return Object_newDouble(value);
 }
 
 static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
@@ -183,7 +202,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds
           char *strStart = ds->start;
           ds->lastType = JT_INT;
           ds->start = offset;
-          return ds->dec->newIntegerFromString(ds->prv, strStart, offset - strStart);
+          return Object_newIntegerFromString(strStart, offset - strStart);
         }
         goto BREAK_INT_LOOP;
         break;
@@ -198,15 +217,15 @@ BREAK_INT_LOOP:
 
   if (intNeg == 1 && (intValue & 0x8000000000000000ULL) != 0)
   {
-    return ds->dec->newUnsignedLong(ds->prv, intValue);
+    return Object_newUnsignedLong(intValue);
   }
   else if ((intValue >> 31))
   {
-    return ds->dec->newLong(ds->prv, (JSINT64) (intValue * (JSINT64) intNeg));
+    return Object_newLong((JSINT64) (intValue * (JSINT64) intNeg));
   }
   else
   {
-    return ds->dec->newInt(ds->prv, (JSINT32) (intValue * intNeg));
+    return Object_newInteger((JSINT32) (intValue * intNeg));
   }
 
 DECODE_NAN:
@@ -216,7 +235,7 @@ DECODE_NAN:
 
     ds->lastType = JT_NAN;
     ds->start = offset;
-    return ds->dec->newNaN(ds->prv);
+    return Object_newNaN();
 
 SET_NAN_ERROR:
     return SetError(ds, -1, "Unexpected character found when decoding 'NaN'");
@@ -235,10 +254,10 @@ DECODE_INF:
 
     if (intNeg == 1) {
       ds->lastType = JT_POS_INF;
-      return ds->dec->newPosInf(ds->prv);
+      return Object_newPosInf();
     } else {
       ds->lastType = JT_NEG_INF;
-      return ds->dec->newNegInf(ds->prv);
+      return Object_newNegInf();
     }
 
 SET_INF_ERROR:
@@ -266,7 +285,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 
   ds->lastType = JT_TRUE;
   ds->start = offset;
-  return ds->dec->newTrue(ds->prv);
+  return Object_newTrue();
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
@@ -288,7 +307,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 
   ds->lastType = JT_FALSE;
   ds->start = offset;
-  return ds->dec->newFalse(ds->prv);
+  return Object_newFalse();
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
@@ -308,7 +327,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 
   ds->lastType = JT_NULL;
   ds->start = offset;
-  return ds->dec->newNull(ds->prv);
+  return Object_newNull();
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
@@ -388,7 +407,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
     {
       return SetError(ds, -1, "Could not reserve memory block");
     }
-    ds->escStart = (JSUINT32 *) ds->dec->malloc(newSize * sizeof(JSUINT32));
+    ds->escStart = (JSUINT32 *) PyObject_Malloc(newSize * sizeof(JSUINT32));
     if (!ds->escStart)
     {
       return SetError(ds, -1, "Could not reserve memory block");
@@ -415,7 +434,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
         ds->lastType = JT_UTF8;
         inputOffset ++;
         ds->start += ( (char *) inputOffset - (ds->start));
-        return ds->dec->newString(ds->prv, ds->escStart, escOffset);
+        return Object_newString(ds->escStart, escOffset);
       }
       case DS_UTFLENERROR:
       {
@@ -594,7 +613,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newArray(ds->prv);
+  newObj = Object_newArray();
   len = 0;
 
   ds->lastType = JT_INVALID;
@@ -613,7 +632,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
         return newObj;
       }
 
-      ds->dec->releaseObject(ds->prv, newObj);
+      Object_releaseObject(newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (1)");
     }
 
@@ -621,11 +640,11 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
+      Object_releaseObject(newObj);
       return NULL;
     }
 
-    ds->dec->arrayAddItem (ds->prv, newObj, itemValue);
+    Object_arrayAddItem(newObj, itemValue);
 
     SkipWhitespace(ds);
 
@@ -640,7 +659,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
       break;
 
     default:
-      ds->dec->releaseObject(ds->prv, newObj);
+      Object_releaseObject(newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
     }
 
@@ -661,7 +680,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = ds->dec->newObject(ds->prv);
+  newObj = Object_newObject();
   len = 0;
 
   ds->start ++;
@@ -679,7 +698,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
         return newObj;
       }
 
-      ds->dec->releaseObject(ds->prv, newObj);
+      Object_releaseObject(newObj);
       return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
 
@@ -688,14 +707,14 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemName == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
+      Object_releaseObject(newObj);
       return NULL;
     }
 
     if (ds->lastType != JT_UTF8)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      Object_releaseObject(newObj);
+      Object_releaseObject(itemName);
       return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
     }
 
@@ -703,8 +722,8 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (*(ds->start++) != ':')
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      Object_releaseObject(newObj);
+      Object_releaseObject(itemName);
       return SetError(ds, -1, "No ':' found when decoding object value");
     }
 
@@ -714,12 +733,12 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
 
     if (itemValue == NULL)
     {
-      ds->dec->releaseObject(ds->prv, newObj);
-      ds->dec->releaseObject(ds->prv, itemName);
+      Object_releaseObject(newObj);
+      Object_releaseObject(itemName);
       return NULL;
     }
 
-    ds->dec->objectAddKey (ds->prv, newObj, itemName, itemValue);
+    Object_objectAddKey(newObj, itemName, itemValue);
 
     SkipWhitespace(ds);
 
@@ -734,7 +753,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
         break;
 
       default:
-        ds->dec->releaseObject(ds->prv, newObj);
+        Object_releaseObject(newObj);
         return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
 
@@ -785,53 +804,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
   }
 }
 
-JSOBJ JSON_DecodeObject(JSONObjectDecoder *dec, const char *buffer, size_t cbBuffer)
-{
-  /*
-  FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time */
-  struct DecoderState ds;
-  JSUINT32 escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32))];
-  JSOBJ ret;
-
-  ds.start = (char *) buffer;
-  ds.end = ds.start + cbBuffer;
-
-  ds.escStart = escBuffer;
-  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32));
-  ds.escHeap = false;
-  ds.prv = dec->prv;
-  ds.dec = dec;
-  ds.dec->errorStr = NULL;
-  ds.dec->errorOffset = NULL;
-  ds.objDepth = 0;
-
-  ds.dec = dec;
-
-  ret = decode_any (&ds);
-
-  if (ds.escHeap)
-  {
-    dec->free(ds.escStart);
-  }
-
-  if (!(dec->errorStr))
-  {
-    if ((ds.end - ds.start) > 0)
-    {
-      SkipWhitespace(&ds);
-    }
-
-    if (ds.start != ds.end && ret)
-    {
-      dec->releaseObject(ds.prv, ret);
-      return SetError(&ds, -1, "Trailing data");
-    }
-  }
-
-  return ret;
-}
-
-static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
+static void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
 {
   int result = PyDict_SetItem(obj, name, value);
   if (result == -1) {
@@ -845,7 +818,7 @@ static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
   return;
 }
 
-static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
+static void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
 {
   PyList_Append(obj, value);
   Py_DECREF( (PyObject *) value);
@@ -861,67 +834,67 @@ when C11 is made mandatory (CPython 3.11+, PyPy ?).
 */
 typedef char assert_py_ucs4_is_jsuint32[1 - 2*!(sizeof(Py_UCS4) == sizeof(JSUINT32))];
 
-static JSOBJ Object_newString(void *prv, JSUINT32 *start, JSUINT32 *end)
+static JSOBJ Object_newString(JSUINT32 *start, JSUINT32 *end)
 {
   return PyUnicode_FromKindAndData (PyUnicode_4BYTE_KIND, (Py_UCS4 *) start, (end - start));
 }
 
-static JSOBJ Object_newTrue(void *prv)
+static JSOBJ Object_newTrue()
 {
   Py_RETURN_TRUE;
 }
 
-static JSOBJ Object_newFalse(void *prv)
+static JSOBJ Object_newFalse()
 {
   Py_RETURN_FALSE;
 }
 
-static JSOBJ Object_newNull(void *prv)
+static JSOBJ Object_newNull()
 {
   Py_RETURN_NONE;
 }
 
-static JSOBJ Object_newNaN(void *prv)
+static JSOBJ Object_newNaN()
 {
     return PyFloat_FromDouble(Py_NAN);
 }
 
-static JSOBJ Object_newPosInf(void *prv)
+static JSOBJ Object_newPosInf()
 {
     return PyFloat_FromDouble(Py_HUGE_VAL);
 }
 
-static JSOBJ Object_newNegInf(void *prv)
+static JSOBJ Object_newNegInf()
 {
     return PyFloat_FromDouble(-Py_HUGE_VAL);
 }
 
-static JSOBJ Object_newObject(void *prv)
+static JSOBJ Object_newObject()
 {
   return PyDict_New();
 }
 
-static JSOBJ Object_newArray(void *prv)
+static JSOBJ Object_newArray()
 {
   return PyList_New(0);
 }
 
-static JSOBJ Object_newInteger(void *prv, JSINT32 value)
+static JSOBJ Object_newInteger(JSINT32 value)
 {
   return PyLong_FromLong( (long) value);
 }
 
-static JSOBJ Object_newLong(void *prv, JSINT64 value)
+static JSOBJ Object_newLong(JSINT64 value)
 {
   return PyLong_FromLongLong (value);
 }
 
-static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
+static JSOBJ Object_newUnsignedLong(JSUINT64 value)
 {
   return PyLong_FromUnsignedLongLong (value);
 }
 
-static JSOBJ Object_newIntegerFromString(void *prv, char *value, size_t length)
+static JSOBJ Object_newIntegerFromString(char *value, size_t length)
 {
   // PyLong_FromString requires a NUL-terminated string in CPython, contrary to the documentation: https://github.com/python/cpython/issues/59200
   char *buf = PyObject_Malloc(length + 1);
@@ -932,12 +905,12 @@ static JSOBJ Object_newIntegerFromString(void *prv, char *value, size_t length)
   return ret;
 }
 
-static JSOBJ Object_newDouble(void *prv, double value)
+static JSOBJ Object_newDouble(double value)
 {
   return PyFloat_FromDouble(value);
 }
 
-static void Object_releaseObject(void *prv, JSOBJ obj)
+static void Object_releaseObject(JSOBJ obj)
 {
   Py_DECREF( ((PyObject *)obj));
 }
@@ -947,33 +920,9 @@ static char *g_kwlist[] = {"obj", NULL};
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *ret;
-  PyObject *sarg;
+  PyObject *sarg = NULL;
   PyObject *arg;
-  JSONObjectDecoder decoder =
-  {
-    Object_newString,
-    Object_objectAddKey,
-    Object_arrayAddItem,
-    Object_newTrue,
-    Object_newFalse,
-    Object_newNull,
-    Object_newNaN,
-    Object_newPosInf,
-    Object_newNegInf,
-    Object_newObject,
-    Object_newArray,
-    Object_newInteger,
-    Object_newLong,
-    Object_newUnsignedLong,
-    Object_newIntegerFromString,
-    Object_newDouble,
-    Object_releaseObject,
-    PyObject_Malloc,
-    PyObject_Free,
-    PyObject_Realloc
-  };
-
-  decoder.prv = NULL;
+  void *s2d = NULL;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", g_kwlist, &arg))
   {
@@ -1022,15 +971,43 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     }
   }
 
-  decoder.errorStr = NULL;
-  decoder.errorOffset = NULL;
+  dconv_s2d_init(&s2d, DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
 
-  decoder.s2d = NULL;
-  dconv_s2d_init(&decoder.s2d, DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
+  // FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time
+  struct DecoderState ds;
+  JSUINT32 escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32))];
+  ds.start = (char *) raw;
+  ds.end = ds.start + sarg_length;
+  ds.escStart = escBuffer;
+  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32));
+  ds.escHeap = false;
+  ds.errorStr = NULL;
+  ds.errorOffset = NULL;
+  ds.objDepth = 0;
+  ds.s2d = s2d;
 
-  ret = JSON_DecodeObject(&decoder, raw, sarg_length);
+  ret = decode_any (&ds);
 
-  dconv_s2d_free(&decoder.s2d);
+  if (ds.escHeap)
+  {
+    PyObject_Free(ds.escStart);
+  }
+
+  if (!(ds.errorStr))
+  {
+    if ((ds.end - ds.start) > 0)
+    {
+      SkipWhitespace(&ds);
+    }
+
+    if (ds.start != ds.end && ret)
+    {
+      Object_releaseObject(ret);
+      ret = SetError(&ds, -1, "Trailing data");
+    }
+  }
+
+  dconv_s2d_free(&s2d);
 
   if (!is_bytes_like)
   {
@@ -1051,12 +1028,12 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  if (decoder.errorStr)
+  if (ds.errorStr)
   {
     /*
     FIXME: It's possible to give a much nicer error message here with actual failing element in input etc*/
 
-    PyErr_Format (JSONDecodeError, "%s", decoder.errorStr);
+    PyErr_Format (JSONDecodeError, "%s", ds.errorStr);
 
     if (ret)
     {

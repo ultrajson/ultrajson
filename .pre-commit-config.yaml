@@ -6,7 +6,7 @@ repos:
         args: [--py310-plus]
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.1
+    rev: 26.5.1
     hooks:
       - id: black
 
@@ -38,7 +38,7 @@ repos:
         exclude: "^.github/.*_TEMPLATE.md"
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.4
     hooks:
       - id: check-github-workflows
       - id: check-renovate
@@ -49,12 +49,12 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
+    rev: v1.26.1
     hooks:
       - id: zizmor
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.21.2
+    rev: v2.25.1
     hooks:
       - id: pyproject-fmt
         args: [--max-supported-python=3.15]

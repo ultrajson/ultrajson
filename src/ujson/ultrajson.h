@@ -176,7 +176,6 @@ typedef struct __JSONTypeContext
 {
   int type;
   void *prv;
-  void *encoder_prv;
 } JSONTypeContext;
 
 /*
@@ -232,8 +231,8 @@ typedef struct __JSONObjectEncoder
   const char *keySeparatorChars;
 
   /*
-  Private pointer to be used by the caller. Passed as encoder_prv in JSONTypeContext */
-  void *prv;
+  The function passed to ujson.dumps()'s "default" prameter. */
+  PyObject *defaultFn;
 
   /*
   Pointer to the DoubleToStringConverter instance */

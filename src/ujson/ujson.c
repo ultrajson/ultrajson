@@ -40,17 +40,10 @@ http://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <Python.h>
 #include "ujson.h"
 
-/* objToJSON */
-PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs);
-
-/* JSONToObj */
-PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs);
-
-/* objToJSONFile */
-PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs);
-
-/* JSONFileToObj */
-PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* ujson_dumps(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* ujson_dump(PyObject* self, PyObject *args, PyObject *kwargs);
+PyObject* ujson_load(PyObject* self, PyObject *args, PyObject *kwargs);
 
 PyObject* JSONDecodeError;
 
@@ -62,12 +55,12 @@ PyObject* JSONDecodeError;
     "Set reject_bytes=True to raise TypeError on bytes."
 
 static PyMethodDef ujsonMethods[] = {
-  {"encode", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"decode", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure."},
-  {"dumps", (PyCFunction) objToJSON, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
-  {"loads", (PyCFunction) JSONToObj, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure."},
-  {"dump", (PyCFunction) objToJSONFile, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
-  {"load", (PyCFunction) JSONFileToObj, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure."},
+  {"encode", (PyCFunction) ujson_dumps, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
+  {"decode", (PyCFunction) ujson_loads, METH_VARARGS | METH_KEYWORDS, "Converts JSON as string to dict object structure."},
+  {"dumps", (PyCFunction) ujson_dumps, METH_VARARGS | METH_KEYWORDS,  "Converts arbitrary object recursively into JSON. " ENCODER_HELP_TEXT},
+  {"loads", (PyCFunction) ujson_loads, METH_VARARGS | METH_KEYWORDS,  "Converts JSON as string to dict object structure."},
+  {"dump", (PyCFunction) ujson_dump, METH_VARARGS | METH_KEYWORDS, "Converts arbitrary object recursively into JSON file. " ENCODER_HELP_TEXT},
+  {"load", (PyCFunction) ujson_load, METH_VARARGS | METH_KEYWORDS, "Converts JSON as file to dict object structure."},
   {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

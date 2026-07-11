@@ -708,19 +708,6 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   JSONObjectEncoder encoder =
   {
-    Object_beginTypeContext,
-    Object_endTypeContext,
-    Object_getStringValue,
-    Object_getLongValue,
-    Object_getUnsignedLongValue,
-    Object_getDoubleValue,
-    Object_iterNext,
-    Object_iterEnd,
-    Object_iterGetValue,
-    Object_iterGetName,
-    PyObject_Malloc,
-    PyObject_Realloc,
-    PyObject_Free,
     -1, //recursionMax
     true, //forceAscii
     false, //encodeHTMLChars
@@ -853,7 +840,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     if (ret != buffer)
     {
-      encoder.free (ret);
+      PyObject_Free (ret);
     }
 
     return NULL;
@@ -863,7 +850,7 @@ PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (ret != buffer)
   {
-    encoder.free (ret);
+    PyObject_Free (ret);
   }
 
   PRINTMARK();
@@ -1011,7 +998,7 @@ static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
 
   if (enc->heap)
   {
-    enc->start = (char *) enc->realloc (enc->start, newSize);
+    enc->start = (char *) PyObject_Realloc (enc->start, newSize);
     if (!enc->start)
     {
       SetError (NULL, enc, "Could not reserve memory block");
@@ -1022,7 +1009,7 @@ static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
   {
     char *oldStart = enc->start;
     enc->heap = true;
-    enc->start = (char *) enc->malloc (newSize);
+    enc->start = (char *) PyObject_Malloc (newSize);
     if (!enc->start)
     {
       SetError (NULL, enc, "Could not reserve memory block");
@@ -1611,7 +1598,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
   }
 
   tc.encoder_prv = enc->prv;
-  enc->beginTypeContext(obj, &tc, enc);
+  Object_beginTypeContext(obj, &tc, enc);
 
   /*
   This reservation covers any additions on non-variable parts below, specifically:
@@ -1646,7 +1633,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       // The extra 1 byte covers the optional newline.
       size_t per_item_reserve = (enc->indent > 0 ? enc->indent : 0) * (enc->level + 1) + enc->itemSeparatorLength + 1;
-      while (enc->iterNext(obj, &tc))
+      while (Object_iterNext(obj, &tc))
       {
         Buffer_Reserve (enc, per_item_reserve);
 
@@ -1656,22 +1643,22 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 
-        iterObj = enc->iterGetValue(obj, &tc);
+        iterObj = Object_iterGetValue(obj, &tc);
 
         enc->level ++;
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, NULL, 0);
         if (enc->errorMsg)
         {
-          enc->iterEnd(obj, &tc);
-          enc->endTypeContext(obj, &tc);
+          Object_iterEnd(obj, &tc);
+          Object_endTypeContext(obj, &tc);
           enc->level--;
           return;
         }
         count ++;
       }
 
-      enc->iterEnd(obj, &tc);
+      Object_iterEnd(obj, &tc);
 
       if (count > 0 && enc->indent > 0) {
         // Reserve space for the indentation plus the newline.
@@ -1692,14 +1679,14 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
       // The extra 1 byte covers the optional newline.
       size_t reserve_size = (enc->indent > 0 ? enc->indent : 0) * (enc->level + 1) + enc->itemSeparatorLength + 1;
-      while ((res = enc->iterNext(obj, &tc)))
+      while ((res = Object_iterNext(obj, &tc)))
       {
         Buffer_Reserve (enc, reserve_size);
 
         if(res < 0)
         {
-          enc->iterEnd(obj, &tc);
-          enc->endTypeContext(obj, &tc);
+          Object_iterEnd(obj, &tc);
+          Object_endTypeContext(obj, &tc);
           enc->level--;
           return;
         }
@@ -1710,23 +1697,23 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
         }
         Buffer_AppendIndentNewlineUnchecked (enc);
 
-        iterObj = enc->iterGetValue(obj, &tc);
-        objName = enc->iterGetName(obj, &tc, &szlen);
+        iterObj = Object_iterGetValue(obj, &tc);
+        objName = Object_iterGetName(obj, &tc, &szlen);
 
         enc->level ++;
         Buffer_AppendIndentUnchecked (enc, enc->level);
         encode (iterObj, enc, objName, szlen);
         if (enc->errorMsg)
         {
-          enc->iterEnd(obj, &tc);
-          enc->endTypeContext(obj, &tc);
+          Object_iterEnd(obj, &tc);
+          Object_endTypeContext(obj, &tc);
           enc->level--;
           return;
         }
         count ++;
       }
 
-      enc->iterEnd(obj, &tc);
+      Object_iterEnd(obj, &tc);
 
       if (count > 0 && enc->indent > 0) {
         Buffer_Reserve (enc, enc->indent * enc->level + 1);
@@ -1740,13 +1727,13 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_LONG:
     {
-      Buffer_AppendLongUnchecked (enc, enc->getLongValue(obj, &tc));
+      Buffer_AppendLongUnchecked (enc, Object_getLongValue(obj, &tc));
       break;
     }
 
     case JT_ULONG:
     {
-      Buffer_AppendUnsignedLongUnchecked (enc, enc->getUnsignedLongValue(obj, &tc));
+      Buffer_AppendUnsignedLongUnchecked (enc, Object_getUnsignedLongValue(obj, &tc));
       break;
     }
 
@@ -1780,9 +1767,9 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_DOUBLE:
     {
-      if (!Buffer_AppendDoubleDconv(obj, enc, enc->getDoubleValue(obj, &tc)))
+      if (!Buffer_AppendDoubleDconv(obj, enc, Object_getDoubleValue(obj, &tc)))
       {
-        enc->endTypeContext(obj, &tc);
+        Object_endTypeContext(obj, &tc);
         enc->level--;
         return;
       }
@@ -1791,7 +1778,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_UTF8:
     {
-      value = enc->getStringValue(obj, &tc, &szlen);
+      value = Object_getStringValue(obj, &tc, &szlen);
       if (!value)
       {
         return;  // Out of memory
@@ -1800,7 +1787,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       Buffer_Reserve(enc, RESERVE_STRING(szlen));
       if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
-        enc->endTypeContext(obj, &tc);
+        Object_endTypeContext(obj, &tc);
         return;
       }
       Buffer_AppendCharUnchecked (enc, '\"');
@@ -1809,7 +1796,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       {
         if (!Buffer_EscapeStringValidated(obj, enc, value, value + szlen))
         {
-          enc->endTypeContext(obj, &tc);
+          Object_endTypeContext(obj, &tc);
           enc->level--;
           return;
         }
@@ -1825,7 +1812,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
 
     case JT_RAW:
     {
-      value = enc->getStringValue(obj, &tc, &szlen);
+      value = Object_getStringValue(obj, &tc, &szlen);
       if (!value)  // Out of memory
       {
         return;
@@ -1834,7 +1821,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
       Buffer_Reserve(enc, szlen);
       if (enc->errorMsg)  // Out of memory (via Buffer_Reserve())
       {
-        enc->endTypeContext(obj, &tc);
+        Object_endTypeContext(obj, &tc);
         return;
       }
 
@@ -1844,15 +1831,12 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     }
   }
 
-  enc->endTypeContext(obj, &tc);
+  Object_endTypeContext(obj, &tc);
   enc->level--;
 }
 
 char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
 {
-  enc->malloc = enc->malloc ? enc->malloc : malloc;
-  enc->free =  enc->free ? enc->free : free;
-  enc->realloc = enc->realloc ? enc->realloc : realloc;
   enc->errorMsg = NULL;
   enc->errorObj = NULL;
   enc->level = 0;
@@ -1874,7 +1858,7 @@ char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t
     if (enc->heap)
     {
       // Buffer was realloc'd at some point, or no initial buffer was provided.
-      enc->free(enc->start);
+      PyObject_Free(enc->start);
     }
     return NULL;
   }

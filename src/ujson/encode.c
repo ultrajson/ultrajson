@@ -156,7 +156,7 @@ static char *PyUnicodeToUTF8Raw(PyObject *obj, size_t *_outLen, PyObject **pByte
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
     Py_ssize_t len;
-    char *data = PyUnicode_AsUTF8AndSize(obj, &len);
+    char *data = (char *) PyUnicode_AsUTF8AndSize(obj, &len);
     *_outLen = len;
     return data;
   }

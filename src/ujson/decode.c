@@ -917,7 +917,7 @@ static void Object_releaseObject(JSOBJ obj)
 
 static char *g_kwlist[] = {"obj", NULL};
 
-PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *ret;
   PyObject *sarg = NULL;
@@ -1046,7 +1046,7 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   return ret;
 }
 
-PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* ujson_load(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *read;
   PyObject *string;
@@ -1083,7 +1083,7 @@ PyObject* JSONFileToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 
   argtuple = PyTuple_Pack(1, string);
 
-  result = JSONToObj (self, argtuple, kwargs);
+  result = ujson_loads(self, argtuple, kwargs);
 
   Py_XDECREF(argtuple);
   Py_XDECREF(string);

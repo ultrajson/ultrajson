@@ -682,7 +682,7 @@ static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
 }
 
-PyObject* objToJSON(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* ujson_dumps(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   static char *kwlist[] = { "obj", "ensure_ascii", "encode_html_chars", "escape_forward_slashes", "sort_keys", "indent", "allow_nan", "reject_bytes", "default", "separators", NULL };
 
@@ -863,7 +863,7 @@ ERROR:  // Out of memory
   return NULL;
 }
 
-PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
+PyObject* ujson_dump(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *data;
   PyObject *file;
@@ -901,7 +901,7 @@ PyObject* objToJSONFile(PyObject* self, PyObject *args, PyObject *kwargs)
     return NULL;
   }
 
-  string = objToJSON (self, argtuple, kwargs);
+  string = ujson_dumps (self, argtuple, kwargs);
 
   if (string == NULL)
   {

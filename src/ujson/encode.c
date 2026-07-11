@@ -374,7 +374,7 @@ static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder 
 
 static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
-  PyObject *obj, *objRepr, *defaultFn, *newObj;
+  PyObject *obj, *objRepr, *newObj;
   int level = 0;
   TypeContext *pc;
   PRINTMARK();
@@ -385,7 +385,6 @@ static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObject
   }
 
   obj = (PyObject*) _obj;
-  defaultFn = (PyObject*) enc->prv;
 
   tc->prv = PyObject_Malloc(sizeof(TypeContext));
   pc = (TypeContext *) tc->prv;
@@ -566,7 +565,7 @@ BEGIN:
     return;
   }
 
-  if (defaultFn)
+  if (enc->defaultFn)
   {
     // Break infinite loop
     if (level >= DEFAULT_FN_MAX_DEPTH)
@@ -576,7 +575,7 @@ BEGIN:
       goto INVALID;
     }
 
-    newObj = PyObject_CallFunctionObjArgs(defaultFn, obj, NULL);
+    newObj = PyObject_CallFunctionObjArgs(enc->defaultFn, obj, NULL);
     if (newObj)
     {
       PRINTMARK();
@@ -720,7 +719,7 @@ PyObject* ujson_dumps(PyObject* self, PyObject *args, PyObject *kwargs)
     NULL, //itemSeparatorChars
     0, //keySeparatorLength
     NULL, //keySeparatorChars
-    NULL, //prv
+    NULL, //defaultFn
   };
 
 
@@ -740,8 +739,7 @@ PyObject* ujson_dumps(PyObject* self, PyObject *args, PyObject *kwargs)
 
   if (odefaultFn != NULL && odefaultFn != Py_None)
   {
-    // Here use prv to store default function
-    encoder.prv = odefaultFn;
+    encoder.defaultFn = odefaultFn;
   }
 
   if (encoder.allowNan)
@@ -1597,7 +1595,6 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
     Buffer_memcpy(enc, enc->keySeparatorChars, enc->keySeparatorLength);
   }
 
-  tc.encoder_prv = enc->prv;
   Object_beginTypeContext(obj, &tc, enc);
 
   /*

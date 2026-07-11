@@ -75,7 +75,7 @@ static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 
 #define EPOCH_ORD 719163
 
-typedef void *(*PFN_PyTypeToJSON)(JSOBJ obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
+typedef void *(*PFN_PyTypeToJSON)(PyObject *obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
 bool object_is_decimal_type(PyObject *obj);
 
@@ -104,8 +104,8 @@ typedef struct __TypeContext
 
 #define GET_TC(__ptrtc) ((TypeContext *)((__ptrtc)->prv))
 
-// If newObj is set, we should use it rather than JSOBJ
-#define GET_OBJ(__jsobj, __ptrtc) (GET_TC(__ptrtc)->newObj ? GET_TC(__ptrtc)->newObj : __jsobj)
+// If newObj is set, we should use it rather than the original PyObject
+#define GET_OBJ(__pyobj, __ptrtc) (GET_TC(__ptrtc)->newObj ? GET_TC(__ptrtc)->newObj : __pyobj)
 
 // Avoid infinite loop caused by the default function
 #define DEFAULT_FN_MAX_DEPTH 3
@@ -113,40 +113,38 @@ typedef struct __TypeContext
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
-static void *PyLongToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyLongToINT64(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   *((JSINT64 *) outValue) = GET_TC(tc)->longValue;
   return NULL;
 }
 
-static void *PyLongToUINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyLongToUINT64(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   *((JSUINT64 *) outValue) = GET_TC(tc)->unsignedLongValue;
   return NULL;
 }
 
-static void *PyLongToINTSTR(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyLongToINTSTR(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = GET_TC(tc)->rawJSONValue;
   *_outLen = PyUnicode_GET_LENGTH(obj);
   return PyUnicode_1BYTE_DATA(obj);
 }
 
-static void *PyFloatToDOUBLE(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyFloatToDOUBLE(PyObject *obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  PyObject *obj = (PyObject *) _obj;
   *((double *) outValue) = PyFloat_AsDouble (obj);
   return NULL;
 }
 
-static void *PyStringToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyStringToUTF8(PyObject *obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  PyObject *obj = (PyObject *) _obj;
   *_outLen = PyBytes_GET_SIZE(obj);
   return PyBytes_AS_STRING(obj);
 }
 
-static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesObj)
+static char *PyUnicodeToUTF8Raw(PyObject *obj, size_t *_outLen, PyObject **pBytesObj)
 {
   /*
   Converts the PyUnicode object to char* whose size is stored in _outLen.
@@ -154,8 +152,6 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   In that case, the returned char* is in fact the internal buffer of that PyBytes object,
   and when the char* buffer is no longer needed, the bytesObj must be DECREF'd.
   */
-  PyObject *obj = (PyObject *) _obj;
-
 #ifndef Py_LIMITED_API
   if (PyUnicode_IS_COMPACT_ASCII(obj))
   {
@@ -177,12 +173,12 @@ static char *PyUnicodeToUTF8Raw(JSOBJ _obj, size_t *_outLen, PyObject **pBytesOb
   return PyBytes_AS_STRING(bytesObj);
 }
 
-static void *PyUnicodeToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyUnicodeToUTF8(PyObject *_obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   return PyUnicodeToUTF8Raw(_obj, _outLen, &(GET_TC(tc)->utf8BytesObj));
 }
 
-static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size_t *_outLen)
+static void *PyRawJSONToUTF8(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
   PyObject *obj = GET_TC(tc)->rawJSONValue;
   if (PyUnicode_Check(obj))
@@ -195,7 +191,7 @@ static void *PyRawJSONToUTF8(JSOBJ _obj, JSONTypeContext *tc, void *outValue, si
   }
 }
 
-static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
+static int Tuple_iterNext(PyObject *obj, JSONTypeContext *tc)
 {
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
   {
@@ -207,16 +203,16 @@ static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
   return 1;
 }
 
-static void Tuple_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+static void Tuple_iterEnd(PyObject *obj, JSONTypeContext *tc)
 {
 }
 
-static JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+static PyObject *Tuple_iterGetValue(PyObject *obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->itemValue;
 }
 
-static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
+static int List_iterNext(PyObject *obj, JSONTypeContext *tc)
 {
   if (GET_TC(tc)->index >= GET_TC(tc)->size)
   {
@@ -229,11 +225,11 @@ static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
   return 1;
 }
 
-static void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+static void List_iterEnd(PyObject *obj, JSONTypeContext *tc)
 {
 }
 
-static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+static PyObject *List_iterGetValue(PyObject *obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->itemValue;
 }
@@ -274,7 +270,7 @@ static PyObject* Dict_convertKey(PyObject* key)
   return key;
 }
 
-static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+static int Dict_iterNext(PyObject *obj, JSONTypeContext *tc)
 {
   PyObject* key;
   if (!PyDict_Next(GET_TC(tc)->dictObj, &GET_TC(tc)->index, &key, &GET_TC(tc)->itemValue))
@@ -292,25 +288,25 @@ static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
   return 1;
 }
 
-static void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+static void Dict_iterEnd(PyObject *obj, JSONTypeContext *tc)
 {
   Py_CLEAR(GET_TC(tc)->itemName);
   Py_DECREF(GET_TC(tc)->dictObj);
   PRINTMARK();
 }
 
-static JSOBJ Dict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+static PyObject *Dict_iterGetValue(PyObject *obj, JSONTypeContext *tc)
 {
   return GET_TC(tc)->itemValue;
 }
 
-static char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+static char *Dict_iterGetName(PyObject *obj, JSONTypeContext *tc, size_t *outLen)
 {
   *outLen = PyBytes_GET_SIZE(GET_TC(tc)->itemName);
   return PyBytes_AS_STRING(GET_TC(tc)->itemName);
 }
 
-static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+static int SortedDict_iterNext(PyObject *obj, JSONTypeContext *tc)
 {
   // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
   // standard library's _json.c sort_keys handler.
@@ -372,19 +368,17 @@ static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder 
   pc->index = 0;
 }
 
-static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
+static void Object_beginTypeContext (PyObject *obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
 {
-  PyObject *obj, *objRepr, *newObj;
+  PyObject *objRepr, *newObj;
   int level = 0;
   TypeContext *pc;
   PRINTMARK();
-  if (!_obj)  // Reachable only by making iterGetValue() fail (e.g. truncating a list mid-serialisation)
+  if (!obj)  // Reachable only by making iterGetValue() fail (e.g. truncating a list mid-serialisation)
   {
     tc->type = JT_INVALID;
     return;
   }
-
-  obj = (PyObject*) _obj;
 
   tc->prv = PyObject_Malloc(sizeof(TypeContext));
   pc = (TypeContext *) tc->prv;
@@ -614,7 +608,7 @@ INVALID:
   return;
 }
 
-static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
+static void Object_endTypeContext(PyObject *obj, JSONTypeContext *tc)
 {
   Py_XDECREF(GET_TC(tc)->newObj);
   Py_XDECREF(GET_TC(tc)->utf8BytesObj);
@@ -627,13 +621,13 @@ static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
   tc->prv = NULL;
 }
 
-static const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
+static const char *Object_getStringValue(PyObject *obj, JSONTypeContext *tc, size_t *_outLen)
 {
   obj = GET_OBJ(obj, tc);
   return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
 }
 
-static JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
+static JSINT64 Object_getLongValue(PyObject *obj, JSONTypeContext *tc)
 {
   JSINT64 ret;
   obj = GET_OBJ(obj, tc);
@@ -641,7 +635,7 @@ static JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
+static JSUINT64 Object_getUnsignedLongValue(PyObject *obj, JSONTypeContext *tc)
 {
   JSUINT64 ret;
   obj = GET_OBJ(obj, tc);
@@ -649,7 +643,7 @@ static JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
+static double Object_getDoubleValue(PyObject *obj, JSONTypeContext *tc)
 {
   double ret;
   obj = GET_OBJ(obj, tc);
@@ -657,25 +651,25 @@ static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
   return ret;
 }
 
-static int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
+static int Object_iterNext(PyObject *obj, JSONTypeContext *tc)
 {
   obj = GET_OBJ(obj, tc);
   return GET_TC(tc)->iterNext(obj, tc);
 }
 
-static void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+static void Object_iterEnd(PyObject *obj, JSONTypeContext *tc)
 {
   obj = GET_OBJ(obj, tc);
   GET_TC(tc)->iterEnd(obj, tc);
 }
 
-static JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+static PyObject *Object_iterGetValue(PyObject *obj, JSONTypeContext *tc)
 {
   obj = GET_OBJ(obj, tc);
   return GET_TC(tc)->iterGetValue(obj, tc);
 }
 
-static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+static char *Object_iterGetName(PyObject *obj, JSONTypeContext *tc, size_t *outLen)
 {
   obj = GET_OBJ(obj, tc);
   return GET_TC(tc)->iterGetName(obj, tc, outLen);
@@ -963,7 +957,7 @@ static const JSUINT8 g_asciiOutputTable[256] =
 /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1
 };
 
-static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
+static void SetError (PyObject *obj, JSONObjectEncoder *enc, const char *message)
 {
   enc->errorMsg = message;
   enc->errorObj = obj;
@@ -1158,7 +1152,7 @@ static void Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *
   }
 }
 
-static bool Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
+static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
   JSUTF32 ucs;
   char *of = (char *) enc->offset;
@@ -1524,7 +1518,7 @@ static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 
   enc->offset += (wstr - (enc->offset));
 }
 
-static bool Buffer_AppendDoubleDconv(JSOBJ obj, JSONObjectEncoder *enc, double value)
+static bool Buffer_AppendDoubleDconv(PyObject *obj, JSONObjectEncoder *enc, double value)
 {
   char buf[128];
   int strlength;
@@ -1553,12 +1547,12 @@ Handle integration functions returning NULL here */
 FIXME:
 Perhaps implement recursion detection */
 
-static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
+static void encode(PyObject *obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
 {
   const char *value;
   char *objName;
   int count, res;
-  JSOBJ iterObj;
+  PyObject *iterObj;
   size_t szlen;
   JSONTypeContext tc;
 
@@ -1832,7 +1826,7 @@ static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t c
   enc->level--;
 }
 
-char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
+char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
 {
   enc->errorMsg = NULL;
   enc->errorObj = NULL;

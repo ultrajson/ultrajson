@@ -78,20 +78,7 @@ static PyObject *FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATT
 static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end);
 static void Object_objectAddKey(PyObject *obj, PyObject *name, PyObject *value);
 static void Object_arrayAddItem(PyObject *obj, PyObject *value);
-static PyObject *Object_newTrue();
-static PyObject *Object_newFalse();
-static PyObject *Object_newNull();
-static PyObject *Object_newNaN();
-static PyObject *Object_newPosInf();
-static PyObject *Object_newNegInf();
-static PyObject *Object_newObject();
-static PyObject *Object_newArray();
-static PyObject *Object_newInteger(JSINT32 value);
-static PyObject *Object_newLong(JSINT64 value);
-static PyObject *Object_newUnsignedLong(JSUINT64 value);
 static PyObject *Object_newIntegerFromString(char *value, size_t length);
-static PyObject *Object_newDouble(double value);
-static void Object_releaseObject(PyObject *obj);
 
 static PyObject *SetError( struct DecoderState *ds, int offset, const char *message)
 {
@@ -109,7 +96,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decodeDouble(struct DecoderState *d
   double value = dconv_s2d(ds->s2d, ds->start, len, &processed_characters_count);
   ds->lastType = JT_DOUBLE;
   ds->start += processed_characters_count;
-  return Object_newDouble(value);
+  return PyFloat_FromDouble(value);
 }
 
 static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
@@ -216,15 +203,15 @@ BREAK_INT_LOOP:
 
   if (intNeg == 1 && (intValue & 0x8000000000000000ULL) != 0)
   {
-    return Object_newUnsignedLong(intValue);
+    return PyLong_FromUnsignedLongLong(intValue);
   }
   else if ((intValue >> 31))
   {
-    return Object_newLong((JSINT64) (intValue * (JSINT64) intNeg));
+    return PyLong_FromLongLong((JSINT64) (intValue * (JSINT64) intNeg));
   }
   else
   {
-    return Object_newInteger((JSINT32) (intValue * intNeg));
+    return PyLong_FromLong((long) (intValue * intNeg));
   }
 
 DECODE_NAN:
@@ -234,7 +221,7 @@ DECODE_NAN:
 
     ds->lastType = JT_NAN;
     ds->start = offset;
-    return Object_newNaN();
+    return PyFloat_FromDouble(Py_NAN);
 
 SET_NAN_ERROR:
     return SetError(ds, -1, "Unexpected character found when decoding 'NaN'");
@@ -253,10 +240,10 @@ DECODE_INF:
 
     if (intNeg == 1) {
       ds->lastType = JT_POS_INF;
-      return Object_newPosInf();
+      return PyFloat_FromDouble(Py_HUGE_VAL);
     } else {
       ds->lastType = JT_NEG_INF;
-      return Object_newNegInf();
+      return PyFloat_FromDouble(-Py_HUGE_VAL);
     }
 
 SET_INF_ERROR:
@@ -284,7 +271,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_true ( struct DecoderState *
 
   ds->lastType = JT_TRUE;
   ds->start = offset;
-  return Object_newTrue();
+  Py_RETURN_TRUE;
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
@@ -306,7 +293,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_false ( struct DecoderState 
 
   ds->lastType = JT_FALSE;
   ds->start = offset;
-  return Object_newFalse();
+  Py_RETURN_FALSE;
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
@@ -326,7 +313,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_null ( struct DecoderState *
 
   ds->lastType = JT_NULL;
   ds->start = offset;
-  return Object_newNull();
+  Py_RETURN_NONE;
 
 SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
@@ -612,7 +599,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_array(struct DecoderState *d
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = Object_newArray();
+  newObj = PyList_New(0);
   len = 0;
 
   ds->lastType = JT_INVALID;
@@ -631,7 +618,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_array(struct DecoderState *d
         return newObj;
       }
 
-      Object_releaseObject(newObj);
+      Py_DECREF(newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (1)");
     }
 
@@ -639,7 +626,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_array(struct DecoderState *d
 
     if (itemValue == NULL)
     {
-      Object_releaseObject(newObj);
+      Py_DECREF(newObj);
       return NULL;
     }
 
@@ -658,7 +645,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_array(struct DecoderState *d
       break;
 
     default:
-      Object_releaseObject(newObj);
+      Py_DECREF(newObj);
       return SetError(ds, -1, "Unexpected character found when decoding array value (2)");
     }
 
@@ -679,7 +666,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
     return SetError(ds, -1, "Reached object decoding depth limit");
   }
 
-  newObj = Object_newObject();
+  newObj = PyDict_New();
   len = 0;
 
   ds->start ++;
@@ -697,7 +684,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
         return newObj;
       }
 
-      Object_releaseObject(newObj);
+      Py_DECREF(newObj);
       return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
 
@@ -706,14 +693,14 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
 
     if (itemName == NULL)
     {
-      Object_releaseObject(newObj);
+      Py_DECREF(newObj);
       return NULL;
     }
 
     if (ds->lastType != JT_UTF8)
     {
-      Object_releaseObject(newObj);
-      Object_releaseObject(itemName);
+      Py_DECREF(newObj);
+      Py_DECREF(itemName);
       return SetError(ds, -1, "Key name of object must be 'string' when decoding 'object'");
     }
 
@@ -721,8 +708,8 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
 
     if (*(ds->start++) != ':')
     {
-      Object_releaseObject(newObj);
-      Object_releaseObject(itemName);
+      Py_DECREF(newObj);
+      Py_DECREF(itemName);
       return SetError(ds, -1, "No ':' found when decoding object value");
     }
 
@@ -732,8 +719,8 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
 
     if (itemValue == NULL)
     {
-      Object_releaseObject(newObj);
-      Object_releaseObject(itemName);
+      Py_DECREF(newObj);
+      Py_DECREF(itemName);
       return NULL;
     }
 
@@ -752,7 +739,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState 
         break;
 
       default:
-        Object_releaseObject(newObj);
+        Py_DECREF(newObj);
         return SetError(ds, -1, "Unexpected character in found when decoding object value");
     }
 
@@ -838,61 +825,6 @@ static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end)
   return PyUnicode_FromKindAndData (PyUnicode_4BYTE_KIND, (Py_UCS4 *) start, (end - start));
 }
 
-static PyObject *Object_newTrue()
-{
-  Py_RETURN_TRUE;
-}
-
-static PyObject *Object_newFalse()
-{
-  Py_RETURN_FALSE;
-}
-
-static PyObject *Object_newNull()
-{
-  Py_RETURN_NONE;
-}
-
-static PyObject *Object_newNaN()
-{
-    return PyFloat_FromDouble(Py_NAN);
-}
-
-static PyObject *Object_newPosInf()
-{
-    return PyFloat_FromDouble(Py_HUGE_VAL);
-}
-
-static PyObject *Object_newNegInf()
-{
-    return PyFloat_FromDouble(-Py_HUGE_VAL);
-}
-
-static PyObject *Object_newObject()
-{
-  return PyDict_New();
-}
-
-static PyObject *Object_newArray()
-{
-  return PyList_New(0);
-}
-
-static PyObject *Object_newInteger(JSINT32 value)
-{
-  return PyLong_FromLong( (long) value);
-}
-
-static PyObject *Object_newLong(JSINT64 value)
-{
-  return PyLong_FromLongLong (value);
-}
-
-static PyObject *Object_newUnsignedLong(JSUINT64 value)
-{
-  return PyLong_FromUnsignedLongLong (value);
-}
-
 static PyObject *Object_newIntegerFromString(char *value, size_t length)
 {
   // PyLong_FromString requires a NUL-terminated string in CPython, contrary to the documentation: https://github.com/python/cpython/issues/59200
@@ -902,16 +834,6 @@ static PyObject *Object_newIntegerFromString(char *value, size_t length)
   PyObject *ret = PyLong_FromString(buf, NULL, 10);
   PyObject_Free(buf);
   return ret;
-}
-
-static PyObject *Object_newDouble(double value)
-{
-  return PyFloat_FromDouble(value);
-}
-
-static void Object_releaseObject(PyObject *obj)
-{
-  Py_DECREF(obj);
 }
 
 static char *g_kwlist[] = {"obj", NULL};
@@ -1001,7 +923,7 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
 
     if (ds.start != ds.end && ret)
     {
-      Object_releaseObject(ret);
+      Py_DECREF(ret);
       ret = SetError(&ds, -1, "Trailing data");
     }
   }

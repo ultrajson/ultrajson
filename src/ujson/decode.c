@@ -73,35 +73,34 @@ struct DecoderState
   void *s2d;
 };
 
-static JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
-typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
+static PyObject *FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 
-static JSOBJ Object_newString(JSUINT32 *start, JSUINT32 *end);
-static void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value);
-static void Object_arrayAddItem(JSOBJ obj, JSOBJ value);
-static JSOBJ Object_newTrue();
-static JSOBJ Object_newFalse();
-static JSOBJ Object_newNull();
-static JSOBJ Object_newNaN();
-static JSOBJ Object_newPosInf();
-static JSOBJ Object_newNegInf();
-static JSOBJ Object_newObject();
-static JSOBJ Object_newArray();
-static JSOBJ Object_newInteger(JSINT32 value);
-static JSOBJ Object_newLong(JSINT64 value);
-static JSOBJ Object_newUnsignedLong(JSUINT64 value);
-static JSOBJ Object_newIntegerFromString(char *value, size_t length);
-static JSOBJ Object_newDouble(double value);
-static void Object_releaseObject(JSOBJ obj);
+static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end);
+static void Object_objectAddKey(PyObject *obj, PyObject *name, PyObject *value);
+static void Object_arrayAddItem(PyObject *obj, PyObject *value);
+static PyObject *Object_newTrue();
+static PyObject *Object_newFalse();
+static PyObject *Object_newNull();
+static PyObject *Object_newNaN();
+static PyObject *Object_newPosInf();
+static PyObject *Object_newNegInf();
+static PyObject *Object_newObject();
+static PyObject *Object_newArray();
+static PyObject *Object_newInteger(JSINT32 value);
+static PyObject *Object_newLong(JSINT64 value);
+static PyObject *Object_newUnsignedLong(JSUINT64 value);
+static PyObject *Object_newIntegerFromString(char *value, size_t length);
+static PyObject *Object_newDouble(double value);
+static void Object_releaseObject(PyObject *obj);
 
-static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
+static PyObject *SetError( struct DecoderState *ds, int offset, const char *message)
 {
   ds->errorOffset = ds->start + offset;
   ds->errorStr = (char *) message;
   return NULL;
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
 {
   int processed_characters_count;
   /* Prevent int overflow if ds->end - ds->start is too large. See check_decode_decimal_no_int_overflow()
@@ -113,7 +112,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodeDouble(struct DecoderState *ds)
   return Object_newDouble(value);
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
 {
   int intNeg = 1;
   bool hasError = false;
@@ -271,7 +270,7 @@ SET_INF_ERROR:
 
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_true ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -291,7 +290,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_false ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -313,7 +312,7 @@ SETERROR:
   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_null ( struct DecoderState *ds)
 {
   char *offset = ds->start;
   offset ++;
@@ -385,7 +384,7 @@ static const JSUINT8 g_decoderLookup[256] =
   /* 0xf0 */ 4, 4, 4, 4, 4, DS_EXCEEDSMAX, DS_EXCEEDSMAX, DS_EXCEEDSMAX, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
 };
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
   int index;
   JSUINT32 *escOffset;
@@ -603,10 +602,10 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds
   }
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_array(struct DecoderState *ds)
 {
-  JSOBJ itemValue;
-  JSOBJ newObj;
+  PyObject *itemValue;
+  PyObject *newObj;
   int len;
   ds->objDepth++;
   if (ds->objDepth > JSON_MAX_OBJECT_DEPTH) {
@@ -667,11 +666,11 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
   }
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_object( struct DecoderState *ds)
 {
-  JSOBJ itemName;
-  JSOBJ itemValue;
-  JSOBJ newObj;
+  PyObject *itemName;
+  PyObject *itemValue;
+  PyObject *newObj;
   int len;
 
   ds->objDepth++;
@@ -761,7 +760,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
   }
 }
 
-static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
+static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_any(struct DecoderState *ds)
 {
   for (;;)
   {
@@ -804,7 +803,7 @@ static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
   }
 }
 
-static void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
+static void Object_objectAddKey(PyObject *obj, PyObject *name, PyObject *value)
 {
   int result = PyDict_SetItem(obj, name, value);
   if (result == -1) {
@@ -813,15 +812,15 @@ static void Object_objectAddKey(JSOBJ obj, JSOBJ name, JSOBJ value)
     // Set our own error
     PyErr_SetString(JSONDecodeError, "Invalid JSON: object keys must be strings");
   }
-  Py_DECREF( (PyObject *) name);
-  Py_DECREF( (PyObject *) value);
+  Py_DECREF(name);
+  Py_DECREF(value);
   return;
 }
 
-static void Object_arrayAddItem(JSOBJ obj, JSOBJ value)
+static void Object_arrayAddItem(PyObject *obj, PyObject *value)
 {
   PyList_Append(obj, value);
-  Py_DECREF( (PyObject *) value);
+  Py_DECREF(value);
   return;
 }
 
@@ -834,67 +833,67 @@ when C11 is made mandatory (CPython 3.11+, PyPy ?).
 */
 typedef char assert_py_ucs4_is_jsuint32[1 - 2*!(sizeof(Py_UCS4) == sizeof(JSUINT32))];
 
-static JSOBJ Object_newString(JSUINT32 *start, JSUINT32 *end)
+static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end)
 {
   return PyUnicode_FromKindAndData (PyUnicode_4BYTE_KIND, (Py_UCS4 *) start, (end - start));
 }
 
-static JSOBJ Object_newTrue()
+static PyObject *Object_newTrue()
 {
   Py_RETURN_TRUE;
 }
 
-static JSOBJ Object_newFalse()
+static PyObject *Object_newFalse()
 {
   Py_RETURN_FALSE;
 }
 
-static JSOBJ Object_newNull()
+static PyObject *Object_newNull()
 {
   Py_RETURN_NONE;
 }
 
-static JSOBJ Object_newNaN()
+static PyObject *Object_newNaN()
 {
     return PyFloat_FromDouble(Py_NAN);
 }
 
-static JSOBJ Object_newPosInf()
+static PyObject *Object_newPosInf()
 {
     return PyFloat_FromDouble(Py_HUGE_VAL);
 }
 
-static JSOBJ Object_newNegInf()
+static PyObject *Object_newNegInf()
 {
     return PyFloat_FromDouble(-Py_HUGE_VAL);
 }
 
-static JSOBJ Object_newObject()
+static PyObject *Object_newObject()
 {
   return PyDict_New();
 }
 
-static JSOBJ Object_newArray()
+static PyObject *Object_newArray()
 {
   return PyList_New(0);
 }
 
-static JSOBJ Object_newInteger(JSINT32 value)
+static PyObject *Object_newInteger(JSINT32 value)
 {
   return PyLong_FromLong( (long) value);
 }
 
-static JSOBJ Object_newLong(JSINT64 value)
+static PyObject *Object_newLong(JSINT64 value)
 {
   return PyLong_FromLongLong (value);
 }
 
-static JSOBJ Object_newUnsignedLong(JSUINT64 value)
+static PyObject *Object_newUnsignedLong(JSUINT64 value)
 {
   return PyLong_FromUnsignedLongLong (value);
 }
 
-static JSOBJ Object_newIntegerFromString(char *value, size_t length)
+static PyObject *Object_newIntegerFromString(char *value, size_t length)
 {
   // PyLong_FromString requires a NUL-terminated string in CPython, contrary to the documentation: https://github.com/python/cpython/issues/59200
   char *buf = PyObject_Malloc(length + 1);
@@ -905,14 +904,14 @@ static JSOBJ Object_newIntegerFromString(char *value, size_t length)
   return ret;
 }
 
-static JSOBJ Object_newDouble(double value)
+static PyObject *Object_newDouble(double value)
 {
   return PyFloat_FromDouble(value);
 }
 
-static void Object_releaseObject(JSOBJ obj)
+static void Object_releaseObject(PyObject *obj)
 {
-  Py_DECREF( ((PyObject *)obj));
+  Py_DECREF(obj);
 }
 
 static char *g_kwlist[] = {"obj", NULL};
@@ -1023,7 +1022,7 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     if (ret)
     {
-        Py_DECREF( (PyObject *) ret);
+        Py_DECREF(ret);
     }
     return NULL;
   }
@@ -1037,7 +1036,7 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
 
     if (ret)
     {
-        Py_DECREF( (PyObject *) ret);
+        Py_DECREF(ret);
     }
 
     return NULL;

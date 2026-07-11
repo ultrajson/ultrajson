@@ -169,9 +169,6 @@ enum JSTYPES
   JT_NEG_INF,   // Negative infinity
 };
 
-typedef void * JSOBJ;
-typedef void * JSITER;
-
 typedef struct __JSONTypeContext
 {
   int type;
@@ -180,10 +177,10 @@ typedef struct __JSONTypeContext
 
 /*
 Function pointer declarations, suitable for implementing UltraJSON */
-typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
-typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
-typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *tc);
-typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSONTypeContext *tc, size_t *outLen);
+typedef int (*JSPFN_ITERNEXT)(PyObject *obj, JSONTypeContext *tc);
+typedef void (*JSPFN_ITEREND)(PyObject *obj, JSONTypeContext *tc);
+typedef PyObject *(*JSPFN_ITERGETVALUE)(PyObject *obj, JSONTypeContext *tc);
+typedef char *(*JSPFN_ITERGETNAME)(PyObject *obj, JSONTypeContext *tc, size_t *outLen);
 
 
 struct __JSONObjectEncoder;
@@ -241,7 +238,7 @@ typedef struct __JSONObjectEncoder
   /*
   Set to an error message if error occurred */
   const char *errorMsg;
-  JSOBJ errorObj;
+  PyObject *errorObj;
 
   /* Buffer stuff */
   char *start;
@@ -258,7 +255,7 @@ Encode an object structure into JSON.
 
 Arguments:
 obj - An anonymous type representing the object
-enc - Function definitions for querying JSOBJ type
+enc - Function definitions for querying PyObject type
 buffer - Preallocated buffer to store result in. If NULL function allocates own buffer
 cbBuffer - Length of buffer (ignored if buffer is NULL)
 outLen - Will store the length of the encoded string
@@ -275,7 +272,7 @@ JSONObjectEncoder.free or free() as specified when calling this function.
 
 If an error occurs during encoding, NULL is returned and no outLen is stored.
 */
-EXPORTFUNCTION char *JSON_EncodeObject(JSOBJ obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
+EXPORTFUNCTION char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
 
 #define DCONV_DECIMAL_IN_SHORTEST_LOW -4
 #define DCONV_DECIMAL_IN_SHORTEST_HIGH 16

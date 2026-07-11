@@ -157,7 +157,7 @@ static void module_free(void *m)
   module_clear((PyObject *)m);
 }
 
-PyMODINIT_FUNC PyInit_ujson(void)
+PyMODINIT_FUNC PyInit_ujson()
 {
   PyObject* module;
 

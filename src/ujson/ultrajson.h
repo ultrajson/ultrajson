@@ -185,52 +185,12 @@ typedef int (*JSPFN_ITERNEXT)(JSOBJ obj, JSONTypeContext *tc);
 typedef void (*JSPFN_ITEREND)(JSOBJ obj, JSONTypeContext *tc);
 typedef JSOBJ (*JSPFN_ITERGETVALUE)(JSOBJ obj, JSONTypeContext *tc);
 typedef char *(*JSPFN_ITERGETNAME)(JSOBJ obj, JSONTypeContext *tc, size_t *outLen);
-typedef void *(*JSPFN_MALLOC)(size_t size);
-typedef void (*JSPFN_FREE)(void *pptr);
-typedef void *(*JSPFN_REALLOC)(void *base, size_t size);
 
 
 struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder
 {
-  void (*beginTypeContext)(JSOBJ obj, JSONTypeContext *tc, struct __JSONObjectEncoder *enc);
-  void (*endTypeContext)(JSOBJ obj, JSONTypeContext *tc);
-  const char *(*getStringValue)(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen);
-  JSINT64 (*getLongValue)(JSOBJ obj, JSONTypeContext *tc);
-  JSUINT64 (*getUnsignedLongValue)(JSOBJ obj, JSONTypeContext *tc);
-  double (*getDoubleValue)(JSOBJ obj, JSONTypeContext *tc);
-
-  /*
-  Retrieve next object in an iteration. Should return 0 to indicate iteration has reached end or 1 if there are more items
-  or -1 on error. Implementer is responsible for keeping state of the iteration. Use ti->prv fields for this
-  */
-  JSPFN_ITERNEXT iterNext;
-
-  /*
-  Ends the iteration of an iterable object.
-  Any iteration state stored in ti->prv can be freed here
-  */
-  JSPFN_ITEREND iterEnd;
-
-  /*
-  Returns a reference to the value object of an iterator
-  The is responsible for the life-cycle of the returned string. Use iterNext/iterEnd and ti->prv to keep track of current object
-  */
-  JSPFN_ITERGETVALUE iterGetValue;
-
-  /*
-  Return name of iterator.
-  The is responsible for the life-cycle of the returned string. Use iterNext/iterEnd and ti->prv to keep track of current object
-  */
-  JSPFN_ITERGETNAME iterGetName;
-
-  /* Library functions
-  Set to NULL to use STDLIB malloc,realloc,free */
-  JSPFN_MALLOC malloc;
-  JSPFN_REALLOC realloc;
-  JSPFN_FREE free;
-
   /*
   Configuration for max recursion, set to 0 to use default (see JSON_MAX_RECURSION_DEPTH)*/
   int recursionMax;

@@ -79,7 +79,6 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
 #endif
 
 #ifdef _WIN32
-    #define EXPORTFUNCTION __declspec(dllexport)
     #define FASTCALL_MSVC __fastcall
     #define FASTCALL_ATTR
     #define INLINE_PREFIX __inline
@@ -91,7 +90,6 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
         #define FASTCALL_ATTR
     #endif
     #define INLINE_PREFIX inline
-    #define EXPORTFUNCTION
 #endif
 
 #ifdef __GNUC__
@@ -242,7 +240,6 @@ JSONObjectEncoder.free or free() as specified when calling this function.
 
 If an error occurs during encoding, NULL is returned and no outLen is stored.
 */
-EXPORTFUNCTION char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
 
 #define DCONV_DECIMAL_IN_SHORTEST_LOW -4
 #define DCONV_DECIMAL_IN_SHORTEST_HIGH 16

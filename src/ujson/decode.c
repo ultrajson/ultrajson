@@ -63,11 +63,11 @@ struct DecoderState
 {
   char *start;
   char *end;
-  JSUINT32 *escStart;
-  JSUINT32 *escEnd;
+  uint32_t *escStart;
+  uint32_t *escEnd;
   bool escHeap;
   int lastType;
-  JSUINT32 objDepth;
+  uint32_t objDepth;
   char *errorStr;
   char *errorOffset;
   void *s2d;
@@ -75,7 +75,7 @@ struct DecoderState
 
 static PyObject *FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
 
-static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end);
+static PyObject *Object_newString(uint32_t *start, uint32_t *end);
 static void Object_objectAddKey(PyObject *obj, PyObject *name, PyObject *value);
 static void Object_arrayAddItem(PyObject *obj, PyObject *value);
 static PyObject *Object_newIntegerFromString(char *value, size_t length);
@@ -103,13 +103,13 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_numeric (struct DecoderState
 {
   int intNeg = 1;
   bool hasError = false;
-  JSUINT64 intValue;
-  JSUINT64 addIntValue;
+  uint64_t intValue;
+  uint64_t addIntValue;
   int chr;
   char *offset = ds->start;
 
-  JSUINT64 maxIntValue = ULLONG_MAX;
-  JSUINT64 overflowLimit = maxIntValue / 10LLU;
+  uint64_t maxIntValue = ULLONG_MAX;
+  uint64_t overflowLimit = maxIntValue / 10LLU;
 
   if (*(offset) == 'I')
   {
@@ -127,7 +127,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_numeric (struct DecoderState
     {
       goto DECODE_INF;
     }
-    maxIntValue = -(JSUINT64) LLONG_MIN;
+    maxIntValue = -(uint64_t) LLONG_MIN;
     overflowLimit = maxIntValue / 10LL;
   }
 
@@ -157,7 +157,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_numeric (struct DecoderState
           hasError = true;
         }
         intValue *= 10ULL;
-        addIntValue = (JSUINT64) (chr - 48);
+        addIntValue = (uint64_t) (chr - 48);
 
         // check whether addition would be out of bounds
         if (maxIntValue - intValue < addIntValue)
@@ -207,7 +207,7 @@ BREAK_INT_LOOP:
   }
   else if ((intValue >> 31))
   {
-    return PyLong_FromLongLong((JSINT64) (intValue * (JSINT64) intNeg));
+    return PyLong_FromLongLong((int64_t) (intValue * (int64_t) intNeg));
   }
   else
   {
@@ -351,7 +351,7 @@ enum DECODESTRINGSTATE
   DS_EXCEEDSMAX,
 };
 
-static const JSUINT8 g_decoderLookup[256] =
+static const uint8_t g_decoderLookup[256] =
 {
   /* 0x00 */ DS_ISNULL, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   /* 0x10 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -374,13 +374,13 @@ static const JSUINT8 g_decoderLookup[256] =
 static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState *ds)
 {
   int index;
-  JSUINT32 *escOffset;
+  uint32_t *escOffset;
   size_t escLen = (ds->escEnd - ds->escStart);
-  JSUINT8 *inputOffset;
-  JSUTF16 ch = 0;
-  JSUINT8 *lastHighSurrogate = NULL;
-  JSUINT8 oct;
-  JSUTF32 ucs;
+  uint8_t *inputOffset;
+  uint16_t ch = 0;
+  uint8_t *lastHighSurrogate = NULL;
+  uint8_t oct;
+  uint32_t ucs;
   ds->lastType = JT_INVALID;
   ds->start ++;
 
@@ -388,28 +388,28 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
   {
     size_t newSize = (ds->end - ds->start);
 
-    JSUINT32 *oldStart = ds->escStart;
-    if (newSize > (SIZE_MAX / sizeof(JSUINT32)))
+    uint32_t *oldStart = ds->escStart;
+    if (newSize > (SIZE_MAX / sizeof(uint32_t)))
     {
       return SetError(ds, -1, "Could not reserve memory block");
     }
-    ds->escStart = (JSUINT32 *) PyObject_Malloc(newSize * sizeof(JSUINT32));
+    ds->escStart = (uint32_t *) PyObject_Malloc(newSize * sizeof(uint32_t));
     if (!ds->escStart)
     {
       return SetError(ds, -1, "Could not reserve memory block");
     }
     ds->escHeap = true;
-    memcpy(ds->escStart, oldStart, escLen * sizeof(JSUINT32));
+    memcpy(ds->escStart, oldStart, escLen * sizeof(uint32_t));
 
     ds->escEnd = ds->escStart + newSize;
   }
 
   escOffset = ds->escStart;
-  inputOffset = (JSUINT8 *) ds->start;
+  inputOffset = (uint8_t *) ds->start;
 
   for (;;)
   {
-    switch (g_decoderLookup[(JSUINT8)(*inputOffset)])
+    switch (g_decoderLookup[(uint8_t)(*inputOffset)])
     {
       case DS_ISNULL:
       {
@@ -470,7 +470,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
                 case '7':
                 case '8':
                 case '9':
-                  ch = (ch << 4) + (JSUTF16) (*inputOffset - '0');
+                  ch = (ch << 4) + (uint16_t) (*inputOffset - '0');
                   break;
 
                 case 'a':
@@ -479,7 +479,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
                 case 'd':
                 case 'e':
                 case 'f':
-                  ch = (ch << 4) + 10 + (JSUTF16) (*inputOffset - 'a');
+                  ch = (ch << 4) + 10 + (uint16_t) (*inputOffset - 'a');
                   break;
 
                 case 'A':
@@ -488,7 +488,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
                 case 'D':
                 case 'E':
                 case 'F':
-                  ch = (ch << 4) + 10 + (JSUTF16) (*inputOffset - 'A');
+                  ch = (ch << 4) + 10 + (uint16_t) (*inputOffset - 'A');
                   break;
               }
 
@@ -503,7 +503,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
             }
             else
             {
-              *(escOffset++) = (JSUINT32) ch;
+              *(escOffset++) = (uint32_t) ch;
             }
             if ((ch & 0xfc00) == 0xd800)
             {
@@ -520,7 +520,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
 
       case 1:
       {
-        *(escOffset++) = (JSUINT32) (*inputOffset++);
+        *(escOffset++) = (uint32_t) (*inputOffset++);
         break;
       }
 
@@ -534,13 +534,13 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
         }
         ucs |= (*inputOffset++) & 0x3f;
         if (ucs < 0x80) return SetError (ds, -1, "Overlong 2-byte UTF-8 sequence detected when decoding 'string'");
-        *(escOffset++) = (JSUINT32) ucs;
+        *(escOffset++) = (uint32_t) ucs;
         break;
       }
 
       case 3:
       {
-        JSUTF32 ucs = 0;
+        uint32_t ucs = 0;
         ucs |= (*inputOffset++) & 0x0f;
 
         for (index = 0; index < 2; index ++)
@@ -557,13 +557,13 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
         }
 
         if (ucs < 0x800) return SetError (ds, -1, "Overlong 3-byte UTF-8 sequence detected when encoding string");
-        *(escOffset++) = (JSUINT32) ucs;
+        *(escOffset++) = (uint32_t) ucs;
         break;
       }
 
       case 4:
       {
-        JSUTF32 ucs = 0;
+        uint32_t ucs = 0;
         ucs |= (*inputOffset++) & 0x07;
 
         for (index = 0; index < 3; index ++)
@@ -582,7 +582,7 @@ static FASTCALL_ATTR PyObject *FASTCALL_MSVC decode_string ( struct DecoderState
         if (ucs < 0x10000) return SetError (ds, -1, "Overlong 4-byte UTF-8 sequence detected when decoding 'string'");
         if (ucs > 0x10FFFF) return SetError(ds, -1, "Code point > U+10FFFF encountered whilst decoding 'string'");
 
-        *(escOffset++) = (JSUINT32) ucs;
+        *(escOffset++) = (uint32_t) ucs;
         break;
       }
     }
@@ -812,15 +812,15 @@ static void Object_arrayAddItem(PyObject *obj, PyObject *value)
 }
 
 /*
-Check that Py_UCS4 is the same as JSUINT32, else Object_newString will fail.
+Check that Py_UCS4 is the same as uint32_t, else Object_newString will fail.
 Based on Linux's check in vbox_vmmdev_types.h.
 This should be replaced with
-  _Static_assert(sizeof(Py_UCS4) == sizeof(JSUINT32));
+  _Static_assert(sizeof(Py_UCS4) == sizeof(uint32_t));
 when C11 is made mandatory (CPython 3.11+, PyPy ?).
 */
-typedef char assert_py_ucs4_is_jsuint32[1 - 2*!(sizeof(Py_UCS4) == sizeof(JSUINT32))];
+typedef char assert_py_ucs4_is_jsuint32[1 - 2*!(sizeof(Py_UCS4) == sizeof(uint32_t))];
 
-static PyObject *Object_newString(JSUINT32 *start, JSUINT32 *end)
+static PyObject *Object_newString(uint32_t *start, uint32_t *end)
 {
   return PyUnicode_FromKindAndData (PyUnicode_4BYTE_KIND, (Py_UCS4 *) start, (end - start));
 }
@@ -896,11 +896,11 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
 
   // FIXME: Base the size of escBuffer of that of cbBuffer so that the unicode escaping doesn't run into the wall each time
   struct DecoderState ds;
-  JSUINT32 escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32))];
+  uint32_t escBuffer[(JSON_MAX_STACK_BUFFER_SIZE / sizeof(uint32_t))];
   ds.start = (char *) raw;
   ds.end = ds.start + sarg_length;
   ds.escStart = escBuffer;
-  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(JSUINT32));
+  ds.escEnd = ds.escStart + (JSON_MAX_STACK_BUFFER_SIZE / sizeof(uint32_t));
   ds.escHeap = false;
   ds.errorStr = NULL;
   ds.errorOffset = NULL;

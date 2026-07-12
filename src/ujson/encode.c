@@ -97,8 +97,8 @@ typedef struct __TypeContext
   union
   {
     PyObject *rawJSONValue;
-    JSINT64 longValue;
-    JSUINT64 unsignedLongValue;
+    int64_t longValue;
+    uint64_t unsignedLongValue;
   };
 } TypeContext;
 
@@ -115,13 +115,13 @@ typedef struct __TypeContext
 
 static void *PyLongToINT64(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  *((JSINT64 *) outValue) = GET_TC(tc)->longValue;
+  *((int64_t *) outValue) = GET_TC(tc)->longValue;
   return NULL;
 }
 
 static void *PyLongToUINT64(PyObject *unused, JSONTypeContext *tc, void *outValue, size_t *_outLen)
 {
-  *((JSUINT64 *) outValue) = GET_TC(tc)->unsignedLongValue;
+  *((uint64_t *) outValue) = GET_TC(tc)->unsignedLongValue;
   return NULL;
 }
 
@@ -627,17 +627,17 @@ static const char *Object_getStringValue(PyObject *obj, JSONTypeContext *tc, siz
   return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
 }
 
-static JSINT64 Object_getLongValue(PyObject *obj, JSONTypeContext *tc)
+static int64_t Object_getLongValue(PyObject *obj, JSONTypeContext *tc)
 {
-  JSINT64 ret;
+  int64_t ret;
   obj = GET_OBJ(obj, tc);
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
 }
 
-static JSUINT64 Object_getUnsignedLongValue(PyObject *obj, JSONTypeContext *tc)
+static uint64_t Object_getUnsignedLongValue(PyObject *obj, JSONTypeContext *tc)
 {
-  JSUINT64 ret;
+  uint64_t ret;
   obj = GET_OBJ(obj, tc);
   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
   return ret;
@@ -937,7 +937,7 @@ Needs a cleanup and more documentation */
 
 /*
 Table for pure ascii output escaping all characters above 127 to \uXXXX */
-static const JSUINT8 g_asciiOutputTable[256] =
+static const uint8_t g_asciiOutputTable[256] =
 {
 /* 0x00 */ 0, 30, 30, 30, 30, 30, 30, 30, 10, 12, 14, 30, 16, 18, 30, 30,
 /* 0x10 */ 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
@@ -1154,7 +1154,7 @@ static void Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *
 
 static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc, const char *io, const char *end)
 {
-  JSUTF32 ucs;
+  uint32_t ucs;
   char *of = (char *) enc->offset;
 
   for (;;)
@@ -1170,7 +1170,7 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
       abort();
     }
 #endif
-    JSUINT8 utflen = g_asciiOutputTable[(unsigned char) *io];
+    uint8_t utflen = g_asciiOutputTable[(unsigned char) *io];
 
     switch (utflen)
     {
@@ -1203,8 +1203,8 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
       // https://en.wikipedia.org/wiki/UTF-8#Description
       case 2:
       {
-        JSUTF32 in;
-        JSUTF16 in16;
+        uint32_t in;
+        uint16_t in16;
 
         if (end - io < 2)
         {
@@ -1219,8 +1219,8 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
           return false;
         }
 
-        memcpy(&in16, io, sizeof(JSUTF16));
-        in = (JSUTF32) in16;
+        memcpy(&in16, io, sizeof(uint16_t));
+        in = (uint32_t) in16;
 
 #ifdef __LITTLE_ENDIAN__
         ucs = ((in & 0x1f) << 6) | ((in >> 8) & 0x3f);
@@ -1241,9 +1241,9 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
 
       case 3:
       {
-        JSUTF32 in;
-        JSUTF16 in16;
-        JSUINT8 in8;
+        uint32_t in;
+        uint16_t in16;
+        uint8_t in8;
 
         if (end - io < 3)
         {
@@ -1259,16 +1259,16 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
         }
         // Under normal UTF-8 decoding rules, UTF-16 surrogates should also be disallowed
         // but in JSON, they're special cased and rewritten later as \udc7f.
-        // if ((JSUINT8) io[0] == 0xed && (JSUINT8) io[1] >= 0xa0)
+        // if ((uint8_t) io[0] == 0xed && (uint8_t) io[1] >= 0xa0)
         // {
         //   enc->offset += (of - enc->offset);
         //   SetError (obj, enc, "Illegal UTF-16 surrogate in 3-byte UTF-8 sequence detected when encoding string");
         //   return false;
         // }
-        memcpy(&in16, io, sizeof(JSUTF16));
-        memcpy(&in8, io + 2, sizeof(JSUINT8));
+        memcpy(&in16, io, sizeof(uint16_t));
+        memcpy(&in8, io + 2, sizeof(uint8_t));
 #ifdef __LITTLE_ENDIAN__
-        in = (JSUTF32) in16;
+        in = (uint32_t) in16;
         in |= in8 << 16;
         ucs = ((in & 0x0f) << 12) | ((in & 0x3f00) >> 2) | ((in & 0x3f0000) >> 16);
 #else
@@ -1289,7 +1289,7 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
       }
       case 4:
       {
-        JSUTF32 in;
+        uint32_t in;
 
         if (end - io < 4)
         {
@@ -1303,14 +1303,14 @@ static bool Buffer_EscapeStringValidated (PyObject *obj, JSONObjectEncoder *enc,
           SetError (obj, enc, "Invalid continuation byte in 4-byte UTF-8 sequence detected when encoding string");
           return false;
         }
-        if (((JSUINT8) io[0] >= 0xf4 && (JSUINT8) io[1] >= 0x90) || (JSUINT8) io[0] >= 0xf5)
+        if (((uint8_t) io[0] >= 0xf4 && (uint8_t) io[1] >= 0x90) || (uint8_t) io[0] >= 0xf5)
         {
           enc->offset += (of - enc->offset);
           SetError (obj, enc, ">U+10FFFF in 4-byte UTF-8 sequence detected when encoding string");
           return false;
         }
 
-        memcpy(&in, io, sizeof(JSUTF32));
+        memcpy(&in, io, sizeof(uint32_t));
 #ifdef __LITTLE_ENDIAN__
         ucs = ((in & 0x07) << 18) | ((in & 0x3f00) << 4) | ((in & 0x3f0000) >> 10) | ((in & 0x3f000000) >> 24);
 #else
@@ -1458,7 +1458,7 @@ static void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
   if (enc->indent > 0) Buffer_AppendCharUnchecked(enc, '\n');
 }
 
-static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, int32_t value)
 {
   ptrdiff_t i;
   if (enc->indent > 0)
@@ -1467,10 +1467,10 @@ static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
         Buffer_AppendCharUnchecked(enc, ' ');
 }
 
-static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
+static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, int64_t value)
 {
   char* wstr;
-  JSUINT64 uvalue;
+  uint64_t uvalue;
 
   if (value == INT64_MIN) {
     uvalue = INT64_MAX + UINT64_C(1);
@@ -1480,7 +1480,7 @@ static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
 
   wstr = enc->offset;
 #ifdef DEBUG
-  // 20 is the maximum length of a JSINT64 (minus sign plus 19 digits)
+  // 20 is the maximum length of a int64_t (minus sign plus 19 digits)
   if (enc->end - enc->offset < 20) {
     fprintf(stderr, "Ran out of buffer space during Buffer_AppendLongUnchecked()\n");
     abort();
@@ -1496,14 +1496,14 @@ static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
   enc->offset += (wstr - (enc->offset));
 }
 
-static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
+static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, uint64_t value)
 {
   char* wstr;
-  JSUINT64 uvalue = value;
+  uint64_t uvalue = value;
 
   wstr = enc->offset;
 #ifdef DEBUG
-  // 21 is the maximum length of a JSUINT64 (minus sign plus 20 digits)
+  // 21 is the maximum length of a uint64_t (minus sign plus 20 digits)
   if (enc->end - enc->offset < 21) {
     fprintf(stderr, "Ran out of buffer space during Buffer_AppendUnsignedLongUnchecked()\n");
     abort();

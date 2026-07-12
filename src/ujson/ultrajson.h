@@ -79,48 +79,18 @@ Dictates and limits how much stack space for buffers UltraJSON will use before r
 #endif
 
 #ifdef _WIN32
-
-    typedef __int64 JSINT64;
-    typedef unsigned __int64 JSUINT64;
-
-    typedef __int32 JSINT32;
-    typedef unsigned __int32 JSUINT32;
-    typedef unsigned __int8 JSUINT8;
-    typedef unsigned __int16 JSUTF16;
-    typedef unsigned __int32 JSUTF32;
-    typedef __int64 JSLONG;
-
     #define EXPORTFUNCTION __declspec(dllexport)
-
     #define FASTCALL_MSVC __fastcall
     #define FASTCALL_ATTR
     #define INLINE_PREFIX __inline
-
 #else
-
-    #include <stdint.h>
-    typedef int64_t JSINT64;
-    typedef uint64_t JSUINT64;
-
-    typedef int32_t JSINT32;
-    typedef uint32_t JSUINT32;
-
     #define FASTCALL_MSVC
-
     #if !defined __x86_64__
         #define FASTCALL_ATTR __attribute__((fastcall))
     #else
         #define FASTCALL_ATTR
     #endif
-
     #define INLINE_PREFIX inline
-
-    typedef uint8_t JSUINT8;
-    typedef uint16_t JSUTF16;
-    typedef uint32_t JSUTF32;
-
-    typedef int64_t JSLONG;
-
     #define EXPORTFUNCTION
 #endif
 
@@ -155,9 +125,9 @@ enum JSTYPES
   JT_NULL,      // NULL
   JT_TRUE,      // boolean true
   JT_FALSE,     // boolean false
-  JT_INT,       // (JSINT32 (signed 32-bit))
-  JT_LONG,      // (JSINT64 (signed 64-bit))
-  JT_ULONG,     // (JSUINT64 (unsigned 64-bit))
+  JT_INT,       // (int32_t (signed 32-bit))
+  JT_LONG,      // (int64_t (signed 64-bit))
+  JT_ULONG,     // (uint64_t (unsigned 64-bit))
   JT_DOUBLE,    // (double)
   JT_UTF8,      // (char 8-bit)
   JT_RAW,       // (raw char 8-bit)

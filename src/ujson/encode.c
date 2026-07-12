@@ -75,6 +75,7 @@ static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
 
 #define EPOCH_ORD 719163
 
+static char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *buffer, size_t cbBuffer, size_t *outLen);
 typedef void *(*PFN_PyTypeToJSON)(PyObject *obj, JSONTypeContext *ti, void *outValue, size_t *_outLen);
 
 bool object_is_decimal_type(PyObject *obj);
@@ -697,7 +698,7 @@ PyObject* ujson_dumps(PyObject* self, PyObject *args, PyObject *kwargs)
   int allowNan = true;
   int rejectBytes = true;
   int indent = 0;
-  size_t retLen;
+  size_t retLen = 0;
 
   JSONObjectEncoder encoder =
   {
@@ -1826,7 +1827,7 @@ static void encode(PyObject *obj, JSONObjectEncoder *enc, const char *name, size
   enc->level--;
 }
 
-char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
+static char *JSON_EncodeObject(PyObject *obj, JSONObjectEncoder *enc, char *_buffer, size_t _cbBuffer, size_t *_outLen)
 {
   enc->errorMsg = NULL;
   enc->errorObj = NULL;

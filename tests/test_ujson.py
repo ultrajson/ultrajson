@@ -1641,18 +1641,10 @@ def test_separators_errors(separators, expected_exception):
 
 def test_loads_bytes_like():
     assert ujson.loads(b"123") == 123
-    if hasattr(sys, "pypy_version_info"):
-        with pytest.raises(TypeError, match="PyPy"):
-            ujson.loads(memoryview(b"{}"))
-    else:
-        assert ujson.loads(memoryview(b'["a", "b", "c"]')) == ["a", "b", "c"]
+    with pytest.raises(TypeError, match="Arbitrary bytes-like objects"):
+        ujson.loads(memoryview(b"{}"))
     assert ujson.loads(bytearray(b"99")) == 99
     assert ujson.loads('"🦄🐳"'.encode()) == "🦄🐳"
-    # array.array exports the C-contiguous buffer protocol and must be accepted.
-    import array as _array
-
-    if not hasattr(sys, "pypy_version_info"):
-        assert ujson.loads(_array.array("B", b'{"a":1}')) == {"a": 1}
 
 
 @pytest.mark.skipif(

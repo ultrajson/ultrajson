@@ -137,20 +137,6 @@ enum JSTYPES
   JT_NEG_INF,   // Negative infinity
 };
 
-typedef struct __JSONTypeContext
-{
-  int type;
-  void *prv;
-} JSONTypeContext;
-
-/*
-Function pointer declarations, suitable for implementing UltraJSON */
-typedef int (*JSPFN_ITERNEXT)(PyObject *obj, JSONTypeContext *tc);
-typedef void (*JSPFN_ITEREND)(PyObject *obj, JSONTypeContext *tc);
-typedef PyObject *(*JSPFN_ITERGETVALUE)(PyObject *obj, JSONTypeContext *tc);
-typedef char *(*JSPFN_ITERGETNAME)(PyObject *obj, JSONTypeContext *tc, size_t *outLen);
-
-
 struct __JSONObjectEncoder;
 
 typedef struct __JSONObjectEncoder

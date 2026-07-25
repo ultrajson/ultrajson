@@ -48,16 +48,8 @@ https://opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 #include <errno.h>
 #include <stdint.h>
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 // Import JSONDecodeError from ujson.c
 extern PyObject* JSONDecodeError;
-
-
-//#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
-#define PRINTMARK()
 
 struct DecoderState
 {

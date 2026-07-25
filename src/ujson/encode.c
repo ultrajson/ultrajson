@@ -48,10 +48,6 @@ https://www.opensource.apple.com/source/tcl/tcl-14/tcl/license.terms
 
 #include "ultrajson.h"
 
-#if ( (defined(_WIN32) || defined(WIN32) ) && ( defined(_MSC_VER) ) )
-#define snprintf sprintf_s
-#endif
-
 /*
 Worst cases being:
 
@@ -71,9 +67,6 @@ The extra 2 bytes are for the quotes around the string
 
 static const char g_hexChars[] = "0123456789abcdef";
 static const char g_escapeChars[] = "0123456789\\b\\t\\n\\f\\r\\\"\\\\\\/";
-
-
-#define EPOCH_ORD 719163
 
 struct __TypeContext;
 typedef int (*JSPFN_ITERNEXT)(PyObject *obj, struct __TypeContext *tc);

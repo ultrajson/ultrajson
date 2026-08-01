@@ -57,17 +57,17 @@ jobs:
             manylinux_image: manylinux2014
             cibw_skip_extra: "*-musllinux_*"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: git fetch --prune --unshallow
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.x"
 
       # https://github.com/pypa/cibuildwheel
       - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
         with:
           output-dir: dist
         # Options are supplied via environment variables:
@@ -110,12 +110,12 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
             git fetch --prune --unshallow
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.x"
 
@@ -152,19 +152,19 @@ jobs:
 
       - name: Publish wheels to PyPI
         if: github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: dist-wheels/
 
       - name: Publish sdist to PyPI
         if: github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
 
       - name: Publish wheels to TestPyPI
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist-wheels/
@@ -173,6 +173,6 @@ jobs:
         if: |
           github.repository == 'ultrajson/ultrajson' &&
           github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           repository-url: https://test.pypi.org/legacy/

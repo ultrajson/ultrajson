@@ -431,19 +431,10 @@ BEGIN:
     return;
   }
   else
-  if (UNLIKELY(PyBytes_Check(obj)))
+  if (UNLIKELY(PyBytes_Check(obj) && !enc->rejectBytes))
   {
-    PRINTMARK();
-    if (enc->rejectBytes)
-    {
-      PyErr_Format (PyExc_TypeError, "reject_bytes is on and '%s' is bytes", PyBytes_AS_STRING(obj));
-      goto INVALID;
-    }
-    else
-    {
-      tc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
-      return;
-    }
+    tc->PyTypeToJSON = PyStringToUTF8; tc->type = JT_UTF8;
+    return;
   }
   else
   if (PyUnicode_Check(obj))

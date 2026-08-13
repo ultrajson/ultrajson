@@ -1454,7 +1454,6 @@ class TestDefaultFunction:
         with pytest.raises(Boom):
             ujson.dumps(object(), default=lambda o: (_ for _ in ()).throw(Boom()))
 
-    @pytest.mark.skip_leak_test  # Known memory leak
     def test_recursive_default(self):
         unjsonable_obj = self.UnjsonableObject()
         with pytest.raises(TypeError, match="maximum recursion depth exceeded"):

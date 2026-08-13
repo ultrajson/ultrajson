@@ -582,6 +582,7 @@ BEGIN:
 INVALID:
   PRINTMARK();
   tc->type = JT_INVALID;
+  Py_XDECREF(tc->newObj);
   return;
 }
 
@@ -1747,6 +1748,7 @@ static void encode(PyObject *obj, JSONObjectEncoder *enc, const char *name, size
       value = Object_getStringValue(obj, &tc, &szlen);
       if (!value)
       {
+        Object_endTypeContext(obj, &tc);
         return;  // Out of memory
       }
 
@@ -1781,6 +1783,7 @@ static void encode(PyObject *obj, JSONObjectEncoder *enc, const char *name, size
       value = Object_getStringValue(obj, &tc, &szlen);
       if (!value)  // Out of memory
       {
+        Object_endTypeContext(obj, &tc);
         return;
       }
 

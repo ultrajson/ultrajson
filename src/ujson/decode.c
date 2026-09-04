@@ -848,14 +848,11 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
   bool is_bytes_like = !PyObject_GetBuffer(arg, &buffer, PyBUF_C_CONTIGUOUS);
   if (is_bytes_like)
   {
-    #ifdef PYPY_VERSION
-      // PyPy's buffer protocol implementation is buggy: https://foss.heptapod.net/pypy/pypy/-/issues/3872
-      if (!PyBytes_Check(arg) && !PyByteArray_Check(arg)) {
-        PyBuffer_Release(&buffer);
-        PyErr_Format(PyExc_TypeError, "Arbitrary bytes-like objects are not supported on PyPy, Use either string, bytes, or bytearray");
-        return NULL;
-      }
-    #endif
+    if (!PyBytes_Check(arg) && !PyByteArray_Check(arg)) {
+      PyBuffer_Release(&buffer);
+      PyErr_Format(PyExc_TypeError, "Arbitrary bytes-like objects are no longer supported. Use either string, bytes, or bytearray.");
+      return NULL;
+    }
     raw = buffer.buf;
     sarg_length = buffer.len;
   }
@@ -875,11 +872,7 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
     }
     else
     {
-      #ifdef PYPY_VERSION
-        PyErr_Format(PyExc_TypeError, "Expected string, bytes, or bytearray");
-      #else
-        PyErr_Format(PyExc_TypeError, "Expected string or C-contiguous bytes-like object");
-      #endif
+      PyErr_Format(PyExc_TypeError, "Expected string, bytes, or bytearray");
       return NULL;
     }
   }

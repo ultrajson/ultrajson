@@ -850,7 +850,7 @@ PyObject* ujson_loads(PyObject* self, PyObject *args, PyObject *kwargs)
   {
     if (!PyBytes_Check(arg) && !PyByteArray_Check(arg)) {
       PyBuffer_Release(&buffer);
-      PyErr_Format(PyExc_TypeError, "Arbitrary bytes-like objects are no longer supported. Use either string, bytes, or bytearray");
+      PyErr_Format(PyExc_TypeError, "Arbitrary bytes-like objects are no longer supported. Use either string, bytes, or bytearray.");
       return NULL;
     }
     raw = buffer.buf;

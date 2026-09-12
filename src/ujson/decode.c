@@ -821,6 +821,11 @@ static PyObject *Object_newIntegerFromString(char *value, size_t length)
 {
   // PyLong_FromString requires a NUL-terminated string in CPython, contrary to the documentation: https://github.com/python/cpython/issues/59200
   char *buf = PyObject_Malloc(length + 1);
+  if (!buf)
+  {
+    PyErr_NoMemory();
+    return NULL;
+  }
   memcpy(buf, value, length);
   buf[length] = '\0';
   PyObject *ret = PyLong_FromString(buf, NULL, 10);

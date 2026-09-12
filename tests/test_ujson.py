@@ -1710,6 +1710,74 @@ def test_nested_json_decode_error():
     assert issubclass(ujson.JSONDecodeError, ValueError)
 
 
+# #712: if this malloc fails we should get MemoryError, not a crash.
+# The child caps its own address space so suite heap state can't hide
+# the OOM path (and a crash here can't take down pytest). The payload
+# is 8M digits on purpose: small enough to decode instantly, far too
+# big for any free heap chunk to serve, so the fallback malloc is the
+# thing that fails. Child exits 0 on MemoryError, 2/3 when pressure
+# isn't possible here.
+_OOM_CHILD = """\
+import os, resource, sys
+
+try:
+    import ujson
+except ImportError:
+    sys.exit(2)
+if not hasattr(resource, "setrlimit") or not hasattr(resource, "RLIMIT_AS"):
+    sys.exit(2)
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(20000000)
+try:
+    with open("/proc/self/statm") as f:
+        cur = int(f.read().split()[0]) * os.sysconf("SC_PAGE_SIZE")
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+except Exception:
+    sys.exit(2)
+margin = 65536
+if hard != resource.RLIM_INFINITY and cur + margin > hard:
+    sys.exit(2)
+try:
+    resource.setrlimit(resource.RLIMIT_AS, (cur + margin, hard))
+except Exception:
+    sys.exit(2)
+code = 3
+try:
+    ujson.loads(b"9" * 8000000)
+except MemoryError:
+    code = 0
+except BaseException:
+    code = 4
+else:
+    code = 3
+finally:
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+    except Exception:
+        pass
+sys.exit(code)
+"""
+
+
+# skipped by the leak runner (it would spawn thousands of processes).
+@pytest.mark.skip_leak_test
+def test_out_of_memory_load_big_int():
+    child = subprocess.run(
+        [sys.executable, "-c", _OOM_CHILD],
+        capture_output=True,
+        timeout=120,
+    )
+    if child.returncode in (2, 3):
+        pytest.skip("could not reproduce the memory-pressure environment")
+    if child.returncode in (-6, 134):
+        pytest.skip("interpreter aborted under the address-space cap")
+    if child.returncode != 0:
+        pytest.fail(
+            "ujson.loads crashed under memory pressure instead of raising "
+            "MemoryError (exit %d), see issue #712" % child.returncode
+        )
+
+
 def test_bad_arguments():
     with pytest.raises(TypeError):
         ujson.loads(object(), object())

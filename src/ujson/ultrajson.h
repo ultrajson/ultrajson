@@ -182,7 +182,7 @@ typedef struct __JSONObjectEncoder
   const char *keySeparatorChars;
 
   /*
-  The function passed to ujson.dumps()'s "default" prameter. */
+  The function passed to ujson.dumps()'s "default" parameter. */
   PyObject *defaultFn;
 
   /*

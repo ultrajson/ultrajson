@@ -123,9 +123,9 @@ bool object_is_decimal_type(PyObject *obj)
     return false;
   }
   int result = PyObject_IsInstance(obj, type_decimal);
+  Py_DECREF(module);
+  Py_DECREF(type_decimal);
   if (result == -1) {
-    Py_DECREF(module);
-    Py_DECREF(type_decimal);
     PyErr_Clear();
     return false;
   }

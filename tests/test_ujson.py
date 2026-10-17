@@ -1785,6 +1785,32 @@ def test_bad_todict():
         ujson.dumps(BadToDict(lambda: {"a": object()}))
 
 
+class Mutator:
+    def __init__(self, callback):
+        self.callback = callback
+
+    def __json__(self):
+        self.callback()
+        return "1"
+
+
+def test_list_mutated_during_encoding():
+    items = [0, None, 2, 3, 4]
+    items[1] = Mutator(items.clear)
+    assert ujson.dumps(items) == "[0,1]"
+
+    items = [0, None, [2] * 10, 3]
+    items[1] = Mutator(lambda: items.pop(2))
+    assert ujson.dumps(items) == "[0,1,3]"
+
+
+@pytest.mark.parametrize("sort_keys", [False, True])
+def test_dict_value_freed_during_encoding(sort_keys):
+    data = {}
+    data["a"] = [Mutator(data.clear), [2] * 10]
+    assert ujson.dumps(data, sort_keys=sort_keys) == '{"a":[1,[2,2,2,2,2,2,2,2,2,2]]}'
+
+
 def test_comprehensive_json_fixture():
     """
     Loads comprehensive.json — a fixture that exercises every JSON value type

@@ -211,19 +211,24 @@ static PyObject *Tuple_iterGetValue(PyObject *obj, TypeContext *tc)
 
 static int List_iterNext(PyObject *obj, TypeContext *tc)
 {
-  if (tc->index >= tc->size)
+  // The list may be mutated by toDict(), __json__() or default() whilst being
+  // serialised so recheck its size and hold a reference to the current item.
+  Py_CLEAR(tc->itemValue);
+  if (tc->index >= PyList_GET_SIZE(obj))
   {
     PRINTMARK();
     return 0;
   }
 
   tc->itemValue = PyList_GET_ITEM(obj, tc->index);
+  Py_INCREF(tc->itemValue);
   tc->index ++;
   return 1;
 }
 
 static void List_iterEnd(PyObject *obj, TypeContext *tc)
 {
+  Py_CLEAR(tc->itemValue);
 }
 
 static PyObject *List_iterGetValue(PyObject *obj, TypeContext *tc)
@@ -234,7 +239,7 @@ static PyObject *List_iterGetValue(PyObject *obj, TypeContext *tc)
 //=============================================================================
 // Dict iteration functions
 // itemName might converted to string (PyObject_Str). Do refCounting
-// itemValue is borrowed from object (which is dict). No refCounting
+// itemValue is a new reference so that it survives the dict being mutated
 //=============================================================================
 
 static PyObject* Dict_convertKey(PyObject* key)
@@ -270,11 +275,13 @@ static PyObject* Dict_convertKey(PyObject* key)
 static int Dict_iterNext(PyObject *obj, TypeContext *tc)
 {
   PyObject* key;
+  Py_CLEAR(tc->itemValue);
   if (!PyDict_Next(tc->dictObj, &tc->index, &key, &tc->itemValue))
   {
     PRINTMARK();
     return 0;
   }
+  Py_INCREF(tc->itemValue);
   Py_XDECREF(tc->itemName);
   tc->itemName = Dict_convertKey(key);
   if (!tc->itemName)
@@ -288,6 +295,7 @@ static int Dict_iterNext(PyObject *obj, TypeContext *tc)
 static void Dict_iterEnd(PyObject *obj, TypeContext *tc)
 {
   Py_CLEAR(tc->itemName);
+  Py_CLEAR(tc->itemValue);
   Py_DECREF(tc->dictObj);
   PRINTMARK();
 }
@@ -339,11 +347,13 @@ static int SortedDict_iterNext(PyObject *obj, TypeContext *tc)
   {
     return -1;
   }
+  Py_CLEAR(tc->itemValue);
   tc->itemValue = PyDict_GetItem(tc->dictObj, key);
   if (!tc->itemValue)
   {
     return -1;  // Reachable only by concurrently deleting keys whilst serialising
   }
+  Py_INCREF(tc->itemValue);
   tc->index++;
   return 1;
 }

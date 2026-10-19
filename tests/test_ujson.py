@@ -1459,6 +1459,19 @@ class TestDefaultFunction:
         with pytest.raises(TypeError, match="maximum recursion depth exceeded"):
             ujson.dumps(unjsonable_obj, default=self.default)
 
+    def test_dict_with_sort_keys(self):
+        # The sorted key list used to be stored in the same slot as the object
+        # returned by default=, leaving the dict with nothing to iterate over.
+        def default(value):
+            return {"b": 1, "a": 2}
+
+        obj = self.UnjsonableObject()
+        assert ujson.dumps(obj, default=default, sort_keys=True) == '{"a":2,"b":1}'
+        assert (
+            ujson.dumps([obj, {"d": 4, "c": 3}], default=default, sort_keys=True)
+            == '[{"a":2,"b":1},{"c":3,"d":4}]'
+        )
+
     @pytest.mark.skip_leak_test  # Known memory leak
     def test_recursive_default_bytes(self):
         with pytest.raises(TypeError, match="maximum recursion depth exceeded"):

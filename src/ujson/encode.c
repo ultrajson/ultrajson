@@ -88,6 +88,7 @@ typedef struct __TypeContext
   PyObject *newObj;
   PyObject *utf8BytesObj;
   PyObject *dictObj;
+  PyObject *sortedKeys;
   Py_ssize_t index;
   Py_ssize_t size;
   PyObject *itemValue;
@@ -288,6 +289,7 @@ static int Dict_iterNext(PyObject *obj, TypeContext *tc)
 static void Dict_iterEnd(PyObject *obj, TypeContext *tc)
 {
   Py_CLEAR(tc->itemName);
+  Py_CLEAR(tc->sortedKeys);
   Py_DECREF(tc->dictObj);
   PRINTMARK();
 }
@@ -307,7 +309,7 @@ static int SortedDict_iterNext(PyObject *obj, TypeContext *tc)
 {
   // Upon first call, obtain a list of the keys and sort them. This follows the same logic as the
   // standard library's _json.c sort_keys handler.
-  if (tc->newObj == NULL)
+  if (tc->sortedKeys == NULL)
   {
     // Obtain the list of keys from the dictionary.
     PyObject *keys = PyDict_Keys(tc->dictObj);
@@ -321,8 +323,7 @@ static int SortedDict_iterNext(PyObject *obj, TypeContext *tc)
       Py_DECREF(keys);
       return -1;
     }
-    // Store the sorted list of keys in the newObj slot.
-    tc->newObj = keys;
+    tc->sortedKeys = keys;
     tc->size = PyList_GET_SIZE(keys);
   }
 
@@ -332,7 +333,7 @@ static int SortedDict_iterNext(PyObject *obj, TypeContext *tc)
     return 0;
   }
 
-  PyObject* key = PyList_GET_ITEM(tc->newObj, tc->index);
+  PyObject* key = PyList_GET_ITEM(tc->sortedKeys, tc->index);
   Py_XDECREF(tc->itemName);
   tc->itemName = Dict_convertKey(key);
   if (!tc->itemName)
@@ -379,6 +380,7 @@ static void Object_beginTypeContext (PyObject *obj, TypeContext *tc, JSONObjectE
   tc->newObj = NULL;
   tc->utf8BytesObj = NULL;
   tc->dictObj = NULL;
+  tc->sortedKeys = NULL;
   tc->itemValue = NULL;
   tc->itemName = NULL;
   tc->index = 0;

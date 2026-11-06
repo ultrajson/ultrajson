@@ -146,6 +146,10 @@ Python's global interpreter lock. What is is not supported nor safe is mutating
 an object in one thread whilst it's simultaneously being serialised by `ujson`
 in another. In such usage, all bugs are features.
 
+Using callbacks such as the `default` option or classes with a `__json__()`
+method to mutate inputs whilst they're being used by `ujson` is similarly
+unsupported.
+
 ## Build options
 
 For those with particular needs, such as Linux distribution packagers, several
